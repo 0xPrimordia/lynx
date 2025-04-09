@@ -1,0 +1,449 @@
+"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
+import { useWallet } from "../providers/WalletProvider";
+import { TokenService, MintParams, TokenRatios } from "../services/tokenService";
+import { toast } from "sonner";
+import { vt323 } from "../fonts";
+import { Card, CardBody, CardHeader, Divider, Input, Button, Spinner, Progress } from "@nextui-org/react";
+
+export default function MintPage() {
+  const { dAppConnector, accountId, isConnected } = useWallet();
+  const [isLoading, setIsLoading] = useState(false);
+  const [lynxAmount, setLynxAmount] = useState<number>(0);
+  const [tokenRatios, setTokenRatios] = useState<TokenRatios | null>(null);
+  const [isLoadingRatios, setIsLoadingRatios] = useState(false);
+  const [hbarRequired, setHbarRequired] = useState<number | null>(null);
+  const [transactions, setTransactions] = useState<Array<{type: string, amount: string, status: string, time: string}>>([]);
+  
+  // Token balances
+  const [balances, setBalances] = useState({
+    hbar: 0,
+    sauce: 0,
+    clxy: 0,
+    lynx: 0,
+    isLoading: false
+  });
+
+  // Memoize the fetchTokenRatios function to use in useEffect
+  const fetchTokenRatios = useCallback(async () => {
+    if (!isConnected || !dAppConnector || !accountId) {
+      return;
+    }
+
+    setIsLoadingRatios(true);
+    try {
+      const tokenService = new TokenService(dAppConnector, accountId);
+      const ratios = await tokenService.getTokenRatios();
+      setTokenRatios(ratios);
+    } catch (error) {
+      console.error("Error fetching token ratios:", error);
+      toast.error("Failed to fetch token exchange ratios");
+    } finally {
+      setIsLoadingRatios(false);
+    }
+  }, [isConnected, dAppConnector, accountId]);
+
+  // Memoize the fetch balances function
+  const fetchBalances = useCallback(async () => {
+    if (!isConnected || !dAppConnector || !accountId) {
+      return;
+    }
+
+    setBalances(prev => ({ ...prev, isLoading: true }));
+    try {
+      // Mock balances for now - in a real implementation you would fetch from your wallet provider
+      setBalances({
+        hbar: 1000000000, // 10 HBAR in tinybar
+        sauce: 500,
+        clxy: 200,
+        lynx: 50,
+        isLoading: false
+      });
+    } catch (error) {
+      console.error("Error fetching balances:", error);
+      toast.error("Failed to fetch token balances");
+      setBalances(prev => ({ ...prev, isLoading: false }));
+    }
+  }, [isConnected, dAppConnector, accountId]);
+
+  // Memoize the calculateRequiredHBAR function to use in useEffect
+  const calculateRequiredHBAR = useCallback(async () => {
+    if (!isConnected || !dAppConnector || !accountId || lynxAmount <= 0) {
+      return;
+    }
+
+    try {
+      const tokenService = new TokenService(dAppConnector, accountId);
+      const required = await tokenService.calculateRequiredHBAR(lynxAmount);
+      setHbarRequired(required);
+    } catch (error) {
+      console.error("Error calculating required HBAR:", error);
+      setHbarRequired(null);
+    }
+  }, [isConnected, dAppConnector, accountId, lynxAmount]);
+
+  // Fetch token ratios when the page loads
+  useEffect(() => {
+    if (isConnected && dAppConnector && accountId) {
+      fetchTokenRatios();
+      fetchBalances();
+    }
+  }, [isConnected, dAppConnector, accountId, fetchTokenRatios, fetchBalances]);
+
+  // Update HBAR required when lynx amount or token ratios change
+  useEffect(() => {
+    if (lynxAmount > 0 && isConnected && dAppConnector && accountId) {
+      calculateRequiredHBAR();
+    } else {
+      setHbarRequired(null);
+    }
+  }, [lynxAmount, tokenRatios, isConnected, dAppConnector, accountId, calculateRequiredHBAR]);
+
+  const handleLynxAmountChange = (value: string) => {
+    const amount = parseFloat(value) || 0;
+    setLynxAmount(amount);
+  };
+
+  const handleMint = async () => {
+    if (!isConnected || !dAppConnector || !accountId) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
+    if (lynxAmount <= 0) {
+      toast.error("Please enter a valid LYNX amount");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const tokenService = new TokenService(dAppConnector, accountId);
+      
+      // Check token allowances first
+      const allowances = await tokenService.checkAllowances(lynxAmount);
+      
+      // Notify the user about required approvals
+      if (!allowances.isSauceAllowanceSufficient) {
+        toast.info(`Approval needed: ${allowances.sauceRequired} SAUCE tokens`);
+      }
+      
+      if (!allowances.isClxyAllowanceSufficient) {
+        toast.info(`Approval needed: ${allowances.clxyRequired} CLXY tokens`);
+      }
+      
+      // Execute the mint transaction
+      const params: MintParams = {
+        lynxAmount: lynxAmount
+      };
+
+      const tx = await tokenService.mintLynx(params);
+      
+      // Add transaction to history
+      const now = new Date();
+      const newTransaction = {
+        type: "Mint LYNX",
+        amount: `${lynxAmount} LYNX`,
+        status: "Completed",
+        time: now.toISOString().slice(0, 16).replace('T', ' ')
+      };
+      setTransactions([newTransaction, ...transactions]);
+      
+      // Update balances after successful mint
+      fetchBalances();
+      
+      toast.success("LYNX tokens minted successfully!");
+      console.log("Transaction ID:", tx);
+    } catch (error) {
+      console.error("Error minting LYNX tokens:", error);
+      toast.error("Failed to mint LYNX tokens. Check console for details.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Convert tiny HBAR to HBAR with 8 decimal places
+  const formatHbar = (tinyHbar: number) => {
+    return (tinyHbar / 100_000_000).toFixed(8);
+  };
+
+  // Calculate the percentage of available balance vs required
+  const calculateBalancePercentage = (available: number, required: number) => {
+    if (required === 0 || available === 0) return 0;
+    const percentage = (available / required) * 100;
+    return Math.min(percentage, 100); // Cap at 100%
+  };
+
+  // Determine if user has sufficient balance
+  const hasSufficientHbar = hbarRequired ? balances.hbar >= hbarRequired : true;
+  const hasSufficientSauce = tokenRatios && lynxAmount > 0 ? balances.sauce >= (lynxAmount * tokenRatios.sauceRatio) : true;
+  const hasSufficientClxy = tokenRatios && lynxAmount > 0 ? balances.clxy >= (lynxAmount * tokenRatios.clxyRatio) : true;
+
+  return (
+    <div className="py-14 container mx-auto px-6">
+      <div className="flex flex-col items-center text-center mb-8">
+        <h1 className={`mb-4 ${vt323.className} terminal-cursor`} style={{ color: "#0159E0", fontSize: "2.6rem" }}>
+          Lynx Token Mint
+        </h1>
+        <p className="text-gray-300 max-w-2xl">
+          Mint LYNX tokens by providing HBAR, SAUCE, and CLXY according to the current exchange ratios.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        {/* Token Balances */}
+        <Card 
+          shadow="sm"
+          radius="lg"
+          className="bg-black"
+        >
+          <CardHeader className="pb-0 pt-4 px-6 flex-col items-start">
+            <h2 className={`text-2xl font-bold ${vt323.className}`} style={{ color: "#0159E0" }}>Your Balances</h2>
+          </CardHeader>
+          <Divider className="my-2"/>
+          <CardBody className="py-4 px-6">
+            {balances.isLoading ? (
+              <div className="flex justify-center py-4">
+                <Spinner size="sm" color="primary" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-white font-medium">HBAR</span>
+                    <span className={`text-white ${vt323.className}`}>{formatHbar(balances.hbar)}</span>
+                  </div>
+                  <Progress 
+                    size="sm" 
+                    color={hasSufficientHbar ? "success" : "danger"}
+                    value={100} 
+                    className="h-1" 
+                  />
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-white font-medium">SAUCE</span>
+                    <span className={`text-white ${vt323.className}`}>{balances.sauce}</span>
+                  </div>
+                  <Progress 
+                    size="sm" 
+                    color={hasSufficientSauce ? "success" : "danger"}
+                    value={100} 
+                    className="h-1" 
+                  />
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-white font-medium">CLXY</span>
+                    <span className={`text-white ${vt323.className}`}>{balances.clxy}</span>
+                  </div>
+                  <Progress 
+                    size="sm" 
+                    color={hasSufficientClxy ? "success" : "danger"}
+                    value={100} 
+                    className="h-1" 
+                  />
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-white font-medium">LYNX</span>
+                    <span className={`text-white ${vt323.className}`}>{balances.lynx}</span>
+                  </div>
+                  <Progress 
+                    size="sm" 
+                    color="primary"
+                    value={100} 
+                    className="h-1" 
+                  />
+                </div>
+              </div>
+            )}
+          </CardBody>
+        </Card>
+
+        {/* Main Mint Form */}
+        <Card 
+          className="lg:col-span-2"
+          shadow="sm"
+          radius="lg"
+        >
+          <CardHeader className="pb-0 pt-4 px-6 flex-col items-start">
+            <h2 className={`text-2xl font-bold ${vt323.className}`} style={{ color: "#0159E0" }}>Mint LYNX Tokens</h2>
+          </CardHeader>
+          <Divider className="my-2"/>
+          <CardBody className="py-4 px-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Input Section */}
+              <div className="space-y-5">
+                <div>
+                  <h3 className={`text-xl font-semibold text-white mb-3 ${vt323.className}`}>Input Amount</h3>
+                  <div className="w-full flex flex-col gap-2">
+                    <div className="flex items-center">
+                      <Input
+                        type="number"
+                        placeholder="0.00"
+                        aria-label="LYNX Amount"
+                        value={lynxAmount.toString()}
+                        onChange={(e) => handleLynxAmountChange(e.target.value)}
+                        classNames={{
+                          base: "max-w-[200px]",
+                          input: "text-xl text-white",
+                          inputWrapper: "bg-gray-900 h-16 rounded-lg border border-gray-700"
+                        }}
+                        size="lg"
+                      />
+                      <span className={`ml-3 text-white font-medium ${vt323.className}`}>LYNX</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {isLoadingRatios ? (
+                  <div className="flex justify-center py-4">
+                    <Spinner size="sm" color="primary" />
+                  </div>
+                ) : tokenRatios ? (
+                  <div className="bg-[#1a1a1a] p-4 rounded-lg">
+                    <h4 className={`text-gray-300 text-sm mb-2 ${vt323.className}`}>Exchange Ratios</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400 text-sm">1 LYNX =</span>
+                        <span className={`text-white text-sm ${vt323.className}`}>{formatHbar(tokenRatios.hbarRatio)} HBAR</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400 text-sm">1 LYNX =</span>
+                        <span className={`text-white text-sm ${vt323.className}`}>{tokenRatios.sauceRatio} SAUCE</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400 text-sm">1 LYNX =</span>
+                        <span className={`text-white text-sm ${vt323.className}`}>{tokenRatios.clxyRatio} CLXY</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Required Tokens Section */}
+              <div className="space-y-5">
+                <h3 className={`text-xl font-semibold text-white mb-3 ${vt323.className}`}>Required Tokens</h3>
+                
+                <div className="space-y-3">
+                  {hbarRequired ? (
+                    <div className="bg-[#1a1a1a] p-3 rounded-lg">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-white text-sm font-medium">HBAR</span>
+                        <span className={`text-white text-sm ${vt323.className}`}>{formatHbar(hbarRequired)}</span>
+                      </div>
+                      <Progress 
+                        size="sm" 
+                        color={hasSufficientHbar ? "success" : "danger"}
+                        value={calculateBalancePercentage(balances.hbar, hbarRequired)} 
+                        className="h-1" 
+                      />
+                      {!hasSufficientHbar && (
+                        <p className="text-red-500 text-xs mt-1">Insufficient balance</p>
+                      )}
+                    </div>
+                  ) : null}
+                  
+                  {tokenRatios && lynxAmount > 0 ? (
+                    <>
+                      <div className="bg-[#1a1a1a] p-3 rounded-lg">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-white text-sm font-medium">SAUCE</span>
+                          <span className={`text-white text-sm ${vt323.className}`}>{lynxAmount * tokenRatios.sauceRatio}</span>
+                        </div>
+                        <Progress 
+                          size="sm" 
+                          color={hasSufficientSauce ? "success" : "danger"}
+                          value={calculateBalancePercentage(balances.sauce, lynxAmount * tokenRatios.sauceRatio)} 
+                          className="h-1" 
+                        />
+                        {!hasSufficientSauce && (
+                          <p className="text-red-500 text-xs mt-1">Insufficient balance</p>
+                        )}
+                      </div>
+                      
+                      <div className="bg-[#1a1a1a] p-3 rounded-lg">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-white text-sm font-medium">CLXY</span>
+                          <span className={`text-white text-sm ${vt323.className}`}>{lynxAmount * tokenRatios.clxyRatio}</span>
+                        </div>
+                        <Progress 
+                          size="sm" 
+                          color={hasSufficientClxy ? "success" : "danger"}
+                          value={calculateBalancePercentage(balances.clxy, lynxAmount * tokenRatios.clxyRatio)} 
+                          className="h-1" 
+                        />
+                        {!hasSufficientClxy && (
+                          <p className="text-red-500 text-xs mt-1">Insufficient balance</p>
+                        )}
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+                
+                <Button
+                  size="sm"
+                  variant="solid"
+                  style={{
+                    backgroundColor: "#0159E0",
+                    color: "white",
+                    borderColor: "#0159E0"
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-6 mt-6 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleMint}
+                  isLoading={isLoading}
+                  disabled={
+                    isLoading || 
+                    !isConnected || 
+                    lynxAmount <= 0 || 
+                    !hasSufficientHbar ||
+                    !hasSufficientSauce ||
+                    !hasSufficientClxy
+                  }
+                >
+                  {isLoading ? "Processing..." : "Mint LYNX Tokens"}
+                </Button>
+              </div>
+            </div>
+            
+            {/* Transaction History */}
+            <div className="mt-8">
+              <h3 className={`text-xl font-semibold text-white mb-3 ${vt323.className}`}>Transaction History</h3>
+              <div className="overflow-x-auto bg-[#1a1a1a] rounded-lg p-2">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-800">
+                      <th className="text-left p-2 text-gray-300 text-sm">Transaction</th>
+                      <th className="text-left p-2 text-gray-300 text-sm">Amount</th>
+                      <th className="text-left p-2 text-gray-300 text-sm">Status</th>
+                      <th className="text-left p-2 text-gray-300 text-sm">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transactions.length > 0 ? (
+                      transactions.map((tx, index) => (
+                        <tr key={index} className={index < transactions.length - 1 ? "border-b border-gray-800" : ""}>
+                          <td className="p-2 text-white text-sm">{tx.type}</td>
+                          <td className={`p-2 text-white text-sm ${vt323.className}`}>{tx.amount}</td>
+                          <td className="p-2 text-sm">
+                            <span className="text-emerald-400">{tx.status}</span>
+                          </td>
+                          <td className="p-2 text-gray-300 text-sm">{tx.time}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="p-3 text-center text-gray-400 text-sm">No transactions yet</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+    </div>
+  );
+} 

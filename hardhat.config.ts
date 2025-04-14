@@ -39,7 +39,9 @@ const config: HardhatUserConfig = {
       url: "https://testnet.hashio.io/api",
       accounts: OPERATOR_KEY ? [`0x${OPERATOR_KEY}`] : [],
       chainId: 296,
-      gasPrice: 1000000000
+      gasPrice: 530000000000,
+      gas: 400000,
+      allowUnlimitedContractSize: true
     }
   },
   paths: {

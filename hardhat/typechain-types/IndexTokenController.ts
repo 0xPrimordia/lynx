@@ -52,6 +52,9 @@ export interface IndexTokenControllerInterface extends Interface {
       | "IndexTokenMinted"
       | "IndexTokenSet"
       | "SupplyKeyVerified"
+      | "TokenCreationAttempt"
+      | "TokenCreationError"
+      | "TokenCreationStep"
   ): EventFragment;
 
   encodeFunctionData(functionFragment: "ADMIN", values?: undefined): string;
@@ -232,6 +235,66 @@ export namespace SupplyKeyVerifiedEvent {
   export type OutputTuple = [hasKey: boolean];
   export interface OutputObject {
     hasKey: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TokenCreationAttemptEvent {
+  export type InputTuple = [
+    name: string,
+    symbol: string,
+    memo: string,
+    treasury: AddressLike
+  ];
+  export type OutputTuple = [
+    name: string,
+    symbol: string,
+    memo: string,
+    treasury: string
+  ];
+  export interface OutputObject {
+    name: string;
+    symbol: string;
+    memo: string;
+    treasury: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TokenCreationErrorEvent {
+  export type InputTuple = [responseCode: BigNumberish, errorMessage: string];
+  export type OutputTuple = [responseCode: bigint, errorMessage: string];
+  export interface OutputObject {
+    responseCode: bigint;
+    errorMessage: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TokenCreationStepEvent {
+  export type InputTuple = [
+    step: string,
+    tokenAddress: AddressLike,
+    responseCode: BigNumberish
+  ];
+  export type OutputTuple = [
+    step: string,
+    tokenAddress: string,
+    responseCode: bigint
+  ];
+  export interface OutputObject {
+    step: string;
+    tokenAddress: string;
+    responseCode: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -445,6 +508,27 @@ export interface IndexTokenController extends BaseContract {
     SupplyKeyVerifiedEvent.OutputTuple,
     SupplyKeyVerifiedEvent.OutputObject
   >;
+  getEvent(
+    key: "TokenCreationAttempt"
+  ): TypedContractEvent<
+    TokenCreationAttemptEvent.InputTuple,
+    TokenCreationAttemptEvent.OutputTuple,
+    TokenCreationAttemptEvent.OutputObject
+  >;
+  getEvent(
+    key: "TokenCreationError"
+  ): TypedContractEvent<
+    TokenCreationErrorEvent.InputTuple,
+    TokenCreationErrorEvent.OutputTuple,
+    TokenCreationErrorEvent.OutputObject
+  >;
+  getEvent(
+    key: "TokenCreationStep"
+  ): TypedContractEvent<
+    TokenCreationStepEvent.InputTuple,
+    TokenCreationStepEvent.OutputTuple,
+    TokenCreationStepEvent.OutputObject
+  >;
 
   filters: {
     "IndexTokenCreated(address,int64)": TypedContractEvent<
@@ -489,6 +573,39 @@ export interface IndexTokenController extends BaseContract {
       SupplyKeyVerifiedEvent.InputTuple,
       SupplyKeyVerifiedEvent.OutputTuple,
       SupplyKeyVerifiedEvent.OutputObject
+    >;
+
+    "TokenCreationAttempt(string,string,string,address)": TypedContractEvent<
+      TokenCreationAttemptEvent.InputTuple,
+      TokenCreationAttemptEvent.OutputTuple,
+      TokenCreationAttemptEvent.OutputObject
+    >;
+    TokenCreationAttempt: TypedContractEvent<
+      TokenCreationAttemptEvent.InputTuple,
+      TokenCreationAttemptEvent.OutputTuple,
+      TokenCreationAttemptEvent.OutputObject
+    >;
+
+    "TokenCreationError(int64,string)": TypedContractEvent<
+      TokenCreationErrorEvent.InputTuple,
+      TokenCreationErrorEvent.OutputTuple,
+      TokenCreationErrorEvent.OutputObject
+    >;
+    TokenCreationError: TypedContractEvent<
+      TokenCreationErrorEvent.InputTuple,
+      TokenCreationErrorEvent.OutputTuple,
+      TokenCreationErrorEvent.OutputObject
+    >;
+
+    "TokenCreationStep(string,address,int64)": TypedContractEvent<
+      TokenCreationStepEvent.InputTuple,
+      TokenCreationStepEvent.OutputTuple,
+      TokenCreationStepEvent.OutputObject
+    >;
+    TokenCreationStep: TypedContractEvent<
+      TokenCreationStepEvent.InputTuple,
+      TokenCreationStepEvent.OutputTuple,
+      TokenCreationStepEvent.OutputObject
     >;
   };
 }

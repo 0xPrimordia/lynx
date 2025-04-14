@@ -1,5 +1,8 @@
-import { Client, AccountId, PrivateKey, Hbar, AccountBalanceQuery, TransferTransaction } from "@hashgraph/sdk";
+import { Client, AccountId, PrivateKey, Hbar, AccountBalanceQuery, TransferTransaction, ContractId } from "@hashgraph/sdk";
 import * as dotenv from "dotenv";
+import { ethers } from "hardhat";
+import path from 'path';
+import fs from 'fs';
 
 dotenv.config({ path: "../../.env.local" });
 
@@ -62,4 +65,55 @@ export class HederaManager {
     const balance = await this.checkBalance(accountId);
     return balance.toTinybars() >= minimum.toTinybars();
   }
+}
+
+/**
+ * Converts a Hedera ID (0.0.123456) to an EVM address (0x...padded)
+ * @param hederaId The Hedera account ID in shard.realm.account format
+ * @returns The corresponding EVM address
+ */
+export function hederaIdToEvmAddress(hederaId: string): string {
+  const accountNum = hederaId.split('.').pop() || "0";
+  const paddedAccountNum = accountNum.padStart(40, '0');
+  return `0x${paddedAccountNum}`;
+}
+
+/**
+ * Converts an EVM address to a Hedera ID format
+ * @param evmAddress The EVM address
+ * @returns The Hedera ID in 0.0.number format
+ */
+export function evmAddressToHederaId(evmAddress: string): string {
+  if (evmAddress.length !== 42) {
+    throw new Error(`Invalid EVM address: ${evmAddress}`);
+  }
+  
+  try {
+    // Use the Hedera SDK's ContractId to convert EVM address to Hedera ID
+    const contractId = ContractId.fromSolidityAddress(evmAddress);
+    return contractId.toString();
+  } catch (error) {
+    // Fallback to the direct conversion in case of SDK issues
+    const hex = evmAddress.replace("0x", "");
+    const num = BigInt(`0x${hex}`);
+    return `0.0.${num.toString()}`;
+  }
+}
+
+/**
+ * Gets deployment info from the deployment-info.json file
+ * @returns The deployment info object
+ */
+export function getDeploymentInfo(): any {
+  const deploymentInfoPath = path.join(__dirname, '../../../deployment-info.json');
+  return require(deploymentInfoPath);
+}
+
+/**
+ * Saves deployment info to the deployment-info.json file
+ * @param info The deployment info object
+ */
+export function saveDeploymentInfo(info: any): void {
+  const deploymentInfoPath = path.join(__dirname, '../../../deployment-info.json');
+  fs.writeFileSync(deploymentInfoPath, JSON.stringify(info, null, 2));
 } 

@@ -191,6 +191,16 @@ const _abi = [
             name: "decimals",
             type: "uint8",
           },
+          {
+            internalType: "address",
+            name: "autoRenewAccount",
+            type: "address",
+          },
+          {
+            internalType: "uint32",
+            name: "autoRenewPeriod",
+            type: "uint32",
+          },
         ],
         internalType: "struct IHederaTokenService.HederaToken",
         name: "token",

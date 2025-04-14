@@ -75,17 +75,10 @@ contract IndexVault {
      * @param _indexToken The address of the index token
      */
     function setIndexToken(address _indexToken) external onlyController {
-        require(indexToken == address(0), "Index token already set");
         require(_indexToken != address(0), "Cannot set to zero address");
+        require(indexToken == address(0), "Index token already set");
         
         indexToken = _indexToken;
-        
-        // Associate with the token
-        int64 associateResponse = hts.associateToken(address(this), _indexToken);
-        if (associateResponse != 0) {
-            revert TransferFailed(_indexToken, associateResponse);
-        }
-        
         emit IndexTokenSet(_indexToken);
     }
     

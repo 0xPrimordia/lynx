@@ -35,7 +35,6 @@ export declare namespace IndexVault {
 export interface IndexVaultInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "HTS_PRECOMPILE"
       | "admin"
       | "calculateRequiredDeposits"
       | "composition"
@@ -44,6 +43,7 @@ export interface IndexVaultInterface extends Interface {
       | "deposits"
       | "getComposition"
       | "getDeposit"
+      | "htsAddress"
       | "indexToken"
       | "receiveMint"
       | "setComposition"
@@ -61,10 +61,6 @@ export interface IndexVaultInterface extends Interface {
       | "TokensDistributed"
   ): EventFragment;
 
-  encodeFunctionData(
-    functionFragment: "HTS_PRECOMPILE",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "admin", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "calculateRequiredDeposits",
@@ -95,6 +91,10 @@ export interface IndexVaultInterface extends Interface {
     values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "htsAddress",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "indexToken",
     values?: undefined
   ): string;
@@ -123,10 +123,6 @@ export interface IndexVaultInterface extends Interface {
     values: [AddressLike, BigNumberish]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "HTS_PRECOMPILE",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "admin", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "calculateRequiredDeposits",
@@ -147,6 +143,7 @@ export interface IndexVaultInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getDeposit", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "htsAddress", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "indexToken", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "receiveMint",
@@ -272,8 +269,6 @@ export interface IndexVault extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  HTS_PRECOMPILE: TypedContractMethod<[], [string], "view">;
-
   admin: TypedContractMethod<[], [string], "view">;
 
   calculateRequiredDeposits: TypedContractMethod<
@@ -313,6 +308,8 @@ export interface IndexVault extends BaseContract {
     [bigint],
     "view"
   >;
+
+  htsAddress: TypedContractMethod<[], [string], "view">;
 
   indexToken: TypedContractMethod<[], [string], "view">;
 
@@ -357,9 +354,6 @@ export interface IndexVault extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "HTS_PRECOMPILE"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "admin"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -403,6 +397,9 @@ export interface IndexVault extends BaseContract {
     [bigint],
     "view"
   >;
+  getFunction(
+    nameOrSignature: "htsAddress"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "indexToken"
   ): TypedContractMethod<[], [string], "view">;

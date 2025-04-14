@@ -33,6 +33,9 @@ contract IndexTokenController {
     event IndexTokenCreated(address tokenAddress, int64 responseCode);
     event SupplyKeyVerified(bool hasKey);
     event IndexTokenSet(address indexed tokenAddress);
+    event TokenCreationAttempt(string name, string symbol, string memo, address treasury);
+    event TokenCreationError(int64 responseCode, string errorMessage);
+    event TokenCreationStep(string step, address tokenAddress, int64 responseCode);
 
     // Errors
     error OnlyAdmin();
@@ -44,6 +47,7 @@ contract IndexTokenController {
     error TokenTransferFailed(address token, int64 errorCode);
     error InsufficientDeposits();
     error HtsError(address token, int64 responseCode, string message);
+    error PreTokenCreationError(string message);
 
     // For testing purposes
     IHederaTokenService private hts;
@@ -98,6 +102,9 @@ contract IndexTokenController {
     ) external payable onlyAdmin {
         require(INDEX_TOKEN == address(0), "Index token already exists");
         
+        // Log token creation attempt
+        emit TokenCreationAttempt(name, symbol, memo, address(this));
+        
         // Create token key arrays - only admin and supply keys
         address[] memory adminKey = new address[](1);
         adminKey[0] = ADMIN;
@@ -107,6 +114,8 @@ contract IndexTokenController {
         
         address[] memory emptyKeys = new address[](0);
         
+        // Debugging events added to trace execution flow
+        emit TokenCreationStep("Before creating token struct", address(0), 0);
         // Create token structure
         IHederaTokenService.HederaToken memory token = IHederaTokenService.HederaToken({
             name: name,
@@ -121,47 +130,94 @@ contract IndexTokenController {
             supplyKey: supplyKey,
             adminKey: adminKey,
             kycKey: emptyKeys,
-            decimals: TOKEN_DECIMALS
+            decimals: TOKEN_DECIMALS,
+            autoRenewAccount: address(this),
+            autoRenewPeriod: AUTO_RENEW_PERIOD
         });
+        emit TokenCreationStep("After creating token struct", address(0), 0);
         
         // Create key types and addresses arrays
-        uint8[] memory keys = new uint8[](2);
+        uint8[] memory keys = new uint8[](3);
         keys[0] = 1; // Admin key
         keys[1] = 4; // Supply key
+        keys[2] = 8; // Auto-renew key
         
-        address[] memory keyAddresses = new address[](2);
+        address[] memory keyAddresses = new address[](3);
         keyAddresses[0] = ADMIN;
         keyAddresses[1] = address(this);
+        keyAddresses[2] = address(this);
         
+        // Add more detailed error handling
+        emit TokenCreationStep("Debug: About to call createToken", address(0), 0);
+        
+        // Debugging events added to trace execution flow
+        emit TokenCreationStep("Before calling createToken", address(0), 0);
         // Create token with value for fees
-        (int64 responseCode, address tokenAddress) = hts.createToken{value: msg.value}(
-            token,
-            0, // Initial supply is 0
-            keys,
-            keyAddresses
-        );
+        emit TokenCreationStep("Creating token", address(0), 0);
+        int64 responseCode;
+        address tokenAddress;
+        try hts.createToken{value: msg.value}(token, 0, keys, keyAddresses) returns (int64 code, address addr) {
+            responseCode = code;
+            tokenAddress = addr;
+            emit TokenCreationStep("CreateToken call completed", addr, code);
+        } catch (bytes memory errorData) {
+            string memory errorMessage = string(errorData);
+            if (errorData.length == 0) {
+                errorMessage = "Unknown error (empty revert data)";
+            }
+            emit TokenCreationError(-999, errorMessage);
+            revert PreTokenCreationError(errorMessage);
+        }
+        emit TokenCreationStep("After calling createToken", tokenAddress, responseCode);
         
         // Check response
         if (responseCode != 0) {
+            string memory errorMessage = responseCode == 22 ? "TOKEN_ALREADY_EXISTS_WITH_DIFFERENT_PROPERTIES" :
+                                      responseCode == 27 ? "INVALID_TOKEN_TREASURY_ACCOUNT" :
+                                      responseCode == 7 ? "INSUFFICIENT_PAYER_BALANCE" :
+                                      "Unknown HTS error";
+            emit TokenCreationError(responseCode, errorMessage);
             revert TokenCreationFailed(responseCode);
+        }
+
+        // Validate token address
+        if (tokenAddress == address(0)) {
+            emit TokenCreationError(0, "Token creation succeeded but no token address returned");
+            revert TokenCreationFailed(0);
         }
         
         // Store token address
         INDEX_TOKEN = tokenAddress;
+        emit TokenCreationStep("Token address stored", tokenAddress, 0);
         
+        // Debugging events added to trace execution flow
+        emit TokenCreationStep("Before associating token", tokenAddress, 0);
         // Associate with token
+        emit TokenCreationStep("Associating with token", tokenAddress, 0);
         int64 associateResponse = hts.associateToken(address(this), tokenAddress);
         if (associateResponse != 0) {
+            emit TokenCreationError(associateResponse, "Failed to associate with token");
             revert TokenCreationFailed(associateResponse);
         }
+        emit TokenCreationStep("After associating token", tokenAddress, associateResponse);
+        emit TokenCreationStep("Token association complete", tokenAddress, 0);
         
+        // Debugging events added to trace execution flow
+        emit TokenCreationStep("Before updating vault", tokenAddress, 0);
         // Inform the vault about the token
+        emit TokenCreationStep("Updating vault", tokenAddress, 0);
         vault.setIndexToken(tokenAddress);
+        emit TokenCreationStep("After updating vault", tokenAddress, 0);
         
+        // Debugging events added to trace execution flow
+        emit TokenCreationStep("Before verifying supply key", tokenAddress, 0);
         // Verify supply key
+        emit TokenCreationStep("Verifying supply key", tokenAddress, 0);
         checkSupplyKey();
+        emit TokenCreationStep("After verifying supply key", tokenAddress, 0);
         
         emit IndexTokenCreated(tokenAddress, responseCode);
+        emit TokenCreationStep("Token creation complete", tokenAddress, 0);
     }
     
     /**
@@ -219,7 +275,7 @@ contract IndexTokenController {
      * @param recipient The address to receive the minted tokens
      * @param amount The amount of tokens to mint
      */
-    function mintTo(address recipient, uint256 amount) external onlyAdmin supplyKeyRequired {
+    function mintTo(address recipient, uint256 amount) external supplyKeyRequired {
         // Validation: ensure amount is greater than zero
         if (amount == 0) {
             revert InvalidAmount();
@@ -273,4 +329,4 @@ contract IndexTokenController {
     
     // Allow contract to receive HBAR
     receive() external payable {}
-} 
+}

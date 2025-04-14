@@ -184,6 +184,16 @@
               "internalType": "uint8",
               "name": "decimals",
               "type": "uint8"
+            },
+            {
+              "internalType": "address",
+              "name": "autoRenewAccount",
+              "type": "address"
+            },
+            {
+              "internalType": "uint32",
+              "name": "autoRenewPeriod",
+              "type": "uint32"
             }
           ],
           "internalType": "struct IHederaTokenService.HederaToken",
@@ -377,6 +387,24 @@
     {
       "inputs": [
         {
+          "internalType": "int64",
+          "name": "responseCode",
+          "type": "int64"
+        },
+        {
+          "internalType": "address",
+          "name": "tokenAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setMockedCreateTokenResponse",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "address",
           "name": "token",
           "type": "address"
@@ -388,6 +416,34 @@
         }
       ],
       "name": "setTransferResult",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "tokenAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "sauceTokenAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "clxyTokenAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "userAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setupTokens",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

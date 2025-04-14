@@ -5,5 +5,4 @@ export * as interfaces from "./interfaces";
 export { IHederaTokenService__factory } from "./IHederaTokenService__factory";
 export { IndexTokenController__factory } from "./IndexTokenController__factory";
 export { IndexVault__factory } from "./IndexVault__factory";
-export { LynxMinter__factory } from "./LynxMinter__factory";
 export { MockHederaTokenService__factory } from "./MockHederaTokenService__factory";

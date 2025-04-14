@@ -1,0 +1,22 @@
+{
+  "name": "lynx-deployment",
+  "version": "1.0.0",
+  "description": "Deployment scripts for Lynx token system",
+  "scripts": {
+    "deploy": "cd .. && npx hardhat run hardhat/scripts/deploy/index-token-system.ts --network hederaTestnet",
+    "fund": "cd .. && ts-node hardhat/scripts/token/fund-hedera.ts",
+    "create-token": "cd .. && ts-node hardhat/scripts/token/create-token-hedera.ts",
+    "verify": "cd .. && ts-node hardhat/scripts/token/verify-hedera.ts",
+    "deploy:all": "npm run deploy && npm run fund && npm run create-token && npm run verify",
+    "check-env": "ts-node check-env.ts"
+  },
+  "dependencies": {
+    "@hashgraph/sdk": "^2.29.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  }
+} 

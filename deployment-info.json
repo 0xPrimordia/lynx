@@ -1,5 +1,7 @@
 {
-  "vaultId": "0.0.5836591",
-  "controllerId": "0.0.5836596",
-  "tokenAddress": ""
-} 
+  "vaultId": "0.0.f63c0858c57ec70664dfb02792f8ab09fe3f0b94",
+  "controllerId": "0.0.0ce7382b60aec869c6f7f762c93993b7b11dba7a",
+  "vaultEvm": "0xf63c0858c57ec70664Dfb02792F8AB09Fe3F0b94",
+  "controllerEvm": "0x0cE7382b60AEc869C6F7f762C93993b7b11DBA7A",
+  "tokenAddress": "0000000000000000000000000000000000000000"
+}

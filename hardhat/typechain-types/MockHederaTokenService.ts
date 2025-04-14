@@ -38,6 +38,8 @@ export declare namespace IHederaTokenService {
     adminKey: AddressLike[];
     kycKey: AddressLike[];
     decimals: BigNumberish;
+    autoRenewAccount: AddressLike;
+    autoRenewPeriod: BigNumberish;
   };
 
   export type HederaTokenStructOutput = [
@@ -53,7 +55,9 @@ export declare namespace IHederaTokenService {
     supplyKey: string[],
     adminKey: string[],
     kycKey: string[],
-    decimals: bigint
+    decimals: bigint,
+    autoRenewAccount: string,
+    autoRenewPeriod: bigint
   ] & {
     name: string;
     symbol: string;
@@ -68,6 +72,8 @@ export declare namespace IHederaTokenService {
     adminKey: string[];
     kycKey: string[];
     decimals: bigint;
+    autoRenewAccount: string;
+    autoRenewPeriod: bigint;
   };
 }
 

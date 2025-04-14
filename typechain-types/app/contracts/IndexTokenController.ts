@@ -28,6 +28,8 @@ export interface IndexTokenControllerInterface extends Interface {
     nameOrSignature:
       | "ADMIN"
       | "ADMIN()"
+      | "AUTO_RENEW_PERIOD"
+      | "AUTO_RENEW_PERIOD()"
       | "HTS_PRECOMPILE"
       | "HTS_PRECOMPILE()"
       | "INDEX_TOKEN"
@@ -76,6 +78,14 @@ export interface IndexTokenControllerInterface extends Interface {
 
   encodeFunctionData(functionFragment: "ADMIN", values?: undefined): string;
   encodeFunctionData(functionFragment: "ADMIN()", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "AUTO_RENEW_PERIOD",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "AUTO_RENEW_PERIOD()",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "HTS_PRECOMPILE",
     values?: undefined
@@ -201,6 +211,14 @@ export interface IndexTokenControllerInterface extends Interface {
 
   decodeFunctionResult(functionFragment: "ADMIN", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ADMIN()", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "AUTO_RENEW_PERIOD",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "AUTO_RENEW_PERIOD()",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "HTS_PRECOMPILE",
     data: BytesLike
@@ -424,6 +442,10 @@ export interface IndexTokenController extends BaseContract {
 
   "ADMIN()": TypedContractMethod<[], [string], "view">;
 
+  AUTO_RENEW_PERIOD: TypedContractMethod<[], [bigint], "view">;
+
+  "AUTO_RENEW_PERIOD()": TypedContractMethod<[], [bigint], "view">;
+
   HTS_PRECOMPILE: TypedContractMethod<[], [string], "view">;
 
   "HTS_PRECOMPILE()": TypedContractMethod<[], [string], "view">;
@@ -463,13 +485,13 @@ export interface IndexTokenController extends BaseContract {
   createIndexToken: TypedContractMethod<
     [name: string, symbol: string, memo: string],
     [void],
-    "nonpayable"
+    "payable"
   >;
 
   "createIndexToken(string,string,string)": TypedContractMethod<
     [name: string, symbol: string, memo: string],
     [void],
-    "nonpayable"
+    "payable"
   >;
 
   getTokenAddress: TypedContractMethod<[], [string], "view">;
@@ -547,6 +569,12 @@ export interface IndexTokenController extends BaseContract {
     nameOrSignature: "ADMIN()"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "AUTO_RENEW_PERIOD"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "AUTO_RENEW_PERIOD()"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "HTS_PRECOMPILE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -601,14 +629,14 @@ export interface IndexTokenController extends BaseContract {
   ): TypedContractMethod<
     [name: string, symbol: string, memo: string],
     [void],
-    "nonpayable"
+    "payable"
   >;
   getFunction(
     nameOrSignature: "createIndexToken(string,string,string)"
   ): TypedContractMethod<
     [name: string, symbol: string, memo: string],
     [void],
-    "nonpayable"
+    "payable"
   >;
   getFunction(
     nameOrSignature: "getTokenAddress"

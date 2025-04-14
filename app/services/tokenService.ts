@@ -4,6 +4,20 @@ import { transactionToBase64String } from "@hashgraph/hedera-wallet-connect";
 import { TOKEN_IDS } from "../config/environment";
 import { Client } from "@hashgraph/sdk";
 
+// Helper for converting Hedera accountId to EVM address format
+const accountIdToEvmAddress = (accountId: string): string => {
+  try {
+    // Convert account ID to a zero-padded hex string
+    const id = AccountId.fromString(accountId).toSolidityAddress();
+    // Ensure it's properly formatted as a 0x-prefixed 40-character string
+    return '0x' + id.replace('0x', '').padStart(40, '0');
+  } catch (error) {
+    console.error("Error converting account ID to EVM address:", error);
+    // Return a fallback value
+    return '0x0000000000000000000000000000000000000000';
+  }
+};
+
 // Constants for the Lynx minter contract - REPLACE THESE WITH YOUR ACTUAL TOKEN IDs
 const LYNX_TOKEN_ID = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.3059001";
 const SAUCE_TOKEN_ID = process.env.NEXT_PUBLIC_SAUCE_TOKEN_ID || "0.0.1183558";
@@ -134,7 +148,7 @@ export class TokenService {
         )
         .setTransactionId(TransactionId.generate(sender))
         .setTransactionMemo(`Approve ${tokenName} for LYNX Minting`)
-        .setMaxTransactionFee(new Hbar(5))
+        .setMaxTransactionFee(new Hbar(10))
         .freezeWith(client);
       
       // Verify frozen state
@@ -267,17 +281,18 @@ export class TokenService {
       // 2. Parse account ID properly
       const sender = AccountId.fromString(this.accountId);
       
-      // 3. Create the mint transaction
+      // 3. Create the mint transaction with recipient address and amount
       const transaction = new ContractExecuteTransaction()
         .setContractId(ContractId.fromString(LYNX_CONTRACT_ID))
         .setGas(5_000_000)
+        .setMaxTransactionFee(new Hbar(10))
         .setFunction(
-          'mint',
+          'mintTo',
           new ContractFunctionParameters()
+            .addAddress(accountIdToEvmAddress(this.accountId)) // Add recipient address
             .addUint256(lynxAmount)
         )
         .setTransactionId(TransactionId.generate(sender))
-        .setMaxTransactionFee(new Hbar(5))
         .freezeWith(client);
       
       console.log(`[CRITICAL DEBUG] Transaction created with ID: ${transaction.transactionId?.toString()}`);
@@ -403,7 +418,7 @@ export class TokenService {
         .setGas(1000000)
         .setFunction("burn", new ContractFunctionParameters().addUint256(lynxAmount))
         .setTransactionId(TransactionId.generate(sender))
-        .setMaxTransactionFee(new Hbar(5))
+        .setMaxTransactionFee(new Hbar(10))
         .freezeWith(client);
       
       console.log("Burn transaction created and frozen:", burnTx.isFrozen());

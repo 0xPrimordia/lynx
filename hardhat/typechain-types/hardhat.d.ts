@@ -30,10 +30,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IHederaTokenService__factory>;
     getContractFactory(
-      name: "LynxMinter",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.LynxMinter__factory>;
-    getContractFactory(
       name: "MockHederaTokenService",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MockHederaTokenService__factory>;
@@ -59,11 +55,6 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IHederaTokenService>;
     getContractAt(
-      name: "LynxMinter",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.LynxMinter>;
-    getContractAt(
       name: "MockHederaTokenService",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -85,10 +76,6 @@ declare module "hardhat/types/runtime" {
       name: "IHederaTokenService",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IHederaTokenService>;
-    deployContract(
-      name: "LynxMinter",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.LynxMinter>;
     deployContract(
       name: "MockHederaTokenService",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -114,11 +101,6 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IHederaTokenService>;
-    deployContract(
-      name: "LynxMinter",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.LynxMinter>;
     deployContract(
       name: "MockHederaTokenService",
       args: any[],

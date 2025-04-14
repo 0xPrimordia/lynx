@@ -9,7 +9,7 @@
     "deploy": "hardhat run scripts/deploy/00_deploy_vault.ts --network hederaTestnet"
   },
   "dependencies": {
-    "@hashgraph/sdk": "^2.19.0",
+    "@hashgraph/sdk": "^2.62.0",
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
     "dotenv": "^16.0.3"
   },
@@ -19,4 +19,4 @@
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"
   }
-} 
+}

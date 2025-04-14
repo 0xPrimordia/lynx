@@ -8,15 +8,13 @@ import "./interfaces/IHederaTokenService.sol";
  * @dev Treasury contract for the index token, handling token custody and composition logic
  */
 contract IndexVault {
-    // Constants
-    address public constant HTS_PRECOMPILE = 0x0000000000000000000000000000000000000167;
-    
     // Token addresses
     address public indexToken;
     
     // Contract references
     address public controller;
     address public admin;
+    address public htsAddress;
     
     // Composition management
     struct Asset {
@@ -62,11 +60,13 @@ contract IndexVault {
     /**
      * @dev Constructor to initialize the vault
      * @param _controller Address of the IndexTokenController that can call this vault
+     * @param _htsAddress Address of the Hedera Token Service precompile
      */
-    constructor(address _controller) {
+    constructor(address _controller, address _htsAddress) {
         controller = _controller;
         admin = msg.sender;
-        hts = IHederaTokenService(HTS_PRECOMPILE);
+        htsAddress = _htsAddress;
+        hts = IHederaTokenService(_htsAddress);
         indexToken = address(0);
     }
     
@@ -277,6 +277,8 @@ contract IndexVault {
         return composition;
     }
     
-    // Allow contract to receive HBAR
+    /**
+     * @dev Accept HBAR transfers
+     */
     receive() external payable {}
 } 

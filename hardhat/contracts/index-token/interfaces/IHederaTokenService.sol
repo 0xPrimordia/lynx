@@ -39,6 +39,8 @@ interface IHederaTokenService {
         address[] adminKey;
         address[] kycKey;
         uint8 decimals;
+        address autoRenewAccount;
+        uint32 autoRenewPeriod;
     }
 
     function setAllowance(address token, address owner, address spender, uint256 amount) external;

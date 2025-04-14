@@ -47,6 +47,20 @@ This application is designed to work with a Hedera token contract. The contract 
   - @hashgraph/sdk
   - WalletConnect
 
+## Recent Updates
+
+### Public Minting Support
+
+The contract has been updated to enable public minting without requiring admin privileges:
+
+- The `onlyAdmin` modifier was removed from the `mintTo` function in the `IndexTokenController` contract
+- Transaction fees in `TokenService` were increased from 5 HBAR to 10 HBAR to ensure transactions have enough gas
+- Scripts were updated to support the new permissions model:
+  - `mint-token.ts` now works with any account that has sufficient deposits
+  - Contract files in both `app/contracts` and `hardhat/contracts` are now synchronized
+
+Users can now mint tokens directly through the UI as long as they have the required token deposits in the vault.
+
 ## Project Structure
 
 - `/app` - Next.js application routes and pages

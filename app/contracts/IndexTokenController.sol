@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import "contracts/IHederaTokenService.sol";
+import "./IHederaTokenService.sol";
 import {IndexVault} from "./IndexVault.sol";
 
 /**
@@ -28,11 +28,48 @@ contract IndexTokenController {
     // State variables
     bool public hasSupplyKey = false;
 
+    // Token info struct
+    struct HederaToken {
+        string name;
+        string symbol;
+        address treasury;
+        string memo;
+        bool supplyType;
+        uint32 maxSupply;
+        bool freezeDefault;
+        address[] freezeKey;
+        address[] wipeKey;
+        address[] supplyKey;
+        address[] adminKey;
+        address[] kycKey;
+        uint8 decimals;
+        address autoRenewAccount;
+        uint32 autoRenewPeriod;
+    }
+
     // Events
     event IndexTokenMinted(address indexed user, uint256 amount);
     event IndexTokenCreated(address tokenAddress, int64 responseCode);
     event SupplyKeyVerified(bool hasKey);
     event IndexTokenSet(address indexed tokenAddress);
+    event TokenCreationAttempt(
+        string name,
+        string symbol,
+        address treasury,
+        address[] supplyKey,
+        address[] adminKey,
+        address[] autoRenewKey
+    );
+    event TokenCreationResponse(
+        int64 responseCode,
+        address tokenAddress,
+        string errorMessage
+    );
+    event TokenAssociationAttempt(
+        address account,
+        address token,
+        int64 responseCode
+    );
 
     // Errors
     error OnlyAdmin();
@@ -95,10 +132,10 @@ contract IndexTokenController {
         string calldata name, 
         string calldata symbol, 
         string calldata memo
-    ) external payable onlyAdmin {
+    ) external payable {
         require(INDEX_TOKEN == address(0), "Index token already exists");
         
-        // Create token key arrays - only admin and supply keys
+        // Create token key arrays
         address[] memory adminKey = new address[](1);
         adminKey[0] = ADMIN;
         
@@ -106,6 +143,16 @@ contract IndexTokenController {
         supplyKey[0] = address(this);
         
         address[] memory emptyKeys = new address[](0);
+        
+        // Log token creation attempt
+        emit TokenCreationAttempt(
+            name,
+            symbol,
+            address(vault),
+            supplyKey,
+            adminKey,
+            emptyKeys
+        );
         
         // Create token structure
         IHederaTokenService.HederaToken memory token = IHederaTokenService.HederaToken({
@@ -121,27 +168,39 @@ contract IndexTokenController {
             supplyKey: supplyKey,
             adminKey: adminKey,
             kycKey: emptyKeys,
-            decimals: TOKEN_DECIMALS
+            decimals: TOKEN_DECIMALS,
+            autoRenewAccount: address(this),
+            autoRenewPeriod: AUTO_RENEW_PERIOD
         });
         
         // Create key types and addresses arrays
-        uint8[] memory keys = new uint8[](2);
+        uint8[] memory keys = new uint8[](3);
         keys[0] = 1; // Admin key
         keys[1] = 4; // Supply key
+        keys[2] = 8; // Auto-renew key
         
-        address[] memory keyAddresses = new address[](2);
+        address[] memory keyAddresses = new address[](3);
         keyAddresses[0] = ADMIN;
         keyAddresses[1] = address(this);
+        keyAddresses[2] = address(this);
         
         // Create token with value for fees
         (int64 responseCode, address tokenAddress) = hts.createToken{value: msg.value}(
             token,
-            0, // Initial supply is 0
+            0,
             keys,
             keyAddresses
         );
         
-        // Check response
+        // Log response
+        string memory errorMessage = responseCode == 0 ? "Success" : 
+            responseCode == -1 ? "Token not associated" :
+            responseCode == -2 ? "No supply key" :
+            responseCode == -3 ? "Invalid amount" :
+            "Unknown error";
+            
+        emit TokenCreationResponse(responseCode, tokenAddress, errorMessage);
+        
         if (responseCode != 0) {
             revert TokenCreationFailed(responseCode);
         }
@@ -149,8 +208,10 @@ contract IndexTokenController {
         // Store token address
         INDEX_TOKEN = tokenAddress;
         
-        // Associate with token
+        // Associate with token and log attempt
         int64 associateResponse = hts.associateToken(address(this), tokenAddress);
+        emit TokenAssociationAttempt(address(this), tokenAddress, associateResponse);
+        
         if (associateResponse != 0) {
             revert TokenCreationFailed(associateResponse);
         }
@@ -219,7 +280,7 @@ contract IndexTokenController {
      * @param recipient The address to receive the minted tokens
      * @param amount The amount of tokens to mint
      */
-    function mintTo(address recipient, uint256 amount) external onlyAdmin supplyKeyRequired {
+    function mintTo(address recipient, uint256 amount) external supplyKeyRequired {
         // Validation: ensure amount is greater than zero
         if (amount == 0) {
             revert InvalidAmount();

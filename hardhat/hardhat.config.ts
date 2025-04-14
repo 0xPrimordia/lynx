@@ -1,7 +1,15 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-verify";
+import "@typechain/hardhat";
+import "hardhat-gas-reporter";
+import "solidity-coverage";
 import "./tasks/token";
 import "./tasks/accounts";
+import "./tasks/create-token";
+import "./tasks/create-token-debug";
+import "./tasks/token-fund";
+import "./tasks/deep-debug";
 import * as dotenv from "dotenv";
 
 dotenv.config({ path: "../.env.local" });
@@ -19,8 +27,12 @@ const config: HardhatUserConfig = {
   networks: {
     hederaTestnet: {
       url: process.env.HEDERA_TESTNET_ENDPOINT || "https://testnet.hashio.io/api",
-      accounts: process.env.OPERATOR_KEY ? [process.env.OPERATOR_KEY] : [],
-      chainId: 296
+      chainId: 296,
+      gasPrice: 530000000000, // 530 gwei
+      loggingEnabled: true,
+      throwOnTransactionFailures: true,
+      throwOnCallFailures: true,
+      accounts: [process.env.OPERATOR_KEY!]
     }
   },
   paths: {
@@ -28,7 +40,13 @@ const config: HardhatUserConfig = {
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts"
+  },
+  gasReporter: {
+    enabled: true,
+    currency: "USD",
+    gasPrice: 600,
+    coinmarketcap: process.env.COINMARKETCAP_API_KEY // Optional for price data
   }
 };
 
-export default config; 
+export default config;

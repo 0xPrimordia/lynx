@@ -270,28 +270,31 @@ contract IndexTokenController {
         emit SupplyKeyVerified(status);
     }
 
+    // User minting methods
+    
     /**
-     * @dev Mint index tokens for a user
-     * @param recipient The address to receive the minted tokens
-     * @param amount The amount of tokens to mint
+     * @dev Mint tokens based on user deposits
+     * @param amount The amount of index tokens to mint
      */
-    function mintTo(address recipient, uint256 amount) external supplyKeyRequired {
-        // Validation: ensure amount is greater than zero
+    function mintWithDeposits(uint256 amount) external {
         if (amount == 0) {
             revert InvalidAmount();
         }
 
         // Verify the recipient has associated the token
-        if (!hts.isTokenAssociated(INDEX_TOKEN, recipient)) {
-            revert TokenNotAssociated(INDEX_TOKEN, recipient);
+        if (!hts.isTokenAssociated(INDEX_TOKEN, msg.sender)) {
+            revert TokenNotAssociated(INDEX_TOKEN, msg.sender);
         }
         
-        // Validate vault deposits
-        bool hasDeposits = vault.validateMint(recipient, amount);
+        // Validate deposits in vault
+        bool hasDeposits = vault.validateMint(msg.sender, amount);
         if (!hasDeposits) {
             revert InsufficientDeposits();
         }
 
+        // Process deposits (consume them)
+        vault.processMint(msg.sender, amount);
+        
         // Mint tokens to the vault (treasury)
         bytes[] memory metadata = new bytes[](0);
         int64 mintResult = hts.mintToken(INDEX_TOKEN, amount, metadata);
@@ -303,11 +306,14 @@ contract IndexTokenController {
             revert HtsError(INDEX_TOKEN, mintResult, message);
         }
         
-        // Send tokens to the recipient through the vault
-        vault.receiveMint(recipient, amount);
+        // Send tokens to the user
+        int64 transferResult = hts.transferToken(INDEX_TOKEN, address(this), msg.sender, amount);
+        if (transferResult != 0) {
+            revert HtsError(INDEX_TOKEN, transferResult, "Transfer to user failed");
+        }
 
         // Emit event for successful mint
-        emit IndexTokenMinted(recipient, amount);
+        emit IndexTokenMinted(msg.sender, amount);
     }
     
     /**

@@ -43,13 +43,20 @@ async function main() {
     const [deployer] = await ethers.getSigners();
     console.log("Deploying contracts with account:", deployer.address);
     
+    const balance = await ethers.provider.getBalance(deployer.address);
+    console.log(`Account balance: ${ethers.formatEther(balance)} HBAR`);
+    
+    console.log("Using gas limits for Hedera testnet");
+    console.log("- Vault deployment: 500000");
+    console.log("- Controller deployment: 500000");
+    console.log("- Update controller: 100000");
+    
     // Deploy IndexVault first
     console.log("\n1. Deploying IndexVault...");
     const IndexVault = await ethers.getContractFactory("IndexVault");
-    // Pass the controller as empty address first, we'll update it later
-    // IndexVault constructor takes (address _controller, address _htsAddress)
+    // Deploy with admin as the deployer
     const vault = await IndexVault.deploy(
-      deployer.address, // temporary controller address
+      deployer.address, // admin address
       HTS_PRECOMPILE, // HTS precompile address
       {
         gasLimit: 500000,
@@ -83,12 +90,19 @@ async function main() {
     
     // Update controller in vault
     console.log("\n3. Setting controller in vault...");
-    const updateTx = await vault.updateController(controllerAddress, {
-      gasLimit: 100000,
-      gasPrice: ethers.parseUnits("600", "gwei")
-    });
-    await updateTx.wait();
-    console.log("Controller set in vault successfully");
+    try {
+      const setControllerTx = await vault.setController(controllerAddress, {
+        gasLimit: 200000,
+        gasPrice: ethers.parseUnits("600", "gwei")
+      });
+      
+      console.log("Transaction sent, waiting for confirmation...");
+      await setControllerTx.wait();
+      console.log("Controller set in vault successfully");
+    } catch (error) {
+      console.error("Error setting controller in vault:", error);
+      throw new Error("Failed to set controller in vault");
+    }
     
     // Get contract addresses in Hedera ID format
     const vaultId = evmAddressToHederaId(vaultAddress);
@@ -98,23 +112,25 @@ async function main() {
     console.log(`VaultId: ${vaultId}`);
     console.log(`ControllerId: ${controllerId}`);
     
-    // Save deployment info
+    // Save deployment info with EVM addresses as well
     const deploymentInfo = {
       vaultId,
       controllerId,
-      tokenAddress: "0000000000000000000000000000000000000000"
+      vaultEvm: vaultAddress,
+      controllerEvm: controllerAddress,
+      tokenAddress: "0x0000000000000000000000000000000000000000" // Will be set later
     };
     
     saveDeploymentInfo(deploymentInfo);
-    console.log("\nDeployment info saved to deployment-info.json");
+    console.log("Deployment info saved to deployment-info.json");
     
     // Output instructions for next steps
     console.log("\nNext steps:");
-    console.log("1. Fund the controller contract:  npx hardhat run scripts/token/fund.ts --network hederaTestnet");
-    console.log("2. Create the token:              npx hardhat run scripts/token/create.ts --network hederaTestnet");
-    console.log("3. Set up vault composition:      node scripts/setup-vault-composition.js");
-    console.log("4. Verify token creation:         npx hardhat run scripts/token/verify.ts --network hederaTestnet");
-    console.log("5. Start minting tokens:          node scripts/mint-token.js");
+    console.log("1. Fund the controller contract:  npx hardhat run scripts/token/fund-hedera.ts --network hederaTestnet");
+    console.log("2. Create the token:              npx hardhat run scripts/token/create-token-hedera.ts --network hederaTestnet");
+    console.log("3. Set up vault composition:      node scripts/setup-token-composition.js");
+    console.log("4. Verify token creation:         npx hardhat run scripts/token/verify-hedera.ts --network hederaTestnet");
+    console.log("5. Start minting tokens:          node scripts/test-mint-with-deposits.js");
     
   } catch (error: any) {
     console.error("Error in deployment:", error.message || error);

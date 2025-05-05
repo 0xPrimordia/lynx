@@ -38,9 +38,17 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IndexVault__factory>;
     getContractFactory(
+      name: "IGovernanceHook",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IGovernanceHook__factory>;
+    getContractFactory(
       name: "IHederaTokenService",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IHederaTokenService__factory>;
+    getContractFactory(
+      name: "IIndexVault",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IIndexVault__factory>;
     getContractFactory(
       name: "MockHederaTokenService",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -77,10 +85,20 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IndexVault>;
     getContractAt(
+      name: "IGovernanceHook",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IGovernanceHook>;
+    getContractAt(
       name: "IHederaTokenService",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.IHederaTokenService>;
+    getContractAt(
+      name: "IIndexVault",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IIndexVault>;
     getContractAt(
       name: "MockHederaTokenService",
       address: string | ethers.Addressable,
@@ -112,9 +130,17 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IndexVault>;
     deployContract(
+      name: "IGovernanceHook",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IGovernanceHook>;
+    deployContract(
       name: "IHederaTokenService",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IHederaTokenService>;
+    deployContract(
+      name: "IIndexVault",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IIndexVault>;
     deployContract(
       name: "MockHederaTokenService",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -151,10 +177,20 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IndexVault>;
     deployContract(
+      name: "IGovernanceHook",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IGovernanceHook>;
+    deployContract(
       name: "IHederaTokenService",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IHederaTokenService>;
+    deployContract(
+      name: "IIndexVault",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IIndexVault>;
     deployContract(
       name: "MockHederaTokenService",
       args: any[],

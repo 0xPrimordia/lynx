@@ -1,0 +1,4 @@
+{
+  "error": "could not decode result data (value=\"0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000\", info={ \"method\": \"getComposition\", \"signature\": \"getComposition()\" }, code=BAD_DATA, version=6.13.5)",
+  "timestamp": "2025-05-05T18:29:06.277Z"
+}

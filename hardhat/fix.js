@@ -1,0 +1,1 @@
+const {ethers}=require("hardhat");async function main(){const v=await ethers.getContractFactory("IndexVault").then(f=>f.attach("0xFE4af8e846408A64E581479a32EAd589E2C350fd"));await v.setController("0x48De035EeEffdec80429aF864937039237379E64",{gasLimit:300000,gasPrice:ethers.parseUnits("600","gwei")}).then(t=>t.wait());console.log("Done");}main().catch(console.error);

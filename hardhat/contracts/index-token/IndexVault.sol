@@ -1,148 +1,239 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.0;
 
 import "./interfaces/IHederaTokenService.sol";
+import "./interfaces/IIndexVault.sol";
+import "./interfaces/IGovernanceHook.sol";
 
 /**
  * @title IndexVault
- * @dev Treasury contract for the index token, handling token custody and composition logic
+ * @dev Stores tokens for the Lynx Index and manages the composition requirements
  */
-contract IndexVault {
-    // Token addresses
-    address public indexToken;
-    
-    // Contract references
-    address public controller;
-    address public admin;
-    address public htsAddress;
-    
-    // Composition management
-    struct Asset {
-        address token;
-        uint16 weight; // in basis points (e.g., 5000 = 50%)
-    }
-    Asset[] public composition;
-    
-    // User deposits tracking
-    mapping(address => mapping(address => uint256)) public deposits; // user => token => amount
-    
-    // HTS interaction
+contract IndexVault is IIndexVault {
+    // Hedera Token Service precompile
+    address constant private HTS_PRECOMPILE = address(0x0000000000000000000000000000000000000167);
     IHederaTokenService private hts;
     
-    // Events
-    event DepositReceived(address indexed user, address indexed token, uint256 amount);
-    event TokensDistributed(address indexed user, uint256 amount);
-    event CompositionUpdated(Asset[] composition);
-    event IndexTokenSet(address indexed tokenAddress);
+    // Admin who can configure the vault until governance is activated
+    address public admin;
     
-    // Errors
-    error OnlyController();
-    error OnlyAdmin();
-    error TokenNotAssociated(address token, address account);
-    error InsufficientDeposit(address token, uint256 required, uint256 actual);
-    error TransferFailed(address token, int64 responseCode);
-    error InvalidComposition();
+    // Controller contract reference
+    address public controller;
+    
+    // Governance hook that can override admin functions when activated
+    IGovernanceHook public governanceHook;
+    bool public governanceActivated = false;
+    
+    // Token composition
+    address[] public compositionTokens;
+    mapping(address => bool) public isCompositionToken;
+    mapping(address => uint256) public tokenWeights;
+    uint256 public totalWeight = 0;
+    
+    // User deposits tracking
+    mapping(address => mapping(address => uint256)) public userDeposits;
+    
+    // Token address
+    address public indexToken;
+    
+    // Events
+    event TokenAdded(address token, uint256 weight);
+    event TokenRemoved(address token);
+    event TokenWeightUpdated(address token, uint256 oldWeight, uint256 newWeight);
+    event UserDeposit(address user, address token, uint256 amount);
+    event GovernanceHookSet(address hookAddress);
+    event GovernanceActivated(bool activated);
+    event ControllerSet(address controllerAddress);
+    event IndexTokenSet(address indexToken);
+    
+    // Modifiers
+    modifier onlyAdmin() {
+        require(
+            msg.sender == admin || 
+            (governanceActivated && msg.sender == address(governanceHook)), 
+            "Only admin or governance can call this function"
+        );
+        _;
+    }
     
     modifier onlyController() {
-        if (msg.sender != controller) {
-            revert OnlyController();
-        }
-        _;
-    }
-    
-    modifier onlyAdmin() {
-        if (msg.sender != admin) {
-            revert OnlyAdmin();
-        }
+        require(msg.sender == controller, "Only controller can call this function");
         _;
     }
     
     /**
-     * @dev Constructor to initialize the vault
-     * @param _controller Address of the IndexTokenController that can call this vault
-     * @param _htsAddress Address of the Hedera Token Service precompile
+     * @dev Constructor to initialize the IndexVault
+     * @param _admin The address of the initial admin
+     * @param _htsAddress The address of the Hedera Token Service precompile
      */
-    constructor(address _controller, address _htsAddress) {
-        controller = _controller;
-        admin = msg.sender;
-        htsAddress = _htsAddress;
+    constructor(address _admin, address _htsAddress) {
+        admin = _admin;
         hts = IHederaTokenService(_htsAddress);
-        indexToken = address(0);
     }
     
     /**
-     * @dev Set the index token address - can only be called once
-     * @param _indexToken The address of the index token
+     * @dev Set the controller contract
+     * @param _controller The address of the controller contract
      */
-    function setIndexToken(address _indexToken) external onlyController {
-        require(indexToken == address(0), "Index token already set");
-        require(_indexToken != address(0), "Cannot set to zero address");
-        
-        indexToken = _indexToken;
-        
-        // Associate with the token
-        int64 associateResponse = hts.associateToken(address(this), _indexToken);
-        if (associateResponse != 0) {
-            revert TransferFailed(_indexToken, associateResponse);
-        }
-        
-        emit IndexTokenSet(_indexToken);
+    function setController(address _controller) external onlyAdmin {
+        controller = _controller;
+        emit ControllerSet(_controller);
     }
     
     /**
-     * @dev Set the composition of the index - which tokens and their weights
-     * @param _composition Array of assets and their weights in basis points
+     * @dev Set the governance hook that can override admin
+     * @param _hook The address of the governance hook
      */
-    function setComposition(Asset[] calldata _composition) external onlyAdmin {
-        // Validate that weights sum to 10000 (100%)
-        uint256 totalWeight = 0;
-        for (uint i = 0; i < _composition.length; i++) {
-            totalWeight += _composition[i].weight;
-            
-            // Ensure each token is associated with this contract
-            if (!hts.isTokenAssociated(address(this), _composition[i].token)) {
-                int64 associateResponse = hts.associateToken(address(this), _composition[i].token);
-                if (associateResponse != 0) {
-                    revert TransferFailed(_composition[i].token, associateResponse);
-                }
+    function setGovernanceHook(address _hook) external onlyAdmin {
+        governanceHook = IGovernanceHook(_hook);
+        emit GovernanceHookSet(_hook);
+    }
+    
+    /**
+     * @dev Activate or deactivate governance
+     * @param _activated Whether governance should be activated
+     */
+    function setGovernanceActivated(bool _activated) external onlyAdmin {
+        governanceActivated = _activated;
+        emit GovernanceActivated(_activated);
+    }
+    
+    /**
+     * @dev Add a token to the composition
+     * @param _token The token address
+     * @param _weight The weight of the token in the composition
+     */
+    function addToken(address _token, uint256 _weight) external onlyAdmin {
+        require(_token != address(0), "Invalid token address");
+        require(_weight > 0, "Weight must be greater than 0");
+        require(!isCompositionToken[_token], "Token already in composition");
+        
+        isCompositionToken[_token] = true;
+        tokenWeights[_token] = _weight;
+        compositionTokens.push(_token);
+        totalWeight += _weight;
+        
+        emit TokenAdded(_token, _weight);
+    }
+    
+    /**
+     * @dev Remove a token from the composition
+     * @param _token The token address to remove
+     */
+    function removeToken(address _token) external onlyAdmin {
+        require(isCompositionToken[_token], "Token not in composition");
+        
+        totalWeight -= tokenWeights[_token];
+        delete tokenWeights[_token];
+        isCompositionToken[_token] = false;
+        
+        // Remove from the array
+        for (uint i = 0; i < compositionTokens.length; i++) {
+            if (compositionTokens[i] == _token) {
+                compositionTokens[i] = compositionTokens[compositionTokens.length - 1];
+                compositionTokens.pop();
+                break;
             }
         }
         
-        if (totalWeight != 10000) {
-            revert InvalidComposition();
-        }
-        
-        // Clear existing composition
-        if (composition.length > 0) {
-            delete composition;
-        }
-        
-        // Set new composition
-        for (uint i = 0; i < _composition.length; i++) {
-            composition.push(_composition[i]);
-        }
-        
-        emit CompositionUpdated(_composition);
+        emit TokenRemoved(_token);
     }
     
     /**
-     * @dev Validates if a user can mint the specified amount based on their deposits
-     * @param user The user address to check
-     * @param amount The amount of index tokens to mint
-     * @return Whether the user can mint the specified amount
+     * @dev Update the weight of a token in the composition
+     * @param _token The token address
+     * @param _newWeight The new weight value
      */
-    function validateMint(address user, uint256 amount) external view returns (bool) {
-        // Short circuit if composition isn't set
-        if (composition.length == 0) {
-            return false;
+    function updateTokenWeight(address _token, uint256 _newWeight) external onlyAdmin {
+        require(isCompositionToken[_token], "Token not in composition");
+        require(_newWeight > 0, "Weight must be greater than 0");
+        
+        uint256 oldWeight = tokenWeights[_token];
+        tokenWeights[_token] = _newWeight;
+        totalWeight = totalWeight - oldWeight + _newWeight;
+        
+        emit TokenWeightUpdated(_token, oldWeight, _newWeight);
+    }
+    
+    /**
+     * @dev Get all composition tokens and their weights
+     * @return tokens Array of token addresses
+     * @return weights Array of corresponding weights
+     */
+    function getComposition() external view returns (address[] memory tokens, uint256[] memory weights) {
+        tokens = new address[](compositionTokens.length);
+        weights = new uint256[](compositionTokens.length);
+        
+        for (uint i = 0; i < compositionTokens.length; i++) {
+            tokens[i] = compositionTokens[i];
+            weights[i] = tokenWeights[compositionTokens[i]];
         }
         
-        // Check user has sufficient deposits for each asset in the composition
-        for (uint i = 0; i < composition.length; i++) {
-            Asset memory asset = composition[i];
-            uint256 requiredAmount = (amount * asset.weight) / 10000;
+        return (tokens, weights);
+    }
+    
+    /**
+     * @dev Deposit tokens into the vault
+     * @param _token The token to deposit
+     * @param _amount The amount to deposit
+     */
+    function depositToken(address _token, uint256 _amount) external {
+        require(isCompositionToken[_token], "Token not in composition");
+        require(_amount > 0, "Amount must be greater than 0");
+        
+        // Verify token is associated
+        require(hts.isTokenAssociated(_token, address(this)), "Token not associated with vault");
+        require(hts.isTokenAssociated(_token, msg.sender), "Token not associated with sender");
+        
+        // Get balance before
+        uint256 balanceBefore = hts.balanceOf(_token, address(this));
+        
+        // Transfer from user to vault
+        int64 result = hts.transferToken(_token, msg.sender, address(this), _amount);
+        require(result == 0, "Transfer failed");
+        
+        // Verify balance increased
+        uint256 balanceAfter = hts.balanceOf(_token, address(this));
+        require(balanceAfter - balanceBefore == _amount, "Transfer amount mismatch");
+        
+        // Update user deposits
+        userDeposits[msg.sender][_token] += _amount;
+        
+        emit UserDeposit(msg.sender, _token, _amount);
+    }
+    
+    /**
+     * @dev Calculate required deposits for minting a specific amount
+     * @param _mintAmount The amount of index tokens to mint
+     * @return tokens Array of token addresses
+     * @return amounts Array of amounts required for each token
+     */
+    function calculateRequiredDeposits(uint256 _mintAmount) external view returns (address[] memory tokens, uint256[] memory amounts) {
+        tokens = new address[](compositionTokens.length);
+        amounts = new uint256[](compositionTokens.length);
+        
+        for (uint i = 0; i < compositionTokens.length; i++) {
+            tokens[i] = compositionTokens[i];
             
-            if (deposits[user][asset.token] < requiredAmount) {
+            // Calculate proportional amount based on weight
+            amounts[i] = (_mintAmount * tokenWeights[compositionTokens[i]]) / totalWeight;
+        }
+        
+        return (tokens, amounts);
+    }
+    
+    /**
+     * @dev Validate if user has sufficient deposits for minting
+     * @param _user The user address
+     * @param _mintAmount The amount to mint
+     * @return valid Whether the user has sufficient deposits
+     */
+    function validateMint(address _user, uint256 _mintAmount) external view onlyController returns (bool) {
+        for (uint i = 0; i < compositionTokens.length; i++) {
+            address token = compositionTokens[i];
+            uint256 requiredAmount = (_mintAmount * tokenWeights[token]) / totalWeight;
+            
+            if (userDeposits[_user][token] < requiredAmount) {
                 return false;
             }
         }
@@ -151,134 +242,41 @@ contract IndexVault {
     }
     
     /**
-     * @dev Receive minted tokens from controller and distribute to user
-     * @param user The user to receive the tokens
-     * @param amount The amount of tokens to distribute
+     * @dev Process a mint by consuming user deposits
+     * @param _user The user address
+     * @param _mintAmount The amount being minted
      */
-    function receiveMint(address user, uint256 amount) external onlyController {
-        require(indexToken != address(0), "Index token not set");
-        
-        // Verify the user has provided sufficient deposits
-        for (uint i = 0; i < composition.length; i++) {
-            Asset memory asset = composition[i];
-            uint256 requiredAmount = (amount * asset.weight) / 10000;
+    function processMint(address _user, uint256 _mintAmount) external onlyController {
+        for (uint i = 0; i < compositionTokens.length; i++) {
+            address token = compositionTokens[i];
+            uint256 requiredAmount = (_mintAmount * tokenWeights[token]) / totalWeight;
             
-            if (deposits[user][asset.token] < requiredAmount) {
-                revert InsufficientDeposit(asset.token, requiredAmount, deposits[user][asset.token]);
-            }
+            require(userDeposits[_user][token] >= requiredAmount, "Insufficient deposit");
             
-            // Deduct the deposit - tokens stay in vault
-            deposits[user][asset.token] -= requiredAmount;
+            userDeposits[_user][token] -= requiredAmount;
         }
-        
-        // Transfer the minted index tokens to the user
-        if (!hts.isTokenAssociated(user, indexToken)) {
-            revert TokenNotAssociated(indexToken, user);
-        }
-        
-        int64 transferResult = hts.transferToken(indexToken, address(this), user, amount);
-        if (transferResult != 0) {
-            revert TransferFailed(indexToken, transferResult);
-        }
-        
-        emit TokensDistributed(user, amount);
     }
     
     /**
-     * @dev Deposit backing assets into the vault
-     * @param token The token address to deposit
-     * @param amount The amount to deposit
+     * @dev Set the index token address
+     * @param _indexToken The index token address
      */
-    function depositAsset(address token, uint256 amount) external {
-        require(amount > 0, "Amount must be greater than zero");
+    function setIndexToken(address _indexToken) external onlyController {
+        require(_indexToken != address(0), "Invalid token address");
         
-        // Check if token is part of composition
-        bool isValidToken = false;
-        for (uint i = 0; i < composition.length; i++) {
-            if (composition[i].token == token) {
-                isValidToken = true;
-                break;
-            }
-        }
-        require(isValidToken, "Token not part of composition");
+        indexToken = _indexToken;
         
-        // Ensure tokens are associated with this contract
-        if (!hts.isTokenAssociated(address(this), token)) {
-            revert TokenNotAssociated(token, address(this));
+        // Associate with the token if not already associated
+        if (!hts.isTokenAssociated(address(this), _indexToken)) {
+            int64 associateResponse = hts.associateToken(address(this), _indexToken);
+            require(associateResponse == 0, "Token association failed");
         }
         
-        // Transfer tokens from user to vault
-        int64 transferResult = hts.transferToken(token, msg.sender, address(this), amount);
-        if (transferResult != 0) {
-            revert TransferFailed(token, transferResult);
-        }
-        
-        // Update user's deposit record
-        deposits[msg.sender][token] += amount;
-        
-        emit DepositReceived(msg.sender, token, amount);
+        emit IndexTokenSet(_indexToken);
     }
     
     /**
-     * @dev Calculate required deposit amounts for minting a specific amount of index tokens
-     * @param amount The amount of index tokens to mint
-     * @return tokens Array of token addresses required
-     * @return amounts Array of required amounts for each token
-     */
-    function calculateRequiredDeposits(uint256 amount) 
-        external 
-        view 
-        returns (address[] memory tokens, uint256[] memory amounts) 
-    {
-        tokens = new address[](composition.length);
-        amounts = new uint256[](composition.length);
-        
-        for (uint i = 0; i < composition.length; i++) {
-            tokens[i] = composition[i].token;
-            amounts[i] = (amount * composition[i].weight) / 10000;
-        }
-        
-        return (tokens, amounts);
-    }
-    
-    /**
-     * @dev Get user's deposit for a specific token
-     * @param user The user address to check
-     * @param token The token address to check
-     * @return The amount of the token deposited by the user
-     */
-    function getDeposit(address user, address token) external view returns (uint256) {
-        return deposits[user][token];
-    }
-    
-    /**
-     * @dev Update controller address - for future upgrades
-     * @param newController The new controller address
-     */
-    function updateController(address newController) external onlyAdmin {
-        require(newController != address(0), "Cannot set to zero address");
-        controller = newController;
-    }
-    
-    /**
-     * @dev Update admin address - for future DAO governance
-     * @param newAdmin The new admin address
-     */
-    function updateAdmin(address newAdmin) external onlyAdmin {
-        require(newAdmin != address(0), "Cannot set to zero address");
-        admin = newAdmin;
-    }
-    
-    /**
-     * @dev Get composition info
-     * @return Full composition array
-     */
-    function getComposition() external view returns (Asset[] memory) {
-        return composition;
-    }
-    
-    /**
-     * @dev Accept HBAR transfers
+     * @dev Receive HBAR
      */
     receive() external payable {}
 } 

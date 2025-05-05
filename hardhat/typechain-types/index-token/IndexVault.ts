@@ -23,51 +23,56 @@ import type {
   TypedContractMethod,
 } from "../common";
 
-export declare namespace IndexVault {
-  export type AssetStruct = { token: AddressLike; weight: BigNumberish };
-
-  export type AssetStructOutput = [token: string, weight: bigint] & {
-    token: string;
-    weight: bigint;
-  };
-}
-
 export interface IndexVaultInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "addToken"
       | "admin"
       | "calculateRequiredDeposits"
-      | "composition"
+      | "compositionTokens"
       | "controller"
-      | "depositAsset"
-      | "deposits"
+      | "depositToken"
       | "getComposition"
-      | "getDeposit"
-      | "htsAddress"
+      | "governanceActivated"
+      | "governanceHook"
       | "indexToken"
-      | "receiveMint"
-      | "setComposition"
+      | "isCompositionToken"
+      | "processMint"
+      | "removeToken"
+      | "setController"
+      | "setGovernanceActivated"
+      | "setGovernanceHook"
       | "setIndexToken"
-      | "updateAdmin"
-      | "updateController"
+      | "tokenWeights"
+      | "totalWeight"
+      | "updateTokenWeight"
+      | "userDeposits"
       | "validateMint"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
-      | "CompositionUpdated"
-      | "DepositReceived"
+      | "ControllerSet"
+      | "GovernanceActivated"
+      | "GovernanceHookSet"
       | "IndexTokenSet"
-      | "TokensDistributed"
+      | "TokenAdded"
+      | "TokenRemoved"
+      | "TokenWeightUpdated"
+      | "UserDeposit"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "addToken",
+    values: [AddressLike, BigNumberish]
+  ): string;
   encodeFunctionData(functionFragment: "admin", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "calculateRequiredDeposits",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "composition",
+    functionFragment: "compositionTokens",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -75,23 +80,19 @@ export interface IndexVaultInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "depositAsset",
+    functionFragment: "depositToken",
     values: [AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "deposits",
-    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getComposition",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getDeposit",
-    values: [AddressLike, AddressLike]
+    functionFragment: "governanceActivated",
+    values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "htsAddress",
+    functionFragment: "governanceHook",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -99,58 +100,104 @@ export interface IndexVaultInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "receiveMint",
+    functionFragment: "isCompositionToken",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "processMint",
     values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "setComposition",
-    values: [IndexVault.AssetStruct[]]
+    functionFragment: "removeToken",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setController",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setGovernanceActivated",
+    values: [boolean]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setGovernanceHook",
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setIndexToken",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "updateAdmin",
+    functionFragment: "tokenWeights",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "updateController",
-    values: [AddressLike]
+    functionFragment: "totalWeight",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "updateTokenWeight",
+    values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "userDeposits",
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "validateMint",
     values: [AddressLike, BigNumberish]
   ): string;
 
+  decodeFunctionResult(functionFragment: "addToken", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "admin", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "calculateRequiredDeposits",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "composition",
+    functionFragment: "compositionTokens",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "controller", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "depositAsset",
+    functionFragment: "depositToken",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "deposits", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getComposition",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "getDeposit", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "htsAddress", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "indexToken", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "receiveMint",
+    functionFragment: "governanceActivated",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setComposition",
+    functionFragment: "governanceHook",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "indexToken", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "isCompositionToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "processMint",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "removeToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setController",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setGovernanceActivated",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setGovernanceHook",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -158,11 +205,19 @@ export interface IndexVaultInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "updateAdmin",
+    functionFragment: "tokenWeights",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "updateController",
+    functionFragment: "totalWeight",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "updateTokenWeight",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "userDeposits",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -171,11 +226,11 @@ export interface IndexVaultInterface extends Interface {
   ): Result;
 }
 
-export namespace CompositionUpdatedEvent {
-  export type InputTuple = [composition: IndexVault.AssetStruct[]];
-  export type OutputTuple = [composition: IndexVault.AssetStructOutput[]];
+export namespace ControllerSetEvent {
+  export type InputTuple = [controllerAddress: AddressLike];
+  export type OutputTuple = [controllerAddress: string];
   export interface OutputObject {
-    composition: IndexVault.AssetStructOutput[];
+    controllerAddress: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -183,7 +238,90 @@ export namespace CompositionUpdatedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace DepositReceivedEvent {
+export namespace GovernanceActivatedEvent {
+  export type InputTuple = [activated: boolean];
+  export type OutputTuple = [activated: boolean];
+  export interface OutputObject {
+    activated: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace GovernanceHookSetEvent {
+  export type InputTuple = [hookAddress: AddressLike];
+  export type OutputTuple = [hookAddress: string];
+  export interface OutputObject {
+    hookAddress: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace IndexTokenSetEvent {
+  export type InputTuple = [indexToken: AddressLike];
+  export type OutputTuple = [indexToken: string];
+  export interface OutputObject {
+    indexToken: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TokenAddedEvent {
+  export type InputTuple = [token: AddressLike, weight: BigNumberish];
+  export type OutputTuple = [token: string, weight: bigint];
+  export interface OutputObject {
+    token: string;
+    weight: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TokenRemovedEvent {
+  export type InputTuple = [token: AddressLike];
+  export type OutputTuple = [token: string];
+  export interface OutputObject {
+    token: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TokenWeightUpdatedEvent {
+  export type InputTuple = [
+    token: AddressLike,
+    oldWeight: BigNumberish,
+    newWeight: BigNumberish
+  ];
+  export type OutputTuple = [
+    token: string,
+    oldWeight: bigint,
+    newWeight: bigint
+  ];
+  export interface OutputObject {
+    token: string;
+    oldWeight: bigint;
+    newWeight: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UserDepositEvent {
   export type InputTuple = [
     user: AddressLike,
     token: AddressLike,
@@ -193,31 +331,6 @@ export namespace DepositReceivedEvent {
   export interface OutputObject {
     user: string;
     token: string;
-    amount: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace IndexTokenSetEvent {
-  export type InputTuple = [tokenAddress: AddressLike];
-  export type OutputTuple = [tokenAddress: string];
-  export interface OutputObject {
-    tokenAddress: string;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace TokensDistributedEvent {
-  export type InputTuple = [user: AddressLike, amount: BigNumberish];
-  export type OutputTuple = [user: string, amount: bigint];
-  export interface OutputObject {
-    user: string;
     amount: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -269,58 +382,74 @@ export interface IndexVault extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  addToken: TypedContractMethod<
+    [_token: AddressLike, _weight: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   admin: TypedContractMethod<[], [string], "view">;
 
   calculateRequiredDeposits: TypedContractMethod<
-    [amount: BigNumberish],
+    [_mintAmount: BigNumberish],
     [[string[], bigint[]] & { tokens: string[]; amounts: bigint[] }],
     "view"
   >;
 
-  composition: TypedContractMethod<
+  compositionTokens: TypedContractMethod<
     [arg0: BigNumberish],
-    [[string, bigint] & { token: string; weight: bigint }],
+    [string],
     "view"
   >;
 
   controller: TypedContractMethod<[], [string], "view">;
 
-  depositAsset: TypedContractMethod<
-    [token: AddressLike, amount: BigNumberish],
+  depositToken: TypedContractMethod<
+    [_token: AddressLike, _amount: BigNumberish],
     [void],
     "nonpayable"
-  >;
-
-  deposits: TypedContractMethod<
-    [arg0: AddressLike, arg1: AddressLike],
-    [bigint],
-    "view"
   >;
 
   getComposition: TypedContractMethod<
     [],
-    [IndexVault.AssetStructOutput[]],
+    [[string[], bigint[]] & { tokens: string[]; weights: bigint[] }],
     "view"
   >;
 
-  getDeposit: TypedContractMethod<
-    [user: AddressLike, token: AddressLike],
-    [bigint],
-    "view"
-  >;
+  governanceActivated: TypedContractMethod<[], [boolean], "view">;
 
-  htsAddress: TypedContractMethod<[], [string], "view">;
+  governanceHook: TypedContractMethod<[], [string], "view">;
 
   indexToken: TypedContractMethod<[], [string], "view">;
 
-  receiveMint: TypedContractMethod<
-    [user: AddressLike, amount: BigNumberish],
+  isCompositionToken: TypedContractMethod<
+    [arg0: AddressLike],
+    [boolean],
+    "view"
+  >;
+
+  processMint: TypedContractMethod<
+    [_user: AddressLike, _mintAmount: BigNumberish],
     [void],
     "nonpayable"
   >;
 
-  setComposition: TypedContractMethod<
-    [_composition: IndexVault.AssetStruct[]],
+  removeToken: TypedContractMethod<[_token: AddressLike], [void], "nonpayable">;
+
+  setController: TypedContractMethod<
+    [_controller: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  setGovernanceActivated: TypedContractMethod<
+    [_activated: boolean],
+    [void],
+    "nonpayable"
+  >;
+
+  setGovernanceHook: TypedContractMethod<
+    [_hook: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -331,20 +460,24 @@ export interface IndexVault extends BaseContract {
     "nonpayable"
   >;
 
-  updateAdmin: TypedContractMethod<
-    [newAdmin: AddressLike],
+  tokenWeights: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+
+  totalWeight: TypedContractMethod<[], [bigint], "view">;
+
+  updateTokenWeight: TypedContractMethod<
+    [_token: AddressLike, _newWeight: BigNumberish],
     [void],
     "nonpayable"
   >;
 
-  updateController: TypedContractMethod<
-    [newController: AddressLike],
-    [void],
-    "nonpayable"
+  userDeposits: TypedContractMethod<
+    [arg0: AddressLike, arg1: AddressLike],
+    [bigint],
+    "view"
   >;
 
   validateMint: TypedContractMethod<
-    [user: AddressLike, amount: BigNumberish],
+    [_user: AddressLike, _mintAmount: BigNumberish],
     [boolean],
     "view"
   >;
@@ -354,99 +487,124 @@ export interface IndexVault extends BaseContract {
   ): T;
 
   getFunction(
+    nameOrSignature: "addToken"
+  ): TypedContractMethod<
+    [_token: AddressLike, _weight: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "admin"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "calculateRequiredDeposits"
   ): TypedContractMethod<
-    [amount: BigNumberish],
+    [_mintAmount: BigNumberish],
     [[string[], bigint[]] & { tokens: string[]; amounts: bigint[] }],
     "view"
   >;
   getFunction(
-    nameOrSignature: "composition"
-  ): TypedContractMethod<
-    [arg0: BigNumberish],
-    [[string, bigint] & { token: string; weight: bigint }],
-    "view"
-  >;
+    nameOrSignature: "compositionTokens"
+  ): TypedContractMethod<[arg0: BigNumberish], [string], "view">;
   getFunction(
     nameOrSignature: "controller"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "depositAsset"
+    nameOrSignature: "depositToken"
   ): TypedContractMethod<
-    [token: AddressLike, amount: BigNumberish],
+    [_token: AddressLike, _amount: BigNumberish],
     [void],
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "deposits"
+    nameOrSignature: "getComposition"
+  ): TypedContractMethod<
+    [],
+    [[string[], bigint[]] & { tokens: string[]; weights: bigint[] }],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "governanceActivated"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "governanceHook"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "indexToken"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "isCompositionToken"
+  ): TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "processMint"
+  ): TypedContractMethod<
+    [_user: AddressLike, _mintAmount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "removeToken"
+  ): TypedContractMethod<[_token: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setController"
+  ): TypedContractMethod<[_controller: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setGovernanceActivated"
+  ): TypedContractMethod<[_activated: boolean], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setGovernanceHook"
+  ): TypedContractMethod<[_hook: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setIndexToken"
+  ): TypedContractMethod<[_indexToken: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "tokenWeights"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "totalWeight"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "updateTokenWeight"
+  ): TypedContractMethod<
+    [_token: AddressLike, _newWeight: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "userDeposits"
   ): TypedContractMethod<
     [arg0: AddressLike, arg1: AddressLike],
     [bigint],
     "view"
   >;
   getFunction(
-    nameOrSignature: "getComposition"
-  ): TypedContractMethod<[], [IndexVault.AssetStructOutput[]], "view">;
-  getFunction(
-    nameOrSignature: "getDeposit"
-  ): TypedContractMethod<
-    [user: AddressLike, token: AddressLike],
-    [bigint],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "htsAddress"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "indexToken"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "receiveMint"
-  ): TypedContractMethod<
-    [user: AddressLike, amount: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "setComposition"
-  ): TypedContractMethod<
-    [_composition: IndexVault.AssetStruct[]],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "setIndexToken"
-  ): TypedContractMethod<[_indexToken: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "updateAdmin"
-  ): TypedContractMethod<[newAdmin: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "updateController"
-  ): TypedContractMethod<[newController: AddressLike], [void], "nonpayable">;
-  getFunction(
     nameOrSignature: "validateMint"
   ): TypedContractMethod<
-    [user: AddressLike, amount: BigNumberish],
+    [_user: AddressLike, _mintAmount: BigNumberish],
     [boolean],
     "view"
   >;
 
   getEvent(
-    key: "CompositionUpdated"
+    key: "ControllerSet"
   ): TypedContractEvent<
-    CompositionUpdatedEvent.InputTuple,
-    CompositionUpdatedEvent.OutputTuple,
-    CompositionUpdatedEvent.OutputObject
+    ControllerSetEvent.InputTuple,
+    ControllerSetEvent.OutputTuple,
+    ControllerSetEvent.OutputObject
   >;
   getEvent(
-    key: "DepositReceived"
+    key: "GovernanceActivated"
   ): TypedContractEvent<
-    DepositReceivedEvent.InputTuple,
-    DepositReceivedEvent.OutputTuple,
-    DepositReceivedEvent.OutputObject
+    GovernanceActivatedEvent.InputTuple,
+    GovernanceActivatedEvent.OutputTuple,
+    GovernanceActivatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "GovernanceHookSet"
+  ): TypedContractEvent<
+    GovernanceHookSetEvent.InputTuple,
+    GovernanceHookSetEvent.OutputTuple,
+    GovernanceHookSetEvent.OutputObject
   >;
   getEvent(
     key: "IndexTokenSet"
@@ -456,34 +614,66 @@ export interface IndexVault extends BaseContract {
     IndexTokenSetEvent.OutputObject
   >;
   getEvent(
-    key: "TokensDistributed"
+    key: "TokenAdded"
   ): TypedContractEvent<
-    TokensDistributedEvent.InputTuple,
-    TokensDistributedEvent.OutputTuple,
-    TokensDistributedEvent.OutputObject
+    TokenAddedEvent.InputTuple,
+    TokenAddedEvent.OutputTuple,
+    TokenAddedEvent.OutputObject
+  >;
+  getEvent(
+    key: "TokenRemoved"
+  ): TypedContractEvent<
+    TokenRemovedEvent.InputTuple,
+    TokenRemovedEvent.OutputTuple,
+    TokenRemovedEvent.OutputObject
+  >;
+  getEvent(
+    key: "TokenWeightUpdated"
+  ): TypedContractEvent<
+    TokenWeightUpdatedEvent.InputTuple,
+    TokenWeightUpdatedEvent.OutputTuple,
+    TokenWeightUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "UserDeposit"
+  ): TypedContractEvent<
+    UserDepositEvent.InputTuple,
+    UserDepositEvent.OutputTuple,
+    UserDepositEvent.OutputObject
   >;
 
   filters: {
-    "CompositionUpdated(tuple[])": TypedContractEvent<
-      CompositionUpdatedEvent.InputTuple,
-      CompositionUpdatedEvent.OutputTuple,
-      CompositionUpdatedEvent.OutputObject
+    "ControllerSet(address)": TypedContractEvent<
+      ControllerSetEvent.InputTuple,
+      ControllerSetEvent.OutputTuple,
+      ControllerSetEvent.OutputObject
     >;
-    CompositionUpdated: TypedContractEvent<
-      CompositionUpdatedEvent.InputTuple,
-      CompositionUpdatedEvent.OutputTuple,
-      CompositionUpdatedEvent.OutputObject
+    ControllerSet: TypedContractEvent<
+      ControllerSetEvent.InputTuple,
+      ControllerSetEvent.OutputTuple,
+      ControllerSetEvent.OutputObject
     >;
 
-    "DepositReceived(address,address,uint256)": TypedContractEvent<
-      DepositReceivedEvent.InputTuple,
-      DepositReceivedEvent.OutputTuple,
-      DepositReceivedEvent.OutputObject
+    "GovernanceActivated(bool)": TypedContractEvent<
+      GovernanceActivatedEvent.InputTuple,
+      GovernanceActivatedEvent.OutputTuple,
+      GovernanceActivatedEvent.OutputObject
     >;
-    DepositReceived: TypedContractEvent<
-      DepositReceivedEvent.InputTuple,
-      DepositReceivedEvent.OutputTuple,
-      DepositReceivedEvent.OutputObject
+    GovernanceActivated: TypedContractEvent<
+      GovernanceActivatedEvent.InputTuple,
+      GovernanceActivatedEvent.OutputTuple,
+      GovernanceActivatedEvent.OutputObject
+    >;
+
+    "GovernanceHookSet(address)": TypedContractEvent<
+      GovernanceHookSetEvent.InputTuple,
+      GovernanceHookSetEvent.OutputTuple,
+      GovernanceHookSetEvent.OutputObject
+    >;
+    GovernanceHookSet: TypedContractEvent<
+      GovernanceHookSetEvent.InputTuple,
+      GovernanceHookSetEvent.OutputTuple,
+      GovernanceHookSetEvent.OutputObject
     >;
 
     "IndexTokenSet(address)": TypedContractEvent<
@@ -497,15 +687,48 @@ export interface IndexVault extends BaseContract {
       IndexTokenSetEvent.OutputObject
     >;
 
-    "TokensDistributed(address,uint256)": TypedContractEvent<
-      TokensDistributedEvent.InputTuple,
-      TokensDistributedEvent.OutputTuple,
-      TokensDistributedEvent.OutputObject
+    "TokenAdded(address,uint256)": TypedContractEvent<
+      TokenAddedEvent.InputTuple,
+      TokenAddedEvent.OutputTuple,
+      TokenAddedEvent.OutputObject
     >;
-    TokensDistributed: TypedContractEvent<
-      TokensDistributedEvent.InputTuple,
-      TokensDistributedEvent.OutputTuple,
-      TokensDistributedEvent.OutputObject
+    TokenAdded: TypedContractEvent<
+      TokenAddedEvent.InputTuple,
+      TokenAddedEvent.OutputTuple,
+      TokenAddedEvent.OutputObject
+    >;
+
+    "TokenRemoved(address)": TypedContractEvent<
+      TokenRemovedEvent.InputTuple,
+      TokenRemovedEvent.OutputTuple,
+      TokenRemovedEvent.OutputObject
+    >;
+    TokenRemoved: TypedContractEvent<
+      TokenRemovedEvent.InputTuple,
+      TokenRemovedEvent.OutputTuple,
+      TokenRemovedEvent.OutputObject
+    >;
+
+    "TokenWeightUpdated(address,uint256,uint256)": TypedContractEvent<
+      TokenWeightUpdatedEvent.InputTuple,
+      TokenWeightUpdatedEvent.OutputTuple,
+      TokenWeightUpdatedEvent.OutputObject
+    >;
+    TokenWeightUpdated: TypedContractEvent<
+      TokenWeightUpdatedEvent.InputTuple,
+      TokenWeightUpdatedEvent.OutputTuple,
+      TokenWeightUpdatedEvent.OutputObject
+    >;
+
+    "UserDeposit(address,address,uint256)": TypedContractEvent<
+      UserDepositEvent.InputTuple,
+      UserDepositEvent.OutputTuple,
+      UserDepositEvent.OutputObject
+    >;
+    UserDeposit: TypedContractEvent<
+      UserDepositEvent.InputTuple,
+      UserDepositEvent.OutputTuple,
+      UserDepositEvent.OutputObject
     >;
   };
 }

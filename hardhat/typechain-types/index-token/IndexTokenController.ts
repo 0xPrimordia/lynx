@@ -38,7 +38,7 @@ export interface IndexTokenControllerInterface extends Interface {
       | "createIndexToken"
       | "getTokenAddress"
       | "hasSupplyKey"
-      | "mintTo"
+      | "mintWithDeposits"
       | "setIndexTokenId"
       | "setSupplyKeyStatus"
       | "setTokenService"
@@ -103,8 +103,8 @@ export interface IndexTokenControllerInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "mintTo",
-    values: [AddressLike, BigNumberish]
+    functionFragment: "mintWithDeposits",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setIndexTokenId",
@@ -169,7 +169,10 @@ export interface IndexTokenControllerInterface extends Interface {
     functionFragment: "hasSupplyKey",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "mintTo", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "mintWithDeposits",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "setIndexTokenId",
     data: BytesLike
@@ -377,8 +380,8 @@ export interface IndexTokenController extends BaseContract {
 
   hasSupplyKey: TypedContractMethod<[], [boolean], "view">;
 
-  mintTo: TypedContractMethod<
-    [recipient: AddressLike, amount: BigNumberish],
+  mintWithDeposits: TypedContractMethod<
+    [amount: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -454,12 +457,8 @@ export interface IndexTokenController extends BaseContract {
     nameOrSignature: "hasSupplyKey"
   ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
-    nameOrSignature: "mintTo"
-  ): TypedContractMethod<
-    [recipient: AddressLike, amount: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: "mintWithDeposits"
+  ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setIndexTokenId"
   ): TypedContractMethod<

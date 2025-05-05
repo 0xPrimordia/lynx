@@ -1,0 +1,17 @@
+{
+  "tokens": [
+    {
+      "name": "SAUCE Token",
+      "symbol": "SAUCE",
+      "weight": 50,
+      "address": "0x00000000000000000000000000000000005Ac664"
+    },
+    {
+      "name": "CLXY Token",
+      "symbol": "CLXY",
+      "weight": 50,
+      "address": "0x00000000000000000000000000000000005AC665"
+    }
+  ],
+  "timestamp": "2025-05-05T18:28:57.506Z"
+}

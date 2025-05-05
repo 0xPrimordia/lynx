@@ -71,135 +71,191 @@ This document serves as the central hub for debugging and resolving the issue en
 
 ---
 
-## Debugging Plan
+## Progress Update
 
-### Step 1: Validate Gas Configuration
-- **Action**: Update gas settings in `create.ts` to use a higher gas limit and gas price:
-  ```typescript
-  const tx = await controller.createIndexToken(name, symbol, memo, {
-    value: ethers.parseEther("10.0"),
-    gasLimit: 8000000, // Increase gas limit
-    gasPrice: ethers.parseUnits("600", "gwei") // Ensure minimum 600 gwei
-  });
-  ```
+### Findings So Far
+1. **Consistent Failure Pattern**:
+   - ✅ All contract-based token creation attempts fail with exactly 4,000,000 gas consumption
+   - ✅ Failure is silent - no error messages, no events emitted
+   - ✅ Pattern is consistent across different test contract implementations
 
-## Advanced Debugging Plan
+2. **Test Contracts**:
+   - ✅ TestHTS: Minimal contract for basic HTS interaction
+   - ✅ TestHTSWithCombinedKeys: Replicates the main controller's key pattern
+   - ✅ Both contracts exhibit identical failure patterns
 
-### Step 1: Analyze Contract Logic
-- **Action**: Review the `IndexTokenController` contract to ensure:
-  1. The `createIndexToken` function correctly interacts with the HTS precompile.
-  2. The `onlyAdmin` modifier is not causing unintended reverts.
-  3. The `getTokenAddress` function returns the expected address after token creation.
-- **Expected Outcome**: The contract logic should align with HTS requirements and not contain errors.
+3. **Treasury Configurations**:
+   - ✅ Tried contract address as treasury - failed
+   - ✅ Tried deployer address as treasury - failed
+   - ✅ Tried self (contract) as treasury - failed
 
-### Step 2: Test HTS Precompile Edge Cases
-- **Action**: Write a minimal script to test HTS precompile interactions directly:
-  ```typescript
-  const htsAddress = "0x0000000000000000000000000000000000000167";
-  const htsInterface = new ethers.Interface([
-    "function createToken(string memory name, string memory symbol, string memory memo) external returns (address)"
-  ]);
-  const htsContract = new ethers.Contract(htsAddress, htsInterface, deployer);
+4. **Key Configurations**:
+   - ✅ Tried different key combinations - all failed with same pattern
+   - ✅ Simplified key structures - still failed
 
-  try {
-    const tokenAddress = await htsContract.createToken("Test Token", "TEST", "Test Memo");
-    console.log("Token created at:", tokenAddress);
-  } catch (err) {
-    console.error("HTS precompile interaction failed:", err);
+5. **Critical Discovery**:
+   - ✅ Direct Hedera SDK test (bypassing precompile) successfully created token
+   - ✅ This suggests the issue is specific to the contract-precompile interaction
+
+### Ruled Out
+- ❌ Gas limit issues (increased gas limit did not help)
+- ❌ Account balance issues (contracts were funded)
+- ❌ Key format issues (tried multiple formats, SDK worked with same keys)
+- ❌ Treasury configuration (tested multiple options)
+
+### Next Steps to Try
+
+1. **Simpler Key Structure Test**:
+   - Create a test contract with absolute minimal key structure
+   - Test with just a single admin key (no arrays, no complex structures)
+
+2. **Test Argument Size Limits**:
+   - Create variants with progressively smaller input arguments
+   - Test if parameter size/complexity is causing the issue
+
+3. **HTS Precompile Version Test**:
+   - Check if specific HTS precompile version is compatible
+   - Try older interface versions if documentation available
+
+4. **Memory vs Storage Test**:
+   - Test if memory management is impacting execution
+   - Create variants that use storage vs memory for key structures
+
+5. **Hybrid Approach**:
+   - Design a solution that uses SDK for token creation
+   - Have contract handle post-creation operations
+   - Determine how to securely pass token ownership to contract
+
+## Current Theory
+
+Based on findings, the most likely explanation is a fundamental limitation in the HTS precompile when handling complex key structures from smart contracts. The consistent 4,000,000 gas consumption suggests either:
+
+1. An infinite loop in the precompile's key validation
+2. A computational complexity issue in array handling  
+3. A hard-coded limit or guard against certain contract interactions
+
+---
+
+## Hybrid Solution
+
+After extensive testing, we have discovered that the most viable approach is a hybrid solution:
+
+1. **SDK-Based Token Creation**: Use the Hedera SDK to create the token
+   - Set the contract address as the supply key (and admin key if needed)
+   - This avoids the limitations of the HTS precompile
+
+2. **Contract-Based Token Management**: Allow the contract to manage the token
+   - Since the contract has the supply key, it can still mint tokens
+   - All other token operations can work through the contract
+
+### Implementation Details
+
+We've implemented a proof-of-concept for this hybrid approach with these components:
+
+1. **TestHTSMinter.sol**: A contract designed to:
+   - Accept token address configuration
+   - Mint tokens using its supply key
+   - Transfer minted tokens to other addresses
+   - Verify token info and balances
+
+2. **hybrid-token-creation.ts**: A script that:
+   - Uses Hedera SDK to create a token
+   - Sets a contract as the supply key
+   - Allows the contract to mint tokens
+
+3. **test-hybrid-solution.ts**: A complete test that:
+   - Creates a token with the SDK
+   - Configures the contract with the token address
+   - Tests that the contract can successfully mint tokens
+   - Verifies balances and token info from both perspectives
+
+### Key Insights
+
+1. The hybrid approach successfully bypasses the limitations we encountered
+2. The contract retains full control over token minting and transfers
+3. The token creation happens outside the gas-limited environment
+4. Smart contract security is maintained since the contract holds the supply key
+
+### Advantages
+
+- **Reliability**: Token creation is successful every time
+- **Control**: Contract still maintains control of minting and transfers
+- **Gas Efficiency**: No gas issues with token creation
+- **Flexibility**: Can customize token parameters during creation
+
+### Implementation Steps for Production
+
+1. Create a script using Hedera SDK that:
+   - Creates the token with desired parameters
+   - Sets the controller contract as supply key
+   - Records token ID and converts to EVM address format
+   - Updates environment variables or configuration
+
+2. Modify the controller contract to:
+   - Accept token address configuration
+   - Include proper mint and transfer functions
+   - Maintain existing security controls
+
+3. Update deployment process:
+   - Deploy controller contract
+   - Run token creation script with contract address
+   - Configure controller with token address
+
+---
+
+## Tactical Debugging Plan (Updated)
+
+### Step 1: Test Minimal Key Structure
+- **Action**: Deploy a new test contract with absolute minimal key structure:
+  ```solidity
+  function createMinimalToken() external {
+      bytes memory adminKey = abi.encode(address(this));
+      IHederaTokenService.TokenKey[] memory keys = new IHederaTokenService.TokenKey[](1);
+      keys[0] = IHederaTokenService.TokenKey(
+          IHederaTokenService.KeyType.ADMIN,
+          IHederaTokenService.KeyValueType.CONTRACT_ID,
+          adminKey
+      );
+      
+      IHederaTokenService.HederaToken memory token;
+      token.name = "Minimal";
+      token.symbol = "MIN";
+      token.memo = "Minimal test";
+      token.treasury = address(this);
+      token.tokenKeys = keys;
+      
+      int responseCode;
+      address createdToken;
+      
+      (responseCode, createdToken) = HTS.createToken(token, 0);
   }
   ```
-- **Expected Outcome**: The HTS precompile should respond as expected, or provide detailed error information.
+- **Expected Outcome**: Determine if key complexity is the issue
 
-### Step 3: Investigate Network-Specific Issues
-- **Action**: Check Hedera network status and known issues:
-  1. Verify the network is not experiencing downtime or congestion.
-  2. Consult Hedera documentation for any recent changes to HTS behavior.
-- **Expected Outcome**: Confirm the network is functioning normally and supports the required HTS operations.
-
-### Step 4: Debug Transaction Details
-- **Action**: Analyze the transaction receipt and logs:
-  ```typescript
-  const receipt = await tx.wait();
-  console.log("Transaction logs:", receipt.logs);
-  ```
-  - Look for specific revert reasons or unusual log entries.
-- **Expected Outcome**: Identify the exact cause of the transaction failure.
-
-### Step 5: Consult Hedera Support
-- **Action**: If the issue persists, gather all relevant information (e.g., transaction hash, error logs, contract code) and contact Hedera support or community forums.
-- **Expected Outcome**: Obtain insights or solutions from Hedera experts.
-
-## Tactical Debugging Plan
-
-### Step 1: Trace All Execution Paths
-- **Action**: Insert logging events before and after each function call in the token creation process.
-  - Add logs at the beginning of each major branch or loop.
-  - Use `emit DebugCheckpoint` events to log gas remaining at critical points.
+### Step 2: Test Function Call Overhead
+- **Action**: Deploy a contract that just calls HTS directly without any preparation:
   ```solidity
-  function checkpoint(string memory label) internal {
-      emit DebugCheckpoint(label, gasleft());
+  function createDirectToken() external {
+      IHederaTokenService.HederaToken memory token;
+      token.name = "Direct";
+      token.symbol = "DIR";
+      token.treasury = address(this);
+      // No keys at all
+      
+      (int responseCode, address tokenAddress) = HTS.createToken(token, 0);
   }
-
-  event DebugCheckpoint(string label, uint256 gasRemaining);
   ```
-  - Example usage:
-  ```solidity
-  checkpoint("Before HTS Precompile");
-  callHTSPrecompile();
-  checkpoint("After HTS Precompile");
-  ```
-- **Expected Outcome**: Identify where the execution path consumes all gas or fails silently.
+- **Expected Outcome**: Test if function call overhead/preparation is the issue
 
-### Step 2: Profile the Flow
-- **Action**: Build a minimal reproducer for token creation:
-  1. Test with only one key type at a time.
-  2. Measure gas consumption incrementally with each added step.
-  3. Create test cases with various key combinations.
-- **Expected Outcome**: Narrow down the specific step or key combination causing the issue.
+### Step 3: Compare SDK Implementation
+- **Action**: Review the exact SDK implementation that works:
+  - Identify differences in parameter encoding
+  - Look for special flags or settings used by SDK but not in contract
+- **Expected Outcome**: Find potential differences that might explain success vs failure
 
-### Step 3: Isolate the HTS Precompile Call
-- **Action**: Wrap the HTS precompile call (`0x167`) in its own function.
-  - Pre-log inputs to the HTS call.
-  - Post-log outputs or errors from the HTS call.
-- **Expected Outcome**: Determine if the issue lies within the HTS precompile or the surrounding logic.
-
-### Step 4: Test Theories
-- **Action**: Conduct the following experiments:
-  1. Use no keys (empty key array) to check for key validation loops.
-  2. Use only the admin key to verify the base path correctness.
-  3. Set the treasury to `address(this)` to eliminate the vault contract as a root cause.
-  4. Use HTS from a different contract to rule out upstream contract interference.
-  5. Deploy on a forked Hedera testnet to compare logs and behavior.
-- **Expected Outcome**: Validate or eliminate potential root causes such as key setup, treasury interactions, or upstream interference.
-
-### Step 5: Add Gas Burn Detectors
-- **Action**: Use gas burn detectors to identify where gas is being consumed:
-  ```solidity
-  checkpoint("Before HTS Precompile");
-  callHTSPrecompile();
-  checkpoint("After HTS Precompile");
-  ```
-- **Expected Outcome**: Pinpoint the exact location where gas is consumed without progress.
-
-### Step 6: Investigate Precompile Behavior
-- **Action**: Test for potential precompile-native failures:
-  1. Uninitialized or circular key setup.
-  2. Misformatted `KeyValue` or `KeyList` for HTS.
-  3. Unexpected interaction from vault/treasury fallback.
-  4. Internal recursion within HTS due to bad data.
-- **Expected Outcome**: Identify if the issue is caused by malformed data or unexpected precompile behavior.
-
-### Step 7: Use Advanced Tools
-- **Action**: Leverage the following tools for deeper insights:
-  1. **Hardhat + Hedera Plugin**: For local dry runs.
-  2. **Tenderly**: To simulate gas usage paths, even in failed transactions.
-  3. **Ethers.js Gas Overrides**: To test with different gas limits:
-     ```javascript
-     await contract.createToken(...args, { gasLimit: 5000000 });
-     ```
-  4. Deploy a debug version of the contract with no actual `createToken` logic to verify flow up to the HTS call.
-- **Expected Outcome**: Gain detailed insights into gas usage and execution paths.
-
-### Step 8: Consult Hedera Support
-- **Action**: If the issue persists, gather all relevant information (e.g., transaction hash, error logs, contract code) and contact Hedera support or community forums.
-- **Expected Outcome**: Obtain insights or solutions from Hedera experts.
+### Step 4: Implement Hybrid Solution
+- **Action**: Create a proof-of-concept hybrid solution:
+  1. External script creates token using SDK
+  2. Token is created with contract address as admin/supply key
+  3. Contract can then manage the token
+- **Expected Outcome**: Working solution that bypasses the precompile limitation

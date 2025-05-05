@@ -43,6 +43,50 @@
         "IHederaTokenService"
       ]
     },
+    "/Users/kevincompton/Sites/lynx/app/contracts/SimpleTokenMinter.sol": {
+      "lastModificationDate": 1746208019367,
+      "contentHash": "9eb1bb943cd21701474fd83732c482b0",
+      "sourceName": "app/contracts/SimpleTokenMinter.sol",
+      "solcConfig": {
+        "version": "0.8.18",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "devdoc",
+                "userdoc",
+                "storageLayout",
+                "evm.gasEstimates"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          },
+          "metadata": {
+            "useLiteralContent": true
+          }
+        }
+      },
+      "imports": [
+        "./IHederaTokenService.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "SimpleTokenMinter"
+      ]
+    },
     "/Users/kevincompton/Sites/lynx/app/contracts/MockHederaTokenService.sol": {
       "lastModificationDate": 1744383205055,
       "contentHash": "817f1aa465b79b3088f709ae2a69e487",
@@ -85,48 +129,6 @@
       ],
       "artifacts": [
         "MockHederaTokenService"
-      ]
-    },
-    "/Users/kevincompton/Sites/lynx/node_modules/hardhat/console.sol": {
-      "lastModificationDate": 1744223952711,
-      "contentHash": "681c532e816169606d13a5fe8b475074",
-      "sourceName": "hardhat/console.sol",
-      "solcConfig": {
-        "version": "0.8.18",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata",
-                "devdoc",
-                "userdoc",
-                "storageLayout",
-                "evm.gasEstimates"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          },
-          "metadata": {
-            "useLiteralContent": true
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        ">=0.4.22 <0.9.0"
-      ],
-      "artifacts": [
-        "console"
       ]
     },
     "/Users/kevincompton/Sites/lynx/app/contracts/IndexVault.sol": {

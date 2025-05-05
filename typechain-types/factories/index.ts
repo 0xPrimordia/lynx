@@ -5,3 +5,4 @@ export { IHederaTokenService__factory } from "./IHederaTokenService__factory";
 export { IndexTokenController__factory } from "./IndexTokenController__factory";
 export { IndexVault__factory } from "./IndexVault__factory";
 export { MockHederaTokenService__factory } from "./MockHederaTokenService__factory";
+export { SimpleTokenMinter__factory } from "./SimpleTokenMinter__factory";

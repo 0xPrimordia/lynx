@@ -1,0 +1,9 @@
+{
+  "success": true,
+  "testType": "token creation and sdk mint failure",
+  "tokenId": "0.0.5948363",
+  "supplyKey": "0.0.1679297187",
+  "initialSupply": "0",
+  "sdkMintFailed": true,
+  "timestamp": "2025-05-05T16:16:43.843Z"
+}

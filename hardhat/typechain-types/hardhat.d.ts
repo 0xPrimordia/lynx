@@ -14,6 +14,18 @@ import * as Contracts from ".";
 declare module "hardhat/types/runtime" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
+      name: "SimpleTokenMinter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SimpleTokenMinter__factory>;
+    getContractFactory(
+      name: "TestHTS",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.TestHTS__factory>;
+    getContractFactory(
+      name: "TestHTSWithCombinedKeys",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.TestHTSWithCombinedKeys__factory>;
+    getContractFactory(
       name: "IHederaTokenService",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IHederaTokenService__factory>;
@@ -35,6 +47,21 @@ declare module "hardhat/types/runtime" {
     ): Promise<Contracts.MockHederaTokenService__factory>;
 
     getContractAt(
+      name: "SimpleTokenMinter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SimpleTokenMinter>;
+    getContractAt(
+      name: "TestHTS",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.TestHTS>;
+    getContractAt(
+      name: "TestHTSWithCombinedKeys",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.TestHTSWithCombinedKeys>;
+    getContractAt(
       name: "IHederaTokenService",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -61,6 +88,18 @@ declare module "hardhat/types/runtime" {
     ): Promise<Contracts.MockHederaTokenService>;
 
     deployContract(
+      name: "SimpleTokenMinter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SimpleTokenMinter>;
+    deployContract(
+      name: "TestHTS",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.TestHTS>;
+    deployContract(
+      name: "TestHTSWithCombinedKeys",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.TestHTSWithCombinedKeys>;
+    deployContract(
       name: "IHederaTokenService",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IHederaTokenService>;
@@ -81,6 +120,21 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockHederaTokenService>;
 
+    deployContract(
+      name: "SimpleTokenMinter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SimpleTokenMinter>;
+    deployContract(
+      name: "TestHTS",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.TestHTS>;
+    deployContract(
+      name: "TestHTSWithCombinedKeys",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.TestHTSWithCombinedKeys>;
     deployContract(
       name: "IHederaTokenService",
       args: any[],

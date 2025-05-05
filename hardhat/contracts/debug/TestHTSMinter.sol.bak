@@ -1,0 +1,95 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "../index-token/interfaces/IHederaTokenService.sol";
+
+contract TestHTSMinter {
+    address private constant HTS_PRECOMPILE = address(0x0000000000000000000000000000000000000167);
+    IHederaTokenService private hts;
+    
+    // Store token address for minting
+    address public tokenAddress;
+    
+    event MintSuccessful(address token, uint64 amount, int responseCode);
+    event TokenAddressSet(address previousToken, address newToken);
+    event Checkpoint(string label, uint256 gasRemaining);
+
+    constructor() {
+        hts = IHederaTokenService(HTS_PRECOMPILE);
+    }
+    
+    // Allow the contract to receive HBAR
+    receive() external payable {}
+    
+    // Checkpoint for gas tracking
+    function checkpoint(string memory label) internal {
+        emit Checkpoint(label, gasleft());
+    }
+    
+    // Set the token address that this contract will mint
+    function setTokenAddress(address _tokenAddress) external {
+        emit TokenAddressSet(tokenAddress, _tokenAddress);
+        tokenAddress = _tokenAddress;
+    }
+    
+    // Mint tokens using the supply key that should be assigned to this contract
+    function mintTokens(uint64 amount, address receiver) external {
+        require(tokenAddress != address(0), "Token address not set");
+        require(amount > 0, "Amount must be greater than 0");
+        require(receiver != address(0), "Invalid receiver address");
+        
+        checkpoint("Before mint");
+        
+        // Call the HTS precompile to mint tokens
+        int responseCode = hts.mintToken(tokenAddress, amount, new bytes[](0));
+        
+        checkpoint("After mint");
+        
+        emit MintSuccessful(tokenAddress, amount, responseCode);
+        
+        // If minting succeeded, transfer the tokens to the receiver
+        if (responseCode == 0 && receiver != address(this)) {
+            checkpoint("Before transfer");
+            
+            int transferResponse = hts.transferToken(tokenAddress, address(this), receiver, amount);
+            
+            checkpoint("After transfer");
+            
+            require(transferResponse == 0, "Transfer failed");
+        }
+    }
+    
+    // Check the token info
+    function getTokenInfo() external view returns (
+        string memory name,
+        string memory symbol,
+        address treasury,
+        int256 totalSupply
+    ) {
+        require(tokenAddress != address(0), "Token address not set");
+        
+        // Query token info from HTS
+        (int responseCode, IHederaTokenService.TokenInfo memory tokenInfo) = 
+            hts.getTokenInfo(tokenAddress);
+            
+        require(responseCode == 0, "Failed to get token info");
+        
+        return (
+            tokenInfo.name,
+            tokenInfo.symbol,
+            tokenInfo.treasury,
+            int256(uint256(tokenInfo.totalSupply))
+        );
+    }
+    
+    // Get token balance of this contract
+    function getTokenBalance() external view returns (uint256) {
+        require(tokenAddress != address(0), "Token address not set");
+        
+        (int responseCode, uint256 balance) = hts.balanceOf(tokenAddress, address(this));
+        
+        require(responseCode == 0, "Failed to get balance");
+        
+        return balance;
+    }
+} 

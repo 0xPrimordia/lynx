@@ -29,6 +29,10 @@ declare module "hardhat/types/runtime" {
       name: "MockHederaTokenService",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MockHederaTokenService__factory>;
+    getContractFactory(
+      name: "SimpleTokenMinter",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SimpleTokenMinter__factory>;
 
     getContractAt(
       name: "IHederaTokenService",
@@ -50,6 +54,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.MockHederaTokenService>;
+    getContractAt(
+      name: "SimpleTokenMinter",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SimpleTokenMinter>;
 
     deployContract(
       name: "IHederaTokenService",
@@ -67,6 +76,10 @@ declare module "hardhat/types/runtime" {
       name: "MockHederaTokenService",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockHederaTokenService>;
+    deployContract(
+      name: "SimpleTokenMinter",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SimpleTokenMinter>;
 
     deployContract(
       name: "IHederaTokenService",
@@ -88,6 +101,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockHederaTokenService>;
+    deployContract(
+      name: "SimpleTokenMinter",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SimpleTokenMinter>;
 
     // default types
     getContractFactory(

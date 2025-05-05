@@ -1,0 +1,78 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "../index-token/interfaces/IHederaTokenService.sol";
+
+contract TestHTSDirect {
+    address private constant HTS_PRECOMPILE = address(0x0000000000000000000000000000000000000167);
+    IHederaTokenService private hts;
+
+    event TokenCreated(address tokenAddress, int responseCode);
+    event Checkpoint(string label, uint256 gasRemaining);
+
+    constructor() {
+        hts = IHederaTokenService(HTS_PRECOMPILE);
+    }
+
+    // Allow the contract to receive HBAR
+    receive() external payable {}
+
+    // Checkpoint for gas tracking
+    function checkpoint(string memory label) internal {
+        emit Checkpoint(label, gasleft());
+    }
+
+    // Test with direct call - no key preparation
+    function createDirectToken() external {
+        checkpoint("Start createDirectToken");
+        
+        // Create token struct with no preparation, minimal fields
+        IHederaTokenService.HederaToken memory token;
+        token.name = "Direct";
+        token.symbol = "DIR";
+        token.memo = "Direct test";
+        token.treasury = address(this);
+        // No keys are set - completely empty
+        
+        checkpoint("Before HTS call (direct)");
+        
+        // Create the token directly
+        int responseCode;
+        address createdToken;
+        (responseCode, createdToken) = hts.createToken(token, 0);
+        
+        checkpoint("After HTS call (direct)");
+        
+        // Emit the result
+        emit TokenCreated(createdToken, responseCode);
+    }
+
+    // Test with static bytes - avoid any dynamic memory operations
+    function createStaticToken() external {
+        checkpoint("Start createStaticToken");
+        
+        // Hard-coded static values
+        string memory name = "Static";
+        string memory symbol = "STC";
+        string memory memo = "Static test";
+        
+        // Create token struct
+        IHederaTokenService.HederaToken memory token;
+        token.name = name;
+        token.symbol = symbol;
+        token.memo = memo;
+        token.treasury = address(this);
+        
+        checkpoint("Before HTS call (static)");
+        
+        // Create the token
+        int responseCode;
+        address createdToken;
+        (responseCode, createdToken) = hts.createToken(token, 0);
+        
+        checkpoint("After HTS call (static)");
+        
+        // Emit the result
+        emit TokenCreated(createdToken, responseCode);
+    }
+} 

@@ -24,6 +24,20 @@ export interface UseTokensReturn {
   calculateTokensNeeded: (lynxAmount: number) => TokensNeeded;
 }
 
+// Types for governance section
+export interface Token {
+  id: string;
+  symbol: string;
+  name: string;
+  icon: string;
+}
+
+export interface SaucerSwapContextType {
+  tokens: Token[];
+  loading: boolean;
+  error: string | null;
+}
+
 // Actual implementation of useTokens hook
 import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '../providers/WalletProvider';
@@ -72,6 +86,22 @@ export interface UseTokensResult {
   refreshBalances: () => Promise<boolean>;
   calculateRequiredTokens: (lynxAmount: number) => RequiredTokens;
 }
+
+// Mock token data for governance section
+const mockTokens: Token[] = [
+  { id: '1', symbol: 'HBAR', name: 'Hedera Hashgraph', icon: 'hbar-icon' },
+  { id: '2', symbol: 'SAUCE', name: 'SaucerSwap Token', icon: 'sauce-icon' },
+  { id: '3', symbol: 'USDC', name: 'USD Coin', icon: 'usdc-icon' },
+  { id: '4', symbol: 'WETH', name: 'Wrapped Ethereum', icon: 'weth-icon' }
+];
+
+export const useSaucerSwapContext = () => {
+  return {
+    tokens: mockTokens,
+    loading: false,
+    error: null
+  };
+};
 
 export function useTokens(): UseTokensResult {
   const { dAppConnector, accountId, isConnected } = useWallet();

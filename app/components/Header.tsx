@@ -70,6 +70,19 @@ const Header: React.FC = () => {
           >
             Burn
           </Link>
+          <Link 
+            href="/governance" 
+            style={{
+              fontSize: "24px",
+              color: "white",
+              textDecoration: "none",
+              transition: "color 0.2s",
+              fontWeight: "500"
+            }}
+            className={vt323.className}
+          >
+            Governance
+          </Link>
         </div>
         
         {/* Connect Wallet */}

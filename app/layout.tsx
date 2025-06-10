@@ -8,6 +8,7 @@ import { Toaster } from "sonner";
 import Header from "./components/Header";
 import { vt323 } from "./fonts";
 import NextUIProvider from "./providers/NextUIProvider";
+import { DaoParametersProvider } from "./providers/DaoParametersProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -34,27 +35,29 @@ export default function RootLayout({
         <ThemeProvider>
           <NextUIProvider>
             <WalletProvider>
-              <TokenQueueProvider>
-                <Header />
-                {children}
-                <footer className="border-t border-[#111] py-6 text-center text-gray-400 text-sm mt-auto">
-                  <div className="container">
-                    &copy; {new Date().getFullYear()} Lynxify. All rights reserved.
-                  </div>
-                </footer>
-                <Toaster 
-                  richColors 
-                  position="top-right" 
-                  theme="dark" 
-                  toastOptions={{
-                    style: {
-                      background: '#111',
-                      color: 'white',
-                      border: '1px solid #222',
-                    },
-                  }}
-                />
-              </TokenQueueProvider>
+              <DaoParametersProvider autoConnect={true}>
+                <TokenQueueProvider>
+                  <Header />
+                  {children}
+                  <footer className="border-t border-[#111] py-6 text-center text-gray-400 text-sm mt-auto">
+                    <div className="container">
+                      &copy; {new Date().getFullYear()} Lynxify. All rights reserved.
+                    </div>
+                  </footer>
+                  <Toaster 
+                    richColors 
+                    position="top-right" 
+                    theme="dark" 
+                    toastOptions={{
+                      style: {
+                        background: '#111',
+                        color: 'white',
+                        border: '1px solid #222',
+                      },
+                    }}
+                  />
+                </TokenQueueProvider>
+              </DaoParametersProvider>
             </WalletProvider>
           </NextUIProvider>
         </ThemeProvider>

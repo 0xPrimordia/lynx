@@ -37,6 +37,8 @@
   },
   "dependencies": {
     "@hashgraph/hedera-wallet-connect": "^1.5.1",
+    "@hashgraphonline/hashinal-wc": "^1.0.96",
+    "@hashgraphonline/standards-sdk": "^0.0.128",
     "@nextui-org/react": "^2.6.11",
     "@radix-ui/react-slot": "^1.1.2",
     "@walletconnect/modal": "^2.7.0",
@@ -88,6 +90,7 @@
     "identity-obj-proxy": "^3.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "patch-package": "^8.0.0",
     "postcss": "^8.4.35",
     "solidity-coverage": "^0.8.14",
     "tailwindcss": "^3.4.1",

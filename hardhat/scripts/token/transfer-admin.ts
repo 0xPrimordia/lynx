@@ -1,103 +1,106 @@
-import { 
-  Client, 
-  AccountId, 
-  PrivateKey, 
-  ContractExecuteTransaction, 
-  ContractId,
-  ContractCallQuery,
-  Hbar 
-} from "@hashgraph/sdk";
-import * as dotenv from "dotenv";
-import path from "path";
-import fs from "fs";
+import { ethers } from "hardhat";
+import * as fs from "fs";
 
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, "../../../.env.local") });
-
-// Helper function to get deployment info
-function getDeploymentInfo(): any {
-  const deploymentInfoPath = path.join(__dirname, "../../../deployment-info.json");
-  return require(deploymentInfoPath);
-}
-
-// Validate environment variables
-function validateEnv() {
-  const requiredEnvVars = ["NEXT_PUBLIC_OPERATOR_ID", "OPERATOR_KEY"];
-  const missing = requiredEnvVars.filter(varName => !process.env[varName]);
-  
-  if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
-  }
-  
-  return {
-    operatorId: process.env.NEXT_PUBLIC_OPERATOR_ID || "",
-    operatorKey: process.env.OPERATOR_KEY || "",
-  };
-}
+// Governance agent EVM address (hardcoded as specified)
+const AGENT_EVM_ADDRESS = "0x00000000000000000000000000000000005d3c19";
 
 async function main() {
+  console.log("TRANSFERRING VAULT ADMIN TO AGENT");
+  console.log("==================================");
+  
+  console.log(`Agent EVM address: ${AGENT_EVM_ADDRESS}`);
+  
+  // Load deployment info
+  let deploymentInfo;
   try {
-    console.log("Starting admin transfer process...");
+    deploymentInfo = JSON.parse(fs.readFileSync("hardhat/deployment-info.json", "utf8"));
+    console.log("\nLoaded deployment info:");
+    console.log(`- Vault: ${deploymentInfo.vaultEvm}`);
+    console.log(`- Controller: ${deploymentInfo.controllerEvm}`);
+  } catch (error) {
+    console.error("Error loading deployment info:", error);
+    console.error("Make sure deployment-info.json exists in hardhat directory");
+    process.exit(1);
+  }
+  
+  // Connect to contracts
+  const [deployer] = await ethers.getSigners();
+  console.log(`\nUsing account: ${deployer.address}`);
+  
+  const IndexVault = await ethers.getContractFactory("IndexVault");
+  const vault = await IndexVault.attach(deploymentInfo.vaultEvm);
+  
+  try {
+    // Check current admin
+    const currentAdmin = await vault.admin();
+    console.log(`\nCurrent vault admin: ${currentAdmin}`);
     
-    // Validate environment
-    const { operatorId, operatorKey } = validateEnv();
-    console.log(`Operator ID: ${operatorId}`);
+    if (currentAdmin.toLowerCase() !== deployer.address.toLowerCase()) {
+      console.error(`❌ Account ${deployer.address} is not the admin of the vault (current admin: ${currentAdmin})`);
+      process.exit(1);
+    }
     
-    // Initialize Hedera client
-    const client = Client.forTestnet();
-    
-    // Set up client operator account
-    client.setOperator(
-      AccountId.fromString(operatorId),
-      PrivateKey.fromString(operatorKey)
-    );
-    
-    // Get deployment info
-    const deploymentInfo = getDeploymentInfo();
-    const controllerEvm = deploymentInfo.controllerEvm;
-    console.log(`Controller EVM address: ${controllerEvm}`);
-    
-    // Get controller info
-    const contractId = ContractId.fromEvmAddress(0, 0, controllerEvm);
-    
-    // First, check who the current admin is
-    const adminQuery = new ContractCallQuery()
-      .setContractId(contractId)
-      .setGas(100000)
-      .setFunction("ADMIN");
-    
-    const adminResult = await adminQuery.execute(client);
-    const adminBytes = adminResult.getAddress();
-    const adminAddress = `0x${Buffer.from(adminBytes).toString('hex')}`;
-    console.log(`Current admin address: ${adminAddress}`);
-    
-    // Get operator account as EVM address
-    const operatorNum = operatorId.split('.').pop() || "0";
-    const paddedOperatorNum = operatorNum.padStart(40, '0');
-    const operatorEvmAddress = `0x${paddedOperatorNum}`;
-    console.log(`Operator EVM address: ${operatorEvmAddress}`);
-    
-    // Check if operator is already admin
-    if (adminAddress.toLowerCase() === operatorEvmAddress.toLowerCase()) {
-      console.log("✅ Operator is already the admin of the controller, no need to transfer.");
+    if (currentAdmin.toLowerCase() === AGENT_EVM_ADDRESS.toLowerCase()) {
+      console.log("✅ Agent is already the admin. No transfer needed.");
       return;
     }
     
-    // Need to transfer admin rights - this will likely fail unless the current operator is the admin
-    console.log("\nAttempting to transfer admin rights to current operator...");
+    // Validate agent address
+    if (!ethers.isAddress(AGENT_EVM_ADDRESS)) {
+      console.error(`❌ Invalid agent EVM address: ${AGENT_EVM_ADDRESS}`);
+      process.exit(1);
+    }
     
-    // Note: The controller would need a function like updateAdmin or transferAdmin for this to work
-    console.log("❌ Cannot transfer admin rights automatically - the controller likely needs:");
-    console.log("1. A transferAdmin or updateAdmin function");
-    console.log("2. The current admin to call this function");
+    console.log(`\n🔄 Transferring admin from ${currentAdmin} to ${AGENT_EVM_ADDRESS}...`);
     
-    console.log("\nPossible solutions:");
-    console.log("1. Use the account that originally deployed the controller to create the token");
-    console.log("2. Update your .env.local file to use the admin account's credentials");
-    console.log("3. Redeploy the controller with the current operator as admin");
+    // Transfer admin
+    console.log("Sending updateAdmin transaction...");
+    const tx = await vault.updateAdmin(AGENT_EVM_ADDRESS, {
+      gasLimit: 150000,
+      gasPrice: ethers.parseUnits("600", "gwei")
+    });
+    
+    console.log(`Transaction sent: ${tx.hash}`);
+    console.log("Waiting for confirmation...");
+    
+    const receipt = await tx.wait();
+    console.log(`Transaction confirmed in block ${receipt.blockNumber}`);
+    
+    // Verify transfer
+    const newAdmin = await vault.admin();
+    console.log(`\nNew vault admin: ${newAdmin}`);
+    
+    if (newAdmin.toLowerCase() === AGENT_EVM_ADDRESS.toLowerCase()) {
+      console.log("\n✅ ADMIN TRANSFER SUCCESSFUL!");
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log(`✅ Agent (${AGENT_EVM_ADDRESS}) is now admin of IndexVault`);
+      console.log(`✅ Agent can now execute setComposition() calls`);
+      console.log(`✅ Minting functionality remains unaffected`);
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      
+      // Save transfer info
+      const transferInfo = {
+        timestamp: new Date().toISOString(),
+        previousAdmin: currentAdmin,
+        newAdmin: AGENT_EVM_ADDRESS,
+        vaultAddress: deploymentInfo.vaultEvm,
+        transactionHash: tx.hash,
+        blockNumber: receipt.blockNumber
+      };
+      
+      fs.writeFileSync("admin-transfer-info.json", JSON.stringify(transferInfo, null, 2));
+      console.log("\n📄 Transfer details saved to admin-transfer-info.json");
+      
+    } else {
+      console.error("\n❌ ADMIN TRANSFER FAILED!");
+      console.error(`Expected: ${AGENT_EVM_ADDRESS}`);
+      console.error(`Actual: ${newAdmin}`);
+      process.exit(1);
+    }
     
   } catch (error) {
-    console.error("Error in admin transfer process:", error);
+    console.error("❌ Error transferring admin:", error);
+    process.exit(1);
   }
 }
 

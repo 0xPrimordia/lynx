@@ -1,0 +1,499 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { VT323 } from "next/font/google";
+import { useDaoParameters } from '../../providers/DaoParametersProvider';
+import { LYNX_TOKENS, TOKEN_INFO, LynxTokenSymbol, getParameterValue } from '../../types';
+import { useWallet } from '../../hooks/useWallet';
+import { 
+  TopicMessageSubmitTransaction, 
+  TransactionId,
+  Client,
+  AccountId
+} from '@hashgraph/sdk';
+import { transactionToBase64String } from '@hashgraph/hedera-wallet-connect';
+import { toast } from 'sonner';
+
+const vt323 = VT323({ weight: "400", subsets: ["latin"] });
+
+interface TokenComposition {
+  symbol: LynxTokenSymbol;
+  name: string;
+  sector: string;
+  allocation: number;
+  maxSlippage: number;
+  maxSwapSize: number;
+}
+
+interface GovernanceVote {
+  type: 'PARAMETER_VOTE';
+  parameterPath: string;
+  newValue: any;
+  voterAccountId: string;
+  votingPower: number;
+  timestamp: Date;
+  txId?: string;
+  reason?: string;
+}
+
+export default function CompositionPage() {
+  const { parameters, isLoading, error } = useDaoParameters();
+  const { account, isConnected, connector: dAppConnector } = useWallet();
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [showVoteButton, setShowVoteButton] = useState<boolean>(false);
+  const [proposedChanges, setProposedChanges] = useState<{ [key: string]: number }>({});
+  const [votingPower, setVotingPower] = useState<number>(0);
+
+  // Get governance topic ID from environment
+  const governanceTopicId = process.env.NEXT_PUBLIC_GOVERNANCE_TOPIC_ID || '0.0.6110234';
+
+  // Map token symbols to their icon URLs
+  const getTokenIconUrl = (symbol: string): string => {
+    const tokenMap: Record<string, string> = {
+      'HBAR': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.15058.png',
+      'HSUITE': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.1055.png',
+      'SAUCERSWAP': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.1188.png',
+      'HTS': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.1062.png',
+      'HELI': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.1063.png',
+      'KARATE': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.1159.png',
+      'HASHPACK': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.1362.png',
+    };
+    
+    return tokenMap[symbol] || '/images/tokens/default.png';
+  };
+
+  const generateComposition = (): TokenComposition[] => {
+    if (!parameters) return [];
+
+    return LYNX_TOKENS.map(token => ({
+      symbol: token,
+      name: TOKEN_INFO[token].name,
+      sector: TOKEN_INFO[token].sector,
+      allocation: getParameterValue(parameters.treasury.weights[token]),
+      maxSlippage: getParameterValue(parameters.treasury.maxSlippage[token]),
+      maxSwapSize: getParameterValue(parameters.treasury.maxSwapSize[token])
+    }));
+  };
+
+  const generateAIRecommendation = (): { composition: TokenComposition[], reasoning: string } => {
+    if (!parameters) return { composition: [], reasoning: "" };
+
+    // Generate slight variations for AI recommendation
+    const aiComposition = LYNX_TOKENS.map(token => {
+      const currentWeight = getParameterValue(parameters.treasury.weights[token]);
+      // Add some variation (-2% to +2%)
+      const variation = (Math.random() - 0.5) * 4;
+      const newWeight = Math.max(5, Math.min(40, currentWeight + variation));
+      
+      return {
+        symbol: token,
+        name: TOKEN_INFO[token].name,
+        sector: TOKEN_INFO[token].sector,
+        allocation: Math.round(newWeight),
+        maxSlippage: getParameterValue(parameters.treasury.maxSlippage[token]),
+        maxSwapSize: getParameterValue(parameters.treasury.maxSwapSize[token])
+      };
+    });
+
+    // Normalize to 100%
+    const total = aiComposition.reduce((sum, token) => sum + token.allocation, 0);
+    aiComposition.forEach(token => {
+      token.allocation = Math.round((token.allocation / total) * 100);
+    });
+
+    const reasoning = "AI analysis suggests minor rebalancing based on recent market volatility and liquidity conditions. HBAR allocation may be adjusted due to network growth, while DeFi tokens show varying performance metrics.";
+
+    return { composition: aiComposition, reasoning };
+  };
+
+  const handleAllocationChange = (symbol: LynxTokenSymbol, newAllocation: number) => {
+    setProposedChanges(prev => ({
+      ...prev,
+      [symbol]: newAllocation
+    }));
+    setShowVoteButton(true);
+  };
+
+  // Mock function to get LYNX token balance for voting power
+  // In a real implementation, this would query the actual token balance
+  const fetchVotingPower = async (): Promise<number> => {
+    if (!isConnected || !account?.accountId) {
+      return 0;
+    }
+    
+    try {
+      // Mock voting power calculation - in reality this would query the user's LYNX balance
+      // For demo purposes, return a random value between 100-5000 LYNX
+      const mockVotingPower = Math.floor(Math.random() * 4900) + 100;
+      return mockVotingPower;
+    } catch (error) {
+      console.error('Error fetching voting power:', error);
+      return 0;
+    }
+  };
+
+  // Fetch voting power when wallet connects
+  useEffect(() => {
+    if (isConnected && account?.accountId) {
+      fetchVotingPower().then(setVotingPower);
+    } else {
+      setVotingPower(0);
+    }
+  }, [isConnected, account?.accountId]);
+
+  const handleVoteSubmit = async () => {
+    if (!isConnected || !account?.accountId) {
+      toast.error('Please connect your wallet to submit governance votes');
+      return;
+    }
+
+    if (Object.keys(proposedChanges).length === 0) {
+      toast.error('No changes to submit');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      toast.loading('Submitting governance votes to Hedera Consensus Service...');
+
+      // Create votes for each parameter change
+      const votes: GovernanceVote[] = [];
+      
+      for (const [symbol, newValue] of Object.entries(proposedChanges)) {
+        const vote: GovernanceVote = {
+          type: 'PARAMETER_VOTE',
+          parameterPath: `treasury.weights.${symbol}`,
+          newValue: newValue,
+          voterAccountId: account.accountId,
+          votingPower: votingPower,
+          timestamp: new Date(),
+          reason: `Proposed allocation change for ${symbol} to ${newValue}%`
+        };
+        votes.push(vote);
+      }
+
+      // Submit each vote as a separate message to the governance topic
+      const txIds: string[] = [];
+      
+      for (const vote of votes) {
+        try {
+          console.log('Submitting vote for parameter:', vote.parameterPath);
+          
+          // Create client for testnet
+          const client = Client.forTestnet();
+          
+          // Create topic message submission transaction
+          const voteMessage = JSON.stringify(vote, null, 2);
+          const transaction = new TopicMessageSubmitTransaction()
+            .setTopicId(governanceTopicId)
+            .setMessage(voteMessage)
+            .setTransactionId(TransactionId.generate(AccountId.fromString(String(account.accountId))))
+            .freezeWith(client);
+
+          // Convert to base64 for wallet submission
+          const txBase64 = transactionToBase64String(transaction);
+          
+          // Submit via wallet (using the pattern from the existing codebase)
+          if (!dAppConnector) {
+            throw new Error('Wallet connector not available');
+          }
+
+          const response = await dAppConnector.signAndExecuteTransaction({
+            signerAccountId: account.accountId,
+            transactionList: txBase64
+          });
+
+          const txId = response?.id || `topic-${governanceTopicId}-${Date.now()}`;
+          txIds.push(txId);
+          console.log(`Vote submitted for ${vote.parameterPath}, TX: ${txId}`);
+
+        } catch (voteError) {
+          console.error(`Error submitting vote for ${vote.parameterPath}:`, voteError);
+          toast.error(`Failed to submit vote for ${vote.parameterPath}`);
+        }
+      }
+
+      toast.dismiss();
+      
+      if (txIds.length > 0) {
+        toast.success(
+          `Successfully submitted ${txIds.length} governance vote(s) to HCS topic ${governanceTopicId}! ` +
+          `Transaction IDs: ${txIds.join(', ')}`
+        );
+        
+        // Reset the proposed changes
+        setShowVoteButton(false);
+        setProposedChanges({});
+        
+        // Show summary
+        console.log('Governance votes submitted:', {
+          voterAccountId: account.accountId,
+          votingPower: votingPower,
+          changes: proposedChanges,
+          transactionIds: txIds,
+          topicId: governanceTopicId,
+          message: 'Votes submitted via Hedera Consensus Service'
+        });
+      } else {
+        toast.error('No votes were successfully submitted');
+      }
+
+    } catch (error: unknown) {
+      console.error('Error submitting governance votes:', error);
+      toast.dismiss();
+      toast.error(`Failed to submit governance votes: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const TokenImage = ({ symbol, size = 80 }: { symbol: string; size?: number }) => {
+    const [imageError, setImageError] = useState(false);
+    
+    if (imageError) {
+      return (
+        <div 
+          className="rounded-full bg-gray-700 flex items-center justify-center"
+          style={{ width: size, height: size }}
+        >
+          <span className="text-white font-medium text-sm">
+            {symbol.substring(0, 2)}
+          </span>
+        </div>
+      );
+    }
+    
+    return (
+      <Image
+        src={getTokenIconUrl(symbol)}
+        alt={symbol}
+        width={size}
+        height={size}
+        className="object-contain"
+        onError={() => setImageError(true)}
+      />
+    );
+  };
+
+  const renderTokenCard = (token: TokenComposition, isEditable: boolean = false) => {
+    const currentAllocation = proposedChanges[token.symbol] ?? token.allocation;
+    
+    return (
+      <div 
+        key={token.symbol} 
+        className="bg-gray-800 rounded-lg p-6 mb-6 flex flex-col items-center justify-between w-[200px] h-[320px]"
+      >
+        <div className="flex flex-col items-center">
+          <div className="rounded-full p-2 mb-2">
+            <TokenImage symbol={token.symbol} />
+          </div>
+          <div className="text-center">
+            <div className="text-white font-medium text-lg">{token.symbol}</div>
+            <div className="text-sm text-gray-400 mt-1">{token.name}</div>
+          </div>
+        </div>
+        
+        <div className="text-center">
+          <div className="text-xs text-gray-500 mb-1">{token.sector}</div>
+        </div>
+        
+        <div className="w-full space-y-3">
+          <div className="text-center">
+            {isEditable ? (
+              <div>
+                <input
+                  type="range"
+                  min="5"
+                  max="40"
+                  value={currentAllocation}
+                  onChange={(e) => handleAllocationChange(token.symbol, parseInt(e.target.value))}
+                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <div className="text-xl font-bold text-white mt-2">{currentAllocation}%</div>
+              </div>
+            ) : (
+              <div className="text-xl font-bold text-white">{token.allocation}%</div>
+            )}
+            <div className="text-xs text-gray-400">Allocation</div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <div className="text-gray-400">Max Slippage</div>
+              <div className="text-white">{token.maxSlippage}%</div>
+            </div>
+            <div>
+              <div className="text-gray-400">Max Swap</div>
+              <div className="text-white">${(token.maxSwapSize / 1000)}K</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-900/30 border border-red-800 rounded-lg p-4 mx-auto my-8 max-w-2xl text-white">
+        {error}
+      </div>
+    );
+  }
+
+  if (!parameters) {
+    return (
+      <div className="text-center py-12">
+        <h2 className={`text-2xl mb-4 ${vt323.className}`}>Loading Composition Data</h2>
+        <p className="text-gray-400">Fetching treasury parameters...</p>
+      </div>
+    );
+  }
+
+  const currentComposition = generateComposition();
+  const aiRecommendation = generateAIRecommendation();
+
+  return (
+    <div className="p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className={`text-3xl font-bold text-white mb-2 ${vt323.className}`}>
+            Treasury Composition
+          </h1>
+          <p className="text-gray-400">
+            Monitor and adjust token allocation weights for the Lynx treasury
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8">
+          {/* AI Recommended Composition */}
+          <div className="mb-8">
+            <h2 className={`text-xl text-white mb-6 ${vt323.className}`}>AI Recommended Allocation</h2>
+            
+            <div className="flex flex-wrap gap-4 justify-center">
+              {aiRecommendation.composition.map(token => (
+                renderTokenCard(token, false)
+              ))}
+            </div>
+            
+            <div className="mt-6 bg-blue-900/30 border border-blue-800 p-4 rounded-lg">
+              <h3 className="text-lg font-medium text-white mb-2">AI Reasoning</h3>
+              <p className="text-gray-300">
+                {aiRecommendation.reasoning}
+              </p>
+            </div>
+          </div>
+          
+          {/* Current Composition */}
+          <div className="mb-8">
+            <h2 className={`text-xl text-white mb-6 ${vt323.className}`}>Current Allocation (Editable)</h2>
+            
+            <div className="flex flex-wrap gap-4 justify-center">
+              {currentComposition.map(token => (
+                renderTokenCard(token, true)
+              ))}
+            </div>
+            
+            {showVoteButton && (
+              <div className="flex justify-center mt-6">
+                <button 
+                  onClick={handleVoteSubmit}
+                  disabled={isSubmitting || !isConnected}
+                  className={`border border-white text-white py-3 px-8 rounded-md text-sm font-medium hover:bg-white/10 transition-colors ${
+                    (isSubmitting || !isConnected) ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {isSubmitting 
+                    ? 'Submitting to HCS...' 
+                    : !isConnected 
+                    ? 'Connect Wallet to Vote' 
+                    : 'Submit Changes for Governance Vote'
+                  }
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {/* Wallet & Voting Status */}
+          {isConnected && account && (
+            <div className="bg-gray-800 rounded-lg p-6 mb-6">
+              <h3 className={`text-lg font-medium text-white mb-4 ${vt323.className}`}>
+                Voting Status
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <div className="text-sm text-gray-400">Connected Account</div>
+                  <div className="text-lg text-white font-mono">{account.accountId}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400">Voting Power</div>
+                  <div className="text-xl text-white">{votingPower.toLocaleString()} LYNX</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400">Network</div>
+                  <div className="text-lg text-white capitalize">{account.network}</div>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-700">
+                <div className="text-sm text-gray-400">Governance Topic</div>
+                <div className="text-sm text-white font-mono">{governanceTopicId}</div>
+              </div>
+            </div>
+          )}
+
+          {!isConnected && (
+            <div className="bg-yellow-900/30 border border-yellow-800 rounded-lg p-6 mb-6">
+              <h3 className="text-lg font-medium text-yellow-400 mb-2">Connect Wallet to Vote</h3>
+              <p className="text-yellow-300">
+                Connect your wallet to submit governance votes for parameter changes.
+              </p>
+              <div className="mt-3 text-sm text-yellow-200">
+                Votes will be submitted to HCS topic: <code className="bg-yellow-800/30 px-1 rounded">{governanceTopicId}</code>
+              </div>
+            </div>
+          )}
+
+          {/* Summary Stats */}
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h3 className={`text-lg font-medium text-white mb-4 ${vt323.className}`}>
+              Allocation Summary
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <div className="text-sm text-gray-400">Total Tokens</div>
+                <div className="text-xl text-white">{LYNX_TOKENS.length}</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-400">Largest Allocation</div>
+                <div className="text-xl text-white">
+                  {Math.max(...currentComposition.map(t => proposedChanges[t.symbol] ?? t.allocation))}%
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-400">Smallest Allocation</div>
+                <div className="text-xl text-white">
+                  {Math.min(...currentComposition.map(t => proposedChanges[t.symbol] ?? t.allocation))}%
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-400">Total Allocation</div>
+                <div className="text-xl text-white">
+                  {currentComposition.reduce((sum, t) => sum + (proposedChanges[t.symbol] ?? t.allocation), 0)}%
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

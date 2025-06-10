@@ -1,8 +1,0 @@
-{
-  "vaultId": "0.0.fe4af8e846408a64e581479a32ead589e2c350fd",
-  "controllerId": "0.0.48de035eeeffdec80429af864937039237379e64",
-  "vaultEvm": "0xFE4af8e846408A64E581479a32EAd589E2C350fd",
-  "controllerEvm": "0x48De035EeEffdec80429aF864937039237379E64",
-  "tokenAddress": "0x0000000000000000000000000000000000000000",
-  "deploymentTimestamp": "2024-05-05T13:20:00.000Z"
-}

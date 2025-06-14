@@ -2,6 +2,9 @@
   "name": "lynx",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "sharp": "0.32.6"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -55,6 +58,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
+    "sharp": "0.32.6",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.1.0",
     "uuid": "^11.1.0"

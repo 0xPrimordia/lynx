@@ -1,4 +1,4 @@
-import { AccountId, ContractExecuteTransaction, ContractFunctionParameters, ContractId, Hbar, AccountBalanceQuery, AccountInfoQuery, TokenId, TransactionId } from "@hashgraph/sdk";
+import { AccountId, ContractExecuteTransaction, ContractFunctionParameters, ContractId, Hbar, TransactionId } from "@hashgraph/sdk";
 import { DAppConnector } from "@hashgraph/hedera-wallet-connect";
 import { transactionToBase64String } from "@hashgraph/hedera-wallet-connect";
 import { TOKEN_IDS } from "../config/environment";
@@ -20,8 +20,6 @@ const accountIdToEvmAddress = (accountId: string): string => {
 
 // Constants for the Lynx minter contract - REPLACE THESE WITH YOUR ACTUAL TOKEN IDs
 const LYNX_TOKEN_ID = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.3059001";
-const SAUCE_TOKEN_ID = process.env.NEXT_PUBLIC_SAUCE_TOKEN_ID || "0.0.1183558";
-const CLXY_TOKEN_ID = process.env.NEXT_PUBLIC_CLXY_TOKEN_ID || "0.0.1318237";
 const LYNX_CONTRACT_ID = process.env.NEXT_PUBLIC_LYNX_CONTRACT_ID || "0.0.5758264";
 
 // Default ratios to use when we can't get values from the contract

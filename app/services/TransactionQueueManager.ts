@@ -1,13 +1,19 @@
-import { AccountId } from "@hashgraph/sdk";
 import { DAppConnector } from "@hashgraph/hedera-wallet-connect";
+
+export interface TransactionResult {
+  txId?: string;
+  transactionId?: string;
+  status?: string;
+  [key: string]: unknown;
+}
 
 export interface TransactionRequest {
   id: string;
   name: string;
   tokenName?: string;
-  createTransaction: () => Promise<any>;
-  onSuccess?: (result: any) => void;
-  onError?: (error: any) => void;
+  createTransaction: () => Promise<TransactionResult>;
+  onSuccess?: (result: TransactionResult) => void;
+  onError?: (error: Error) => void;
   retryCount?: number;
   maxRetries?: number;
   delayMs?: number;
@@ -25,7 +31,7 @@ export type TransactionStatus = 'pending' | 'processing' | 'completed' | 'failed
 export interface QueuedTransaction extends TransactionRequest {
   status: TransactionStatus;
   error?: Error;
-  result?: any;
+  result?: TransactionResult;
   attempts: number;
   timestamp: number;
 }
@@ -42,7 +48,6 @@ export class TransactionQueueManager {
   private connector: DAppConnector | null = null;
   private accountId: string | null = null;
   private defaultDelayMs: number = 500;
-  private maxConcurrent: number = 1; // Currently hardcoded to 1 for sequential processing
   private defaultMaxRetries: number = 2;
   private processingPromise: Promise<void> | null = null;
   
@@ -189,10 +194,10 @@ export class TransactionQueueManager {
         // Process the transaction
         await this.processTransaction(nextTx);
         
-        // After processing, the status might have been changed back to pending for retry
-        // We need to check the current status
-        const currentStatus = nextTx.status;
-        if (currentStatus === 'pending') {
+        // After processing, check if the transaction was marked for retry
+        // The processTransaction method may set status back to 'pending' for retry
+        // TypeScript doesn't realize this, so we use type assertion
+        if ((nextTx.status as TransactionStatus) === 'pending') {
           // Transaction is queued for retry, continue to next iteration
           continue;
         }
@@ -293,7 +298,7 @@ export class TransactionQueueManager {
         
         if (tx.onError) {
           console.log(`[TRACE] Calling onError callback for ${tx.id}`);
-          tx.onError?.(error);
+          tx.onError?.(typedError);
         }
       }
     }

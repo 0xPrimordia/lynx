@@ -207,7 +207,7 @@ export class HCSService {
         .setMessage(messageBytes);
 
       const response = await transaction.execute(this.client);
-      const receipt = await response.getReceipt(this.client);
+      await response.getReceipt(this.client);
 
       return response.transactionId.toString();
     } catch (error) {

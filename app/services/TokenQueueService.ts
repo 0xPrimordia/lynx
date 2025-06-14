@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { DAppConnector } from '@hashgraph/hedera-wallet-connect';
-import { TransactionQueueManager, QueuedTransaction, QueueStats } from './TransactionQueueManager';
+import { TransactionQueueManager, QueuedTransaction, QueueStats, TransactionResult } from './TransactionQueueManager';
 import { TransactionService } from './transactionService';
 import { checkTokenAssociation, associateToken } from '../actions/tokenActions';
 import { TOKEN_IDS, CONTRACT_IDS } from '../config/environment';
@@ -49,6 +49,13 @@ export interface MintLynxResult {
   mintId: string;
 }
 
+export interface TokenConfig {
+  tokenId: string;
+  contractId: string;
+  delay: number;
+  maxRetries: number;
+}
+
 /**
  * Token Queue Service
  * 
@@ -87,7 +94,7 @@ export class TokenQueueService {
   /**
    * Get token configuration by token type/name
    */
-  public getTokenConfig(tokenType: string): any {
+  public getTokenConfig(tokenType: string): TokenConfig | null {
     const type = tokenType.toUpperCase() as keyof typeof TOKEN_CONFIG;
     return TOKEN_CONFIG[type] || null;
   }
@@ -119,12 +126,12 @@ export class TokenQueueService {
     });
     
     // Define success and error callbacks
-    const handleSuccess = (result: any) => {
+    const handleSuccess = (result: { txId?: string; transactionId?: string }) => {
       console.log(`[TRACE] ${tokenType} approval completed successfully:`, result);
       onSuccess?.(result.txId || result.transactionId || 'unknown');
     };
     
-    const handleError = (error: any) => {
+    const handleError = (error: Error) => {
       console.error(`[TRACE] ${tokenType} approval failed:`, error);
       onError?.(error instanceof Error ? error : new Error(String(error)));
     };
@@ -159,7 +166,12 @@ export class TokenQueueService {
           }
           
           console.log(`[TRACE] ${tokenName} approval transaction completed successfully`);
-          return result;
+          // Convert TransactionResponse to TransactionResult
+          return {
+            txId: result.txId,
+            transactionId: result.txId,
+            status: result.status
+          } as TransactionResult;
         } catch (error) {
           console.error(`[TRACE] Exception in TransactionService.approveToken:`, error);
           throw error;
@@ -318,18 +330,23 @@ export class TokenQueueService {
             throw new Error(`CLXY approval not completed - status: ${clxyApproval.status}`);
           }
           
-          console.log(`[QUEUE DEBUG] Approvals verified, proceeding with REAL LYNX mint transaction...`);
+          console.log(`[QUEUE DEBUG] Both approvals completed successfully, executing mint`);
           
-          // Use the transaction service to create and execute the mint
-          const result = await this.transactionService!.mintLynx(lynxAmount);
+          // Execute the mint transaction
+          const mintResult = await this.transactionService!.mintLynx(lynxAmount);
           
-          if (result.status === 'error') {
-            console.error(`[QUEUE DEBUG] LYNX mint transaction failed:`, result.error);
-            throw result.error || new Error('LYNX mint failed');
+          if (mintResult.status === 'error') {
+            console.error(`[QUEUE DEBUG] Minting failed:`, mintResult.error);
+            throw mintResult.error || new Error('LYNX minting failed');
           }
           
-          console.log(`[QUEUE DEBUG] LYNX mint transaction completed:`, result);
-          return result;
+          console.log(`[QUEUE DEBUG] LYNX minting completed successfully`);
+          // Convert TransactionResponse to TransactionResult
+          return {
+            txId: mintResult.txId || 'unknown',
+            transactionId: mintResult.txId || 'unknown',
+            status: mintResult.status
+          } as TransactionResult;
         },
         onSuccess: (result) => {
           console.log(`[QUEUE DEBUG] Mint of ${lynxAmount} LYNX successful:`, result);

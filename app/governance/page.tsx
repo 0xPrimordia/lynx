@@ -38,14 +38,11 @@ export default function GovernancePage() {
   };
 
   // Helper function to extract values from potentially complex parameter objects
-  const extractValue = (param: any): any => {
-    if (typeof param === 'object' && param !== null && param.value !== undefined) {
-      return param.value;
+  const extractValue = (param: unknown): string | number => {
+    if (typeof param === 'object' && param !== null && 'value' in param) {
+      return (param as { value: string | number }).value;
     }
-    if (typeof param === 'object' && param !== null && Object.keys(param).includes('value')) {
-      return param.value;
-    }
-    return param;
+    return param as string | number;
   };
 
   if (isLoading) {
@@ -83,7 +80,7 @@ export default function GovernancePage() {
     );
   }
 
-  const { rebalancing, treasury, fees, governance, metadata } = parameters;
+  const { rebalancing, treasury, governance, metadata } = parameters;
 
   // Mock some state data for display since we don't have actual state yet
   const mockState = {
@@ -156,7 +153,7 @@ export default function GovernancePage() {
               {extractValue(governance.quorumPercentage)}%
             </p>
             <p className="text-sm text-gray-400 mt-1">
-              Min: {formatNumber(extractValue(governance.proposalThreshold))} LYNX
+              Min: {formatNumber(Number(extractValue(governance.proposalThreshold)))} LYNX
             </p>
           </div>
 
@@ -204,7 +201,7 @@ export default function GovernancePage() {
                   <p className="text-sm mt-1">New proposals will appear here</p>
                 </div>
               ) : (
-                mockState.stakeholderVotingRecords.slice(0, 5).map((record: any, index: number) => (
+                mockState.stakeholderVotingRecords.slice(0, 5).map((record: { proposalId: string; vote: string; votingPower: number; timestamp: string }, index: number) => (
                   <div key={index} className="border border-gray-700 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-medium text-white">

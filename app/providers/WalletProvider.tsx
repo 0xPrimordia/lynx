@@ -185,7 +185,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       // No need to explicitly disconnect on unmount - this would break persistence
       // Let WalletConnect handle its own session state
     };
-  }, []); // Empty dependency array - only run once on mount
+  }, [sessionTopic]); // Include sessionTopic in dependency array
 
   // Properly handle page reloads - we don't need to disconnect
   // WalletConnect is designed to maintain session across page reloads

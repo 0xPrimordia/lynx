@@ -35,6 +35,68 @@ export function DaoParametersProvider({ children, autoConnect = true }: DaoParam
   const [recentMessages, setRecentMessages] = useState<HCSMessage[]>([]);
   const [hcsService] = useState<HCSService>(() => getHCSService());
 
+  const createDefaultParameters = useCallback((): DaoParameters => {
+    return {
+      rebalancing: {
+        frequencyHours: 24, // Daily rebalancing
+        thresholds: {
+          normal: 10,    // 10% deviation triggers normal rebalance
+          emergency: 20  // 20% deviation triggers emergency rebalance
+        },
+        cooldownPeriods: {
+          normal: 48,    // 48 hour cooldown for normal rebalancing
+          emergency: 12  // 12 hour cooldown for emergency rebalancing
+        }
+      },
+      treasury: {
+        weights: {
+          HBAR: 30,      // 30% allocation to HBAR
+          HSUITE: 15,    // 15% allocation to HSUITE
+          SAUCERSWAP: 15, // 15% allocation to SAUCERSWAP
+          HTS: 10,       // 10% allocation to HTS
+          HELI: 10,      // 10% allocation to HELI
+          KARATE: 10,    // 10% allocation to KARATE
+          HASHPACK: 10   // 10% allocation to HASHPACK
+        },
+        maxSlippage: {
+          HBAR: 1.0,      // 1% max slippage for HBAR
+          HSUITE: 3.0,    // 3% max slippage for HSUITE
+          SAUCERSWAP: 3.0, // 3% max slippage for SAUCERSWAP
+          HTS: 3.0,       // 3% max slippage for HTS
+          HELI: 3.0,      // 3% max slippage for HELI
+          KARATE: 3.0,    // 3% max slippage for KARATE
+          HASHPACK: 3.0   // 3% max slippage for HASHPACK
+        },
+        maxSwapSize: {
+          HBAR: 1000000,    // $1M max swap size for HBAR
+          HSUITE: 250000,   // $250K max swap size for HSUITE
+          SAUCERSWAP: 250000, // $250K max swap size for SAUCERSWAP
+          HTS: 100000,      // $100K max swap size for HTS
+          HELI: 100000,     // $100K max swap size for HELI
+          KARATE: 100000,   // $100K max swap size for KARATE
+          HASHPACK: 100000  // $100K max swap size for HASHPACK
+        }
+      },
+      fees: {
+        mintingFee: 0.3,     // 0.3% minting fee
+        burningFee: 0.3,     // 0.3% burning fee
+        operationalFee: 0.1  // 0.1% operational fee
+      },
+      governance: {
+        quorumPercentage: 20,   // 20% quorum required
+        votingPeriodHours: 72,  // 72 hour voting period
+        proposalThreshold: 1000 // 1000 LYNX required to create proposal
+      },
+      metadata: {
+        version: "1.0.0",
+        lastUpdated: new Date().toISOString(),
+        updatedBy: "system",
+        networkState: "testnet",
+        topicId: "0.0.6110234"
+      }
+    };
+  }, []);
+
   // Transform API response to match frontend expectations
   const transformApiParameters = (apiParams: Record<string, unknown>): DaoParameters => {
 
@@ -122,76 +184,9 @@ export function DaoParametersProvider({ children, autoConnect = true }: DaoParam
     };
 
     loadParameters();
-  }, [hcsService]);
+  }, [hcsService, createDefaultParameters]);
 
-  // Auto-connect on mount if enabled
-  useEffect(() => {
-    if (autoConnect && !isConnected) {
-      subscribeToUpdates().catch(console.error);
-    }
-  }, [autoConnect, isConnected]);
-
-  const createDefaultParameters = useCallback((): DaoParameters => {
-    return {
-      rebalancing: {
-        frequencyHours: 24, // Daily rebalancing
-        thresholds: {
-          normal: 10,    // 10% deviation triggers normal rebalance
-          emergency: 20  // 20% deviation triggers emergency rebalance
-        },
-        cooldownPeriods: {
-          normal: 48,    // 48 hour cooldown for normal rebalancing
-          emergency: 12  // 12 hour cooldown for emergency rebalancing
-        }
-      },
-      treasury: {
-        weights: {
-          HBAR: 30,      // 30% allocation to HBAR
-          HSUITE: 15,    // 15% allocation to HSUITE
-          SAUCERSWAP: 15, // 15% allocation to SAUCERSWAP
-          HTS: 10,       // 10% allocation to HTS
-          HELI: 10,      // 10% allocation to HELI
-          KARATE: 10,    // 10% allocation to KARATE
-          HASHPACK: 10   // 10% allocation to HASHPACK
-        },
-        maxSlippage: {
-          HBAR: 1.0,      // 1% max slippage for HBAR
-          HSUITE: 3.0,    // 3% max slippage for HSUITE
-          SAUCERSWAP: 3.0, // 3% max slippage for SAUCERSWAP
-          HTS: 3.0,       // 3% max slippage for HTS
-          HELI: 3.0,      // 3% max slippage for HELI
-          KARATE: 3.0,    // 3% max slippage for KARATE
-          HASHPACK: 3.0   // 3% max slippage for HASHPACK
-        },
-        maxSwapSize: {
-          HBAR: 1000000,    // $1M max swap size for HBAR
-          HSUITE: 250000,   // $250K max swap size for HSUITE
-          SAUCERSWAP: 250000, // $250K max swap size for SAUCERSWAP
-          HTS: 100000,      // $100K max swap size for HTS
-          HELI: 100000,     // $100K max swap size for HELI
-          KARATE: 100000,   // $100K max swap size for KARATE
-          HASHPACK: 100000  // $100K max swap size for HASHPACK
-        }
-      },
-      fees: {
-        mintingFee: 0.3,     // 0.3% minting fee
-        burningFee: 0.3,     // 0.3% burning fee
-        operationalFee: 0.1  // 0.1% operational fee
-      },
-      governance: {
-        quorumPercentage: 20,   // 20% quorum required
-        votingPeriodHours: 72,  // 72 hour voting period
-        proposalThreshold: 1000 // 1000 LYNX required to create proposal
-      },
-      metadata: {
-        version: "1.0.0",
-        lastUpdated: new Date().toISOString(),
-        updatedBy: "system",
-        networkState: "testnet",
-        topicId: "0.0.6110234"
-      }
-    };
-  }, []);
+  // Auto-connect on mount if enabled (moved after subscribeToUpdates definition)
 
   const handleHCSMessage = useCallback((message: HCSMessage) => {
     console.log('Received HCS message:', message);
@@ -234,6 +229,13 @@ export function DaoParametersProvider({ children, autoConnect = true }: DaoParam
       setIsLoading(false);
     }
   }, [isConnected, hcsService, handleHCSMessage, handleParametersUpdate]);
+
+  // Auto-connect on mount if enabled
+  useEffect(() => {
+    if (autoConnect && !isConnected) {
+      subscribeToUpdates().catch(console.error);
+    }
+  }, [autoConnect, isConnected, subscribeToUpdates]);
 
   const unsubscribe = useCallback(async () => {
     if (!isConnected) return;

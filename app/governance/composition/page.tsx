@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { VT323 } from "next/font/google";
 import { useDaoParameters } from '../../providers/DaoParametersProvider';
@@ -29,7 +29,7 @@ interface TokenComposition {
 interface GovernanceVote {
   type: 'PARAMETER_VOTE';
   parameterPath: string;
-  newValue: any;
+  newValue: number;
   voterAccountId: string;
   votingPower: number;
   timestamp: Date;
@@ -117,7 +117,7 @@ export default function CompositionPage() {
 
   // Mock function to get LYNX token balance for voting power
   // In a real implementation, this would query the actual token balance
-  const fetchVotingPower = async (): Promise<number> => {
+  const fetchVotingPower = useCallback(async (): Promise<number> => {
     if (!isConnected || !account?.accountId) {
       return 0;
     }
@@ -131,7 +131,7 @@ export default function CompositionPage() {
       console.error('Error fetching voting power:', error);
       return 0;
     }
-  };
+  }, [isConnected, account?.accountId]);
 
   // Fetch voting power when wallet connects
   useEffect(() => {
@@ -140,7 +140,7 @@ export default function CompositionPage() {
     } else {
       setVotingPower(0);
     }
-  }, [isConnected, account?.accountId]);
+  }, [isConnected, account?.accountId, fetchVotingPower]);
 
   const handleVoteSubmit = async () => {
     if (!isConnected || !account?.accountId) {
@@ -165,7 +165,7 @@ export default function CompositionPage() {
           type: 'PARAMETER_VOTE',
           parameterPath: `treasury.weights.${symbol}`,
           newValue: newValue,
-          voterAccountId: account.accountId,
+          voterAccountId: String(account.accountId),
           votingPower: votingPower,
           timestamp: new Date(),
           reason: `Proposed allocation change for ${symbol} to ${newValue}%`
@@ -200,11 +200,11 @@ export default function CompositionPage() {
           }
 
           const response = await dAppConnector.signAndExecuteTransaction({
-            signerAccountId: account.accountId,
+            signerAccountId: String(account.accountId),
             transactionList: txBase64
           });
 
-          const txId = response?.id || `topic-${governanceTopicId}-${Date.now()}`;
+          const txId = String(response?.id) || `topic-${governanceTopicId}-${Date.now()}`;
           txIds.push(txId);
           console.log(`Vote submitted for ${vote.parameterPath}, TX: ${txId}`);
 
@@ -228,7 +228,7 @@ export default function CompositionPage() {
         
         // Show summary
         console.log('Governance votes submitted:', {
-          voterAccountId: account.accountId,
+          voterAccountId: String(account.accountId),
           votingPower: votingPower,
           changes: proposedChanges,
           transactionIds: txIds,

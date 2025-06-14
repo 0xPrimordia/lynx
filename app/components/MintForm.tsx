@@ -8,25 +8,14 @@ import { Card, CardBody, CardHeader, CardFooter } from '@nextui-org/card';
 import { Input } from '@nextui-org/input';
 import { Progress } from '@nextui-org/progress';
 import { Spinner } from '@nextui-org/spinner';
-import { Tooltip } from '@nextui-org/tooltip';
-
-// Add type for mint parameters
-interface MintParams {
-  lynxAmount: number;
-  onSuccess: (txId: string) => void;
-  onError: (error: Error) => void;
-}
-
 export function MintForm() {
   const { toast } = useToast();
-  const { tokenBalances, requiredTokens, calculateRequiredTokens } = useTokens();
+  const { tokenBalances, calculateRequiredTokens } = useTokens();
   const { 
-    queueTokenApproval,
     mintLynx,
     getTransactionStatus, 
     queueStats,
-    isProcessing,
-    getTokenRatios
+    isProcessing
   } = useTokenQueue();
   const { isConnected } = useWallet();
   

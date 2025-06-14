@@ -2,18 +2,30 @@
 
 import { createContext, useContext } from 'react';
 
-// Mock Supabase client
+// Mock Supabase client interfaces
+interface SupabaseQueryBuilder {
+  select: () => { data: unknown[]; error: null };
+  insert: () => { data: unknown[]; error: null };
+  update: () => { data: unknown[]; error: null };
+  delete: () => { data: unknown[]; error: null };
+}
+
+interface SupabaseAuthResponse {
+  data: { user: null };
+  error: null;
+}
+
 interface SupabaseClient {
-  from: (table: string) => any;
+  from: (tableName: string) => SupabaseQueryBuilder;
   auth: {
-    getUser: () => Promise<any>;
-    signIn: (credentials: any) => Promise<any>;
-    signOut: () => Promise<any>;
+    getUser: () => Promise<SupabaseAuthResponse>;
+    signIn: (userCredentials: { email: string; password: string }) => Promise<SupabaseAuthResponse>;
+    signOut: () => Promise<{ error: null }>;
   };
 }
 
 const mockSupabase: SupabaseClient = {
-  from: (table: string) => ({
+  from: () => ({
     select: () => ({ data: [], error: null }),
     insert: () => ({ data: [], error: null }),
     update: () => ({ data: [], error: null }),
@@ -21,7 +33,7 @@ const mockSupabase: SupabaseClient = {
   }),
   auth: {
     getUser: async () => ({ data: { user: null }, error: null }),
-    signIn: async (credentials: any) => ({ data: { user: null }, error: null }),
+    signIn: async () => ({ data: { user: null }, error: null }),
     signOut: async () => ({ error: null })
   }
 };

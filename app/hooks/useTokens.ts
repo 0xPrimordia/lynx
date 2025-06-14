@@ -41,7 +41,6 @@ export interface SaucerSwapContextType {
 // Actual implementation of useTokens hook
 import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '../providers/WalletProvider';
-import { TokenService } from '../services/tokenService';
 
 // Token IDs from environment variables or defaults
 const LYNX_TOKEN_ID = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.3059001";
@@ -111,13 +110,13 @@ export function useTokens(): UseTokensResult {
     CLXY: '0',
     LYNX: '0'
   });
-  const [tokenPrices, setTokenPrices] = useState<TokenPrices>({
+  const [tokenPrices] = useState<TokenPrices>({
     HBAR: 0.065,
     SAUCE: 0.01,
     CLXY: 0.02,
     LYNX: 0.03
   });
-  const [requiredTokens, setRequiredTokens] = useState<RequiredTokens>({
+  const [requiredTokens] = useState<RequiredTokens>({
     HBAR: 0,
     SAUCE: 0,
     CLXY: 0

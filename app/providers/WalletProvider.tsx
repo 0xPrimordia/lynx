@@ -13,8 +13,6 @@ interface WalletContextProps {
   accountId: string | null;
   connectWallet: () => Promise<string | null>;
   disconnectWallet: () => Promise<void>;
-  isConnecting: boolean;
-  connectionError: string | null;
 }
 
 export const WalletContext = createContext<WalletContextProps>({
@@ -24,8 +22,6 @@ export const WalletContext = createContext<WalletContextProps>({
   accountId: null,
   connectWallet: async () => null,
   disconnectWallet: async () => {},
-  isConnecting: false,
-  connectionError: null,
 });
 
 export const useWallet = () => useContext(WalletContext);
@@ -45,8 +41,6 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [accountId, setAccountId] = useState<string | null>(null);
   const [sessionTopic, setSessionTopic] = useState<string | null>(null);
   const initialized = React.useRef(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
   
   useEffect(() => {
     const initWalletConnect = async () => {
@@ -303,8 +297,6 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         accountId,
         connectWallet,
         disconnectWallet,
-        isConnecting,
-        connectionError,
       }}
     >
       {children}

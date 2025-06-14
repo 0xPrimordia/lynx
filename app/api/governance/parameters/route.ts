@@ -1,8 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { DaoParameters, createDefaultDaoParameters } from '../../../types';
-
-// Force Node.js runtime to avoid edge runtime limitations
-export const runtime = 'nodejs';
+import { NextResponse } from 'next/server';
+import { createDefaultDaoParameters } from '../../../types';
 
 interface MirrorNodeMessage {
   consensus_timestamp: string;
@@ -16,13 +13,9 @@ interface MirrorNodeResponse {
   messages: MirrorNodeMessage[];
 }
 
-interface HCS10Message {
-  p: string;
-  op: string;
-  data: string;
-}
 
-export async function GET(request: NextRequest) {
+
+export async function GET(): Promise<NextResponse> {
   try {
     const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
     const governanceTopicId = process.env.NEXT_PUBLIC_GOVERNANCE_TOPIC_ID || '0.0.6110234';
@@ -104,7 +97,7 @@ export async function GET(request: NextRequest) {
             });
             
             // Handle Blob content properly
-            let actualContent: any = null;
+            let actualContent: unknown = null;
             if (referencedContent instanceof Blob) {
               console.log('API: Reading Blob content...');
               const blobText = await referencedContent.text();
@@ -122,28 +115,31 @@ export async function GET(request: NextRequest) {
               actualContent = referencedContent;
             }
             
+            // Check if this contains DAO parameters (nested in data field for HCS-10 format)
+            const contentObj = actualContent as Record<string, unknown>;
+            const dataObj = contentObj?.data as Record<string, unknown>;
+            
             console.log('API: Final content structure:', {
               hasActualContent: !!actualContent,
               actualContentType: typeof actualContent,
               actualContentKeys: typeof actualContent === 'object' ? Object.keys(actualContent || {}) : 'Not an object',
-              hasData: !!(actualContent?.data),
-              dataKeys: actualContent?.data ? Object.keys(actualContent.data) : 'No data field',
-              hasParameters: !!(actualContent?.data?.parameters),
-              hasRebalancing: !!(actualContent?.data?.parameters?.rebalancing),
-              hasTreasury: !!(actualContent?.data?.parameters?.treasury)
+              hasData: !!(contentObj?.data),
+              dataKeys: dataObj ? Object.keys(dataObj) : 'No data field',
+              hasParameters: !!(dataObj?.parameters),
+              hasRebalancing: !!(dataObj?.parameters as Record<string, unknown>)?.rebalancing,
+              hasTreasury: !!(dataObj?.parameters as Record<string, unknown>)?.treasury
             });
-            
-            // Check if this contains DAO parameters (nested in data field for HCS-10 format)
-            const daoData = actualContent?.data?.parameters || actualContent?.data;
-            if (daoData && (daoData.parameters || daoData.rebalancing || daoData.treasury)) {
+            const daoData = dataObj?.parameters || dataObj;
+            const daoDataObj = daoData as Record<string, unknown>;
+            if (daoData && (daoDataObj.parameters || daoDataObj.rebalancing || daoDataObj.treasury)) {
               console.log('API: Found DAO parameters via HCS utility!');
               
               return NextResponse.json({
-                parameters: daoData.parameters || daoData,
+                parameters: daoDataObj.parameters || daoData,
                 metadata: {
                   timestamp: message.consensus_timestamp,
                   sequenceNumber: message.sequence_number,
-                  version: actualContent?.data?.metadata?.version || '1.0.0',
+                  version: (dataObj?.metadata as Record<string, unknown>)?.version || '1.0.0',
                   sourceTopicId: governanceTopicId,
                   decodedWithHCS: true,
                   hcsReference: parsed.data

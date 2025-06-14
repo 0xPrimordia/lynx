@@ -1,5 +1,5 @@
 'use server';
-import { Client, AccountId, PrivateKey, ContractId, ContractCallQuery, ContractFunctionParameters, Hbar, TokenAssociateTransaction, TokenId, TransactionReceipt } from '@hashgraph/sdk';
+import { Client, AccountId, PrivateKey, ContractId, ContractCallQuery, ContractFunctionParameters, Hbar } from '@hashgraph/sdk';
 
 /**
  * Server action to check if a token is associated with an account

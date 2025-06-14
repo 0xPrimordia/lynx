@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { DaoParameters, LYNX_TOKENS } from '../types';
+import { DaoParameters } from '../types';
 import { HCSService, HCSMessage, getHCSService } from '../services/hcsService';
 
 interface DaoParametersContextType {
@@ -36,15 +36,9 @@ export function DaoParametersProvider({ children, autoConnect = true }: DaoParam
   const [hcsService] = useState<HCSService>(() => getHCSService());
 
   // Transform API response to match frontend expectations
-  const transformApiParameters = (apiParams: any): DaoParameters => {
-    const extractValue = (param: any) => {
-      if (typeof param === 'object' && param !== null && param.value !== undefined) {
-        return param.value;
-      }
-      return param;
-    };
+  const transformApiParameters = (apiParams: Record<string, unknown>): DaoParameters => {
 
-    const transformObject = (obj: any): any => {
+    const transformObject = (obj: unknown): unknown => {
       if (typeof obj !== 'object' || obj === null) return obj;
       
       // Handle arrays by transforming each element
@@ -52,12 +46,12 @@ export function DaoParametersProvider({ children, autoConnect = true }: DaoParam
         return obj.map(item => transformObject(item));
       }
       
-      const result: any = {};
+      const result: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(obj)) {
         // Check if this is a parameter object with {value, options, ...}
         if (typeof value === 'object' && value !== null && 'value' in value) {
-          result[key] = (value as any).value;
-          console.log(`Extracted value for ${key}:`, (value as any).value, 'from:', value);
+          result[key] = (value as { value: unknown }).value;
+          console.log(`Extracted value for ${key}:`, (value as { value: unknown }).value, 'from:', value);
         } else if (Array.isArray(value)) {
           // Handle arrays
           result[key] = value.map(item => transformObject(item));
@@ -74,7 +68,7 @@ export function DaoParametersProvider({ children, autoConnect = true }: DaoParam
     console.log('Starting transformation of:', apiParams);
     const transformed = transformObject(apiParams);
     console.log('Transformation complete:', transformed);
-    return transformed;
+    return transformed as DaoParameters;
   };
 
   // Load persisted parameters on mount

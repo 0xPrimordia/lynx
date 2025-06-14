@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { TokenQueueService, MintParams } from '../services/TokenQueueService';
 import { useWallet } from './WalletProvider';
-import { QueueStats } from '../services/TransactionQueueManager';
+import { QueueStats, QueuedTransaction } from '../services/TransactionQueueManager';
 
 interface TokenQueueContextProps {
   queueTokenApproval: (tokenName: string, amount: number) => Promise<string>;
@@ -12,7 +12,7 @@ interface TokenQueueContextProps {
     clxyApprovalId: string;
     mintId: string;
   }>;
-  getTransactionStatus: (id: string) => any;
+  getTransactionStatus: (id: string) => QueuedTransaction | undefined;
   queueStats: QueueStats;
   isProcessing: boolean;
   getTokenRatios: () => { hbarRatio: number; sauceRatio: number; clxyRatio: number; };
@@ -23,7 +23,7 @@ interface TokenQueueContextProps {
 const TokenQueueContext = createContext<TokenQueueContextProps>({
   queueTokenApproval: async () => '',
   mintLynx: async () => ({ sauceApprovalId: '', clxyApprovalId: '', mintId: '' }),
-  getTransactionStatus: () => null,
+  getTransactionStatus: () => undefined,
   queueStats: { totalTransactions: 0, completedTransactions: 0, failedTransactions: 0, pendingTransactions: 0 },
   isProcessing: false,
   getTokenRatios: () => ({ hbarRatio: 0, sauceRatio: 0, clxyRatio: 0 }),
@@ -81,8 +81,9 @@ export const TokenQueueProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
     
     return tokenQueueService.queueTokenApproval({
+      tokenType: tokenName.toUpperCase() as 'SAUCE' | 'CLXY' | 'LYNX',
       tokenName,
-      amount,
+      amount: amount.toString(),
       tokenId: tokenConfig.tokenId || '',
       contractId: tokenConfig.contractId
     });
@@ -100,7 +101,7 @@ export const TokenQueueProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Get transaction status
   const getTransactionStatus = useCallback((id: string) => {
     if (!tokenQueueService) {
-      return null;
+      return undefined;
     }
     
     return tokenQueueService.getTransaction(id);

@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid';
 import { DAppConnector } from '@hashgraph/hedera-wallet-connect';
 import { TransactionQueueManager, QueuedTransaction, QueueStats, TransactionResult } from './TransactionQueueManager';
 import { TransactionService } from './transactionService';
-import { checkTokenAssociation, associateToken } from '../actions/tokenActions';
+import { checkTokenAssociation } from '../actions/tokenActions';
 import { TOKEN_IDS, CONTRACT_IDS } from '../config/environment';
 
 // Token configuration

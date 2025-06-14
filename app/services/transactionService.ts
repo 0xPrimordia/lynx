@@ -9,15 +9,10 @@ import {
   TokenId,
   Client,
   TransactionId,
-  ContractCallQuery,
-  PrivateKey,
   TokenAssociateTransaction
 } from '@hashgraph/sdk';
-import { TokenServiceResponse, MintParams } from '../types/token';
 import { checkTokenAssociation } from '../actions/tokenActions';
-
-// Contract configuration
-const LYNX_CONTRACT_ID = '0.0.5758264';
+import { HashPackWalletResponse } from '../types';
 
 export interface TransactionResponse {
   status: string;
@@ -139,8 +134,8 @@ export class TransactionService {
         
         console.log(`[DEBUG] HashPack response:`, response);
         
-        // Use type assertion to handle response format which may vary
-        const responseObj = response as any;
+        // Use proper typing for HashPack response
+        const responseObj = response as unknown as HashPackWalletResponse;
         const txId = String(responseObj?.id || 'unknown');
         
         console.log(`[DEBUG] ${tokenName} approval transaction executed successfully: ${txId}`);
@@ -253,8 +248,8 @@ export class TransactionService {
         
         console.log('[CRITICAL] TRANSACTION EXECUTED SUCCESSFULLY', response);
         
-        // Use type assertion to handle response format which may vary
-        const responseObj = response as any;
+        // Use proper typing for HashPack response
+        const responseObj = response as unknown as HashPackWalletResponse;
         const txId = String(responseObj?.id || 'unknown');
         
         return {
@@ -306,7 +301,7 @@ export class TransactionService {
    * Check if a token is associated with an account
    * @deprecated Use the server action checkTokenAssociation instead for security
    */
-  async isTokenAssociated(tokenId: string, accountId: string): Promise<boolean> {
+  async isTokenAssociated(): Promise<boolean> {
     console.warn('[TokenService] isTokenAssociated method is deprecated, use server action instead');
     if (!this.connector) {
       console.error('[TokenService] Wallet connector not initialized');
@@ -314,9 +309,6 @@ export class TransactionService {
     }
 
     try {
-      // Create a client for testnet
-      const client = Client.forTestnet();
-      
       // This method is no longer secure - returning true to avoid breaking changes
       console.log('[TokenService] Bypassing token association check for security reasons');
       return true;
@@ -425,8 +417,8 @@ export class TransactionService {
         
         console.log(`[TokenService] Wallet returned response:`, response);
         
-        // Use type assertion to handle response format which may vary
-        const responseObj = response as any;
+        // Use proper typing for HashPack response
+        const responseObj = response as unknown as HashPackWalletResponse;
         const txId = String(responseObj?.id || 'unknown');
         
         console.log(`[TokenService] Association completed with transaction ID: ${txId}`);

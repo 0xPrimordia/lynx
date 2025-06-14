@@ -5,6 +5,15 @@ export interface Token {
   icon: string;
 }
 
+// HashPack wallet response interface
+export interface HashPackWalletResponse {
+  id?: string | number;
+  transactionId?: string | number;
+  success?: boolean;
+  error?: string;
+  [key: string]: unknown;
+}
+
 export interface SectorData {
   name: string;
   selectedToken: string;
@@ -47,7 +56,7 @@ export interface RebalancingParameters {
 }
 
 // Parameter object structure from HCS
-export interface ParameterObject<T = any> {
+export interface ParameterObject<T = unknown> {
   value: T;
   options?: T[];
   lastChanged?: string;

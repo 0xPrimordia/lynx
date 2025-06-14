@@ -56,7 +56,7 @@ export interface TokenServiceResponse {
   status: string;
   transactionId?: string;
   error?: Error;
-  diagnostics?: Record<string, any>;
+  diagnostics?: Record<string, unknown>;
 }
 
 export interface TokenBalances {
@@ -175,7 +175,7 @@ export class TokenService {
       const duration = endTime - startTime;
       
       // Extract transaction ID from response
-      const responseObj = response as any;
+      const responseObj = response as unknown as { id?: string | number };
       const txId = String(responseObj?.id || 'unknown');
       
       console.log(`[TokenService] ${tokenName} approval succeeded in ${duration}ms, transaction ID: ${txId}`);
@@ -314,7 +314,7 @@ export class TokenService {
       console.log(`[CRITICAL DEBUG] Transaction response:`, response);
       
       // Extract transaction ID from response
-      const responseObj = response as any;
+      const responseObj = response as unknown as { id?: string | number };
       const mintTxId = String(responseObj?.id || 'unknown');
       transactionIds.push(mintTxId);
       
@@ -439,7 +439,7 @@ export class TokenService {
       console.log("Burn transaction executed successfully:", response);
       
       // Extract transaction ID from response
-      const responseObj = response as any;
+      const responseObj = response as unknown as { id?: string | number };
       const burnTxId = String(responseObj?.id || 'unknown');
       transactionIds.push(burnTxId);
       

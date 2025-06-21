@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTokens } from '../hooks/useTokens';
 import { useTokenQueue } from '../hooks/useTokenQueue';
 import { useToast } from '../hooks/useToast';
@@ -21,40 +21,34 @@ export function MintForm() {
   
   const [lynxAmount, setLynxAmount] = useState<number>(10);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [mintTxId, setMintTxId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  
+  // Ref to track the approval monitoring interval
+  const checkApprovalsRef = useRef<NodeJS.Timeout | null>(null);
   
   // Calculate token requirements based on LYNX amount
   const required = calculateRequiredTokens(lynxAmount);
   
 
   
-  // Check transaction status regularly
+  // Cleanup effect to clear intervals when component unmounts or states change
   useEffect(() => {
-    if (!isSubmitting || !mintTxId) return;
-    
-    const interval = setInterval(() => {
-      const txStatus = getTransactionStatus(mintTxId);
-      
-      if (txStatus?.status === 'completed') {
-        toast.success(`Successfully minted ${lynxAmount} LYNX tokens!`);
-        setIsSubmitting(false);
-        setCurrentStep('');
-        setError(null);
-        clearInterval(interval);
-      } else if (txStatus?.status === 'failed') {
-        const errorMessage = txStatus.error?.message || 'Unknown error';
-        toast.error(`Failed to mint LYNX: ${errorMessage}`);
-        setIsSubmitting(false);
-        setCurrentStep('');
-        setError(errorMessage);
-        clearInterval(interval);
+    return () => {
+      if (checkApprovalsRef.current) {
+        clearInterval(checkApprovalsRef.current);
+        checkApprovalsRef.current = null;
       }
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [mintTxId, isSubmitting, getTransactionStatus, toast, lynxAmount]);
+    };
+  }, []);
+  
+  // Clear interval when isSubmitting changes to false from other sources
+  useEffect(() => {
+    if (!isSubmitting && checkApprovalsRef.current) {
+      clearInterval(checkApprovalsRef.current);
+      checkApprovalsRef.current = null;
+    }
+  }, [isSubmitting]);
   
   // Handle form submission
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -62,10 +56,14 @@ export function MintForm() {
       e.preventDefault();
     }
     
+    // Double-check to prevent duplicate submissions
     if (isSubmitting || isProcessing) {
+      console.log('[MintForm] handleSubmit called but already processing, ignoring');
       toast.info('Please wait for current transactions to complete');
       return;
     }
+    
+    console.log('[MintForm] handleSubmit starting mint process...');
     
     if (lynxAmount <= 0) {
       toast.error('Please enter a valid amount of LYNX to mint');
@@ -80,7 +78,6 @@ export function MintForm() {
     setIsSubmitting(true);
     setError(null);
     setCurrentStep('Initializing mint process');
-    toast.loading('Starting mint process...');
     
     try {
       // Queue the mint process, which will handle token approvals and associations
@@ -102,15 +99,17 @@ export function MintForm() {
         }
       });
       
-      // Store mint transaction ID
-      setMintTxId(result.mintId);
-      
       // Set current step to inform user
       setCurrentStep('Processing token approvals');
       toast.info('Token approvals and mint transactions queued');
       
+      // Clear any existing approval monitoring interval
+      if (checkApprovalsRef.current) {
+        clearInterval(checkApprovalsRef.current);
+      }
+      
       // Monitor approval statuses
-      const checkApprovals = setInterval(() => {
+      checkApprovalsRef.current = setInterval(() => {
         const sauceStatus = getTransactionStatus(result.sauceApprovalId);
         const clxyStatus = getTransactionStatus(result.clxyApprovalId);
         const mintStatus = getTransactionStatus(result.mintId);
@@ -123,14 +122,46 @@ export function MintForm() {
           setCurrentStep('Processing LYNX mint');
         }
         
-        // Clear interval when everything is done or failed
-        if (
-          (sauceStatus?.status === 'failed') || 
-          (clxyStatus?.status === 'failed') || 
-          (mintStatus?.status === 'completed') || 
-          (mintStatus?.status === 'failed')
-        ) {
-          clearInterval(checkApprovals);
+        // Handle completion or failure
+        if (mintStatus?.status === 'completed') {
+          toast.success(`Successfully minted ${lynxAmount} LYNX tokens!`);
+          setIsSubmitting(false);
+          setCurrentStep('');
+          setError(null);
+          if (checkApprovalsRef.current) {
+            clearInterval(checkApprovalsRef.current);
+            checkApprovalsRef.current = null;
+          }
+        } else if (mintStatus?.status === 'failed') {
+          const errorMessage = mintStatus.error?.message || 'LYNX minting failed';
+          toast.error(`Failed to mint LYNX: ${errorMessage}`);
+          setIsSubmitting(false);
+          setCurrentStep('');
+          setError(errorMessage);
+          if (checkApprovalsRef.current) {
+            clearInterval(checkApprovalsRef.current);
+            checkApprovalsRef.current = null;
+          }
+        } else if (sauceStatus?.status === 'failed') {
+          const errorMessage = sauceStatus.error?.message || 'SAUCE approval failed';
+          toast.error(`Failed to approve SAUCE: ${errorMessage}`);
+          setIsSubmitting(false);
+          setCurrentStep('');
+          setError(errorMessage);
+          if (checkApprovalsRef.current) {
+            clearInterval(checkApprovalsRef.current);
+            checkApprovalsRef.current = null;
+          }
+        } else if (clxyStatus?.status === 'failed') {
+          const errorMessage = clxyStatus.error?.message || 'CLXY approval failed';
+          toast.error(`Failed to approve CLXY: ${errorMessage}`);
+          setIsSubmitting(false);
+          setCurrentStep('');
+          setError(errorMessage);
+          if (checkApprovalsRef.current) {
+            clearInterval(checkApprovalsRef.current);
+            checkApprovalsRef.current = null;
+          }
         }
       }, 500);
       
@@ -165,36 +196,34 @@ export function MintForm() {
         </div>
       </CardHeader>
       <CardBody>
-        <form onSubmit={handleSubmit}>
-          <div className="flex flex-col gap-4">
-            <Input
-              type="number"
-              label="Amount"
-              placeholder="0"
-              min={1}
-              value={lynxAmount.toString()}
-              onChange={(e) => setLynxAmount(parseInt(e.target.value) || 0)}
-              disabled={isSubmitting || isProcessing}
-              endContent={
-                <div className="pointer-events-none flex items-center">
-                  <span className="text-default-400 text-small">LYNX</span>
-                </div>
-              }
-            />
-            
-            <div className="p-3 bg-gray-800 rounded-lg">
-              <h3 className="text-sm font-medium mb-2">Required Tokens:</h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="text-gray-500">HBAR:</div>
-                <div className="font-medium">{required.HBAR} HBAR</div>
-                <div className="text-gray-500">SAUCE:</div>
-                <div className="font-medium">{required.SAUCE} SAUCE</div>
-                <div className="text-gray-500">CLXY:</div>
-                <div className="font-medium">{required.CLXY} CLXY</div>
+        <div className="flex flex-col gap-4">
+          <Input
+            type="number"
+            label="Amount"
+            placeholder="0"
+            min={1}
+            value={lynxAmount.toString()}
+            onChange={(e) => setLynxAmount(parseInt(e.target.value) || 0)}
+            disabled={isSubmitting || isProcessing}
+            endContent={
+              <div className="pointer-events-none flex items-center">
+                <span className="text-default-400 text-small">LYNX</span>
               </div>
+            }
+          />
+          
+          <div className="p-3 bg-gray-800 rounded-lg">
+            <h3 className="text-sm font-medium mb-2">Required Tokens:</h3>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="text-gray-500">HBAR:</div>
+              <div className="font-medium">{required.HBAR} HBAR</div>
+              <div className="text-gray-500">SAUCE:</div>
+              <div className="font-medium">{required.SAUCE} SAUCE</div>
+              <div className="text-gray-500">CLXY:</div>
+              <div className="font-medium">{required.CLXY} CLXY</div>
             </div>
           </div>
-        </form>
+        </div>
       </CardBody>
       <CardFooter className="flex flex-col gap-3">
         {isSubmitting && (
@@ -246,7 +275,12 @@ export function MintForm() {
           ) : (
             <Button
               color="primary"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault(); // Prevent any form submission
+                if (isSubmitting || isProcessing) {
+                  console.log('[MintForm] Mint button clicked but already processing, ignoring');
+                  return;
+                }
                 console.log('[MintForm] Mint button clicked!');
                 handleSubmit();
               }}

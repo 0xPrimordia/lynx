@@ -1,0 +1,45 @@
+{
+  "network": "testnet",
+  "deployments": {
+    "contracts": {
+      "IndexVault": {
+        "hederaId": "0.0.117445425818092487927716198435493777051341793831",
+        "evmAddress": "0x14926F5E729d68efF6d918ef4d733eEe7223aa27",
+        "deployedAt": "2025-06-17T20:45:13.694Z",
+        "verified": false,
+        "abi": "hardhat/artifacts/contracts/index-token/IndexVault.sol/IndexVault.json"
+      },
+      "IndexTokenController": {
+        "hederaId": "0.0.760707078395098943488280152144079095375440986046",
+        "evmAddress": "0x853f48ff35Bcf50E908cF91859BB3BC59BC93Fbe",
+        "deployedAt": "2025-06-17T20:45:13.694Z",
+        "verified": false,
+        "abi": "hardhat/artifacts/contracts/index-token/IndexTokenController.sol/IndexTokenController.json"
+      }
+    },
+    "tokens": {
+      "LYNX": {
+        "tokenId": "0.0.5948419",
+        "evmAddress": "0x00000000000000000000000000000000005Ac403",
+        "createdAt": "2025-05-05T16:27:50.165Z",
+        "verified": true,
+        "decimals": 8,
+        "controller": "0xBA35F3E9Cd6ab70d2c9A4E494aD8627209869c93",
+        "note": "Created via hybrid approach - SDK creation with contract as supply key"
+      },
+      "SAUCE": {
+        "tokenId": "0.0.1183558",
+        "verified": true,
+        "decimals": 6,
+        "type": "external"
+      },
+      "CLXY": {
+        "tokenId": "0.0.5365",
+        "verified": true,
+        "decimals": 6,
+        "type": "external"
+      }
+    }
+  },
+  "lastUpdated": "2025-06-17T20:45:13.694Z"
+}

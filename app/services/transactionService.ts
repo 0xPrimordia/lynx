@@ -9,7 +9,8 @@ import {
   TokenId,
   Client,
   TransactionId,
-  TokenAssociateTransaction
+  TokenAssociateTransaction,
+  AccountAllowanceApproveTransaction
 } from '@hashgraph/sdk';
 import { checkTokenAssociation } from '../actions/tokenActions';
 import { HashPackWalletResponse } from '../types';
@@ -99,15 +100,23 @@ export class TransactionService {
       // 2. Parse account ID properly
       const sender = AccountId.fromString(this.accountId);
       
-      // 3. Create and freeze the contract execute transaction
-      const transaction = new ContractExecuteTransaction()
-        .setContractId(ContractId.fromString(contractId))
-        .setGas(3000000)
-        .setFunction(
-          "approve", 
-          new ContractFunctionParameters()
-            .addAddress(tokenAddress)
-            .addUint256(Number(amount))
+      // 3. Create HTS token allowance transaction instead of ERC20 approve
+      // For native HTS tokens, we use AccountAllowanceApproveTransaction
+      // Use the Hedera ID directly from environment variable
+      const depositMinterHederaId = process.env.NEXT_PUBLIC_DEPOSIT_MINTER_HEDERA_ID;
+      
+      if (!depositMinterHederaId) {
+        throw new Error('NEXT_PUBLIC_DEPOSIT_MINTER_HEDERA_ID environment variable not set');
+      }
+      
+      console.log(`[DEBUG] Approving for DepositMinter Hedera ID: ${depositMinterHederaId}`);
+      
+      const transaction = new AccountAllowanceApproveTransaction()
+        .approveTokenAllowance(
+          TokenId.fromString(tokenId),
+          AccountId.fromString(this.accountId),
+          AccountId.fromString(depositMinterHederaId),  // DepositMinter contract
+          Number(amount)
         )
         .setTransactionId(TransactionId.generate(sender))
         .setTransactionMemo(`Approve ${tokenName} for LYNX Minting`)
@@ -198,8 +207,12 @@ export class TransactionService {
         transactionType: 'mint'
       });
       
-      // Contract ID for LYNX minting
-      const contractId = '0.0.5758264'; // LYNX contract
+      // Use the DepositMinter contract Hedera ID from environment
+      const contractHederaId = process.env.NEXT_PUBLIC_DEPOSIT_MINTER_HEDERA_ID;
+      
+      if (!contractHederaId) {
+        throw new Error('NEXT_PUBLIC_DEPOSIT_MINTER_HEDERA_ID environment variable not set');
+      }
       
       // 1. Create the client FIRST (critical step)
       const client = Client.forTestnet();
@@ -207,25 +220,33 @@ export class TransactionService {
       // 2. Parse account ID properly
       const sender = AccountId.fromString(this.accountId);
       
-      // Per contract, HBAR_RATIO = 10 tinybar
-      // 10 tinybar = 0.0000001 HBAR (since 1 HBAR = 100,000,000 tinybar)
-      const hbarPerLynx = 0.0000001;
+      // 3. Send whole token amounts - contract calculates base units internally
+      const lynxAmountRaw = amount;                            // Send exactly what user inputs (1, 2, 3, etc.)
+      const sauceRequired = amount * 5 * Math.pow(10, 6);     // 5 SAUCE per LYNX (in base units)
+      const clxyRequired = amount * 2 * Math.pow(10, 6);      // 2 CLXY per LYNX (in base units)
+      const hbarRequiredTinybars = amount * 10 * Math.pow(10, 8); // 10 HBAR per LYNX (in tinybars)
       
-      // 3. Create a contract execute transaction to call the mint function
-      console.log('[CRITICAL] Creating mint transaction for contract', contractId);
-      console.log('[CRITICAL] Sending HBAR amount:', amount * hbarPerLynx, 'HBAR (', amount * 10, 'tinybar)');
+      console.log('[CRITICAL] Creating mint transaction for DepositMinter contract', contractHederaId);
+      console.log('[CRITICAL] Calling mintWithDeposits with:', {
+        lynxAmount: lynxAmountRaw,
+        sauceAmount: sauceRequired,
+        clxyAmount: clxyRequired,
+        hbarAmount: hbarRequiredTinybars
+      });
       
       const transaction = new ContractExecuteTransaction()
-        .setContractId(ContractId.fromString(contractId))
-        .setGas(5000000)
+        .setContractId(ContractId.fromString(contractHederaId))
+        .setGas(2000000)
         .setFunction(
-          "mint", 
+          "mintWithDeposits", 
           new ContractFunctionParameters()
-            .addUint256(amount)  // amount to mint
+            .addUint256(lynxAmountRaw) // lynxAmount (raw user input)
+            .addUint256(sauceRequired)          // sauceAmount (in base units)
+            .addUint256(clxyRequired)           // clxyAmount (in base units)
         )
         .setTransactionId(TransactionId.generate(sender))
-        .setTransactionMemo(`Mint ${amount} LYNX tokens`)
-        .setPayableAmount(new Hbar(amount * hbarPerLynx)) // 10 tinybar per LYNX = 0.0000001 HBAR
+        .setTransactionMemo(`Mint ${amount} LYNX tokens via DepositMinter`)
+        .setPayableAmount(Hbar.fromTinybars(hbarRequiredTinybars)) // Convert tinybars to HBAR
         .setMaxTransactionFee(new Hbar(5))
         .freezeWith(client);
       
@@ -263,6 +284,36 @@ export class TransactionService {
           errorMessage: signError instanceof Error ? signError.message : String(signError),
           errorStack: signError instanceof Error ? signError.stack : undefined
         });
+        
+        // Specific HTS error analysis
+        if (signError instanceof Error) {
+          const errorMsg = signError.message;
+          
+          if (errorMsg.includes('INVALID_OPERATION')) {
+            console.error('[HTS ERROR ANALYSIS] INVALID_OPERATION detected!');
+            console.error('[HTS ERROR ANALYSIS] This means one of these HTS calls in the contract failed:');
+            console.error('[HTS ERROR ANALYSIS] 1. hts.isTokenAssociated() - checking if user is associated with tokens');
+            console.error('[HTS ERROR ANALYSIS] 2. hts.allowance() - checking if contract has allowance to spend tokens');
+            console.error('[HTS ERROR ANALYSIS] 3. hts.transferToken() - transferring SAUCE/CLXY from user to contract');
+            console.error('[HTS ERROR ANALYSIS] 4. hts.mintToken() - minting new LYNX tokens (MOST LIKELY FIXED NOW)');
+            console.error('[HTS ERROR ANALYSIS] 5. hts.transferToken() - transferring minted LYNX to user');
+            console.error('[HTS ERROR ANALYSIS] Since we just fixed the supply key, most likely cause is now:');
+            console.error('[HTS ERROR ANALYSIS] - User tokens not associated with contract');
+            console.error('[HTS ERROR ANALYSIS] - Insufficient allowances for SAUCE/CLXY');
+          }
+          
+          if (errorMsg.includes('INSUFFICIENT_ALLOWANCE')) {
+            console.error('[HTS ERROR ANALYSIS] INSUFFICIENT_ALLOWANCE detected!');
+            console.error('[HTS ERROR ANALYSIS] The contract allowance check failed for SAUCE or CLXY');
+            console.error('[HTS ERROR ANALYSIS] This means the approval transactions may not have worked properly');
+          }
+          
+          if (errorMsg.includes('TOKEN_NOT_ASSOCIATED')) {
+            console.error('[HTS ERROR ANALYSIS] TOKEN_NOT_ASSOCIATED detected!');
+            console.error('[HTS ERROR ANALYSIS] User account is not associated with SAUCE, CLXY, or LYNX tokens');
+          }
+        }
+        
         throw signError;
       }
     } catch (error) {

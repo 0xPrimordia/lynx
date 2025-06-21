@@ -1,0 +1,10 @@
+{
+  "contractId": "0.0.6205668",
+  "contractAddress": "0x00000000000000000000000000000000005eb0e4",
+  "tokenAddress": "00000000000000000000000000000000005eabc2",
+  "operatorId": "0.0.4340026",
+  "operatorEVMAddress": "000000000000000000000000000000000042393a",
+  "isAssociated": true,
+  "deployedAt": "2025-06-20T21:44:41.260Z",
+  "purpose": "SimpleTokenMinter for testing minting functionality with token association"
+}

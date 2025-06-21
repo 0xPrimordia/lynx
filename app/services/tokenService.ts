@@ -19,7 +19,7 @@ const accountIdToEvmAddress = (accountId: string): string => {
 };
 
 // Constants for the Lynx minter contract - REPLACE THESE WITH YOUR ACTUAL TOKEN IDs
-const LYNX_TOKEN_ID = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.3059001";
+const LYNX_TOKEN_ID = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.5948419";
 const LYNX_CONTRACT_ID = process.env.NEXT_PUBLIC_LYNX_CONTRACT_ID || "0.0.5758264";
 
 // Default ratios to use when we can't get values from the contract
@@ -462,30 +462,48 @@ export class TokenService {
   async getTokenBalances(): Promise<TokenBalances> {
     console.log("[TokenService] Fetching token balances for account", this.accountId);
     
-    if (!this.connector) {
-      console.error('[TokenService] Wallet connector not initialized');
-      throw new Error('Wallet connector not initialized');
-    }
-
     if (!this.accountId) {
       console.error('[TokenService] Account ID not available');
       throw new Error('Account ID not available');
     }
 
     try {
-      // WORKAROUND: Instead of trying to use queries which are failing with protobuf errors,
-      // use default values for now. This will at least allow us to test the minting flow.
-      console.log("[TokenService] Using default token balances due to query issues");
+      // Import the BalanceService for real balance queries
+      const { BalanceService } = await import('./balanceService');
+      const balanceService = new BalanceService();
       
-      return {
-        hbar: 1000000000, // 10 HBAR in tinybar
-        sauce: 500,
-        clxy: 200,
-        lynx: 50
+      console.log("[TokenService] Using BalanceService to fetch real balances");
+      
+      // Get real balances from the network
+      const realBalances = await balanceService.getTokenBalances(this.accountId);
+      
+      // Convert string balances to numbers and handle HBAR conversion
+      const hbarValue = parseFloat(realBalances.HBAR) * 100_000_000; // Convert HBAR to tinybars
+      
+      const result = {
+        hbar: hbarValue,
+        sauce: parseInt(realBalances.SAUCE) || 0,
+        clxy: parseInt(realBalances.CLXY) || 0,
+        lynx: parseInt(realBalances.LYNX) || 0
       };
+      
+      console.log("[TokenService] Real token balances:", result);
+      
+      // Cleanup
+      balanceService.close();
+      
+      return result;
     } catch (error) {
       console.error("[TokenService] Error fetching token balances:", error);
-      throw error;
+      
+      // Fallback to default values if real query fails
+      console.log("[TokenService] Using fallback balances due to query error");
+      return {
+        hbar: 0,
+        sauce: 0,
+        clxy: 0,
+        lynx: 0
+      };
     }
   }
 

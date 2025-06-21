@@ -1,0 +1,4 @@
+cd hardhat && npx hardhat run scripts/deploy-deposit-minter.ts --network hederaTestnet
+q
+cd hardhat && npx hardhat run scripts/deploy-deposit-minter.ts --network hederaTestnet
+q

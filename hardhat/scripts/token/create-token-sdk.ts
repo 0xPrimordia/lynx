@@ -34,10 +34,14 @@ async function main() {
   const deploymentInfo = JSON.parse(fs.readFileSync(deploymentPath, "utf8"));
   
   const vaultId = deploymentInfo.vaultId;
-  const controllerId = deploymentInfo.controllerId;
+  const depositMinterId = process.env.NEXT_PUBLIC_DEPOSIT_MINTER_HEDERA_ID;
+  
+  if (!depositMinterId) {
+    throw new Error("NEXT_PUBLIC_DEPOSIT_MINTER_HEDERA_ID environment variable not set");
+  }
   
   console.log(`Vault ID: ${vaultId}`);
-  console.log(`Controller ID: ${controllerId}`);
+  console.log(`DepositMinter ID: ${depositMinterId}`);
   
   // Initialize Hedera client
   const client = Client.forTestnet();
@@ -46,15 +50,15 @@ async function main() {
     PrivateKey.fromString(operatorKey)
   );
   
-  // Create token with controller as supply key
+  // Create token with DepositMinter as supply key
   console.log("\nCreating Lynx Index Token...");
   
   try {
-    // Vault as treasury
-    const treasuryId = AccountId.fromString(vaultId);
+    // Start with operator as treasury (safer approach)
+    const treasuryId = AccountId.fromString(operatorId);
     
-    // Controller as supply key
-    const supplyKeyContractId = ContractId.fromString(controllerId);
+    // DepositMinter as supply key
+    const supplyKeyContractId = ContractId.fromString(depositMinterId);
     
     // Admin key (operator for now)
     const adminKey = PrivateKey.fromString(operatorKey).publicKey;
@@ -72,6 +76,8 @@ async function main() {
       .setMaxTransactionFee(new Hbar(30));
     
     console.log("Submitting token creation transaction...");
+    console.log("- Treasury: Operator (will transfer to vault later)");
+    console.log("- Supply Key: DepositMinter contract");
     
     // Sign and submit transaction
     const txResponse = await tokenCreateTx.execute(client);
@@ -111,11 +117,16 @@ async function main() {
     fs.writeFileSync(deploymentPath, JSON.stringify(deploymentInfo, null, 2));
     console.log("\nDeployment info updated");
     
-    // Next steps
+    // Update environment variables for the new token
+    console.log("\n📝 Update your .env.local file with:");
+    console.log(`NEXT_PUBLIC_LYNX_TOKEN_ID=${tokenId.toString()}`);
+    console.log(`NEXT_PUBLIC_LYNX_TOKEN_EVM_ID=${tokenEvmAddress}`);
+    
     console.log("\nNext Steps:");
-    console.log("1. Set the token ID in the controller contract");
-    console.log("2. Update vault to work with the token");
-    console.log(`3. Run: npx hardhat run scripts/token/set-token-id.ts --network hederaTestnet`);
+    console.log("1. Update .env.local with the new token IDs");
+    console.log("2. Update the hardcoded vault address in DepositMinter contract");
+    console.log("3. (Optional) Transfer treasury from operator to vault");
+    console.log("4. Test the minting functionality");
     
   } catch (error) {
     console.error("Error creating token:", error);

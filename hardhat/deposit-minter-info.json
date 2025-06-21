@@ -1,0 +1,17 @@
+{
+  "contractId": "0.0.6206049",
+  "contractAddress": "0x00000000000000000000000000000000005eb261",
+  "adminAddress": "000000000000000000000000000000000042393a",
+  "operatorId": "0.0.4340026",
+  "operatorEVMAddress": "000000000000000000000000000000000042393a",
+  "isAdminVerified": true,
+  "lynxToken": "0x00000000000000000000000000000000005e9e46",
+  "sauceToken": "0x0000000000000000000000000000000000120f46",
+  "clxyToken": "0x00000000000000000000000000000000000014f5",
+  "associationsVerified": {
+    "lynx": true,
+    "sauce": true,
+    "clxy": true
+  },
+  "deployedAt": "2025-06-20T23:25:58.306Z"
+}

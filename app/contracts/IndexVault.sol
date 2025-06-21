@@ -92,12 +92,10 @@ contract IndexVault {
         for (uint i = 0; i < _composition.length; i++) {
             totalWeight += _composition[i].weight;
             
-            // Ensure each token is associated with this contract
-            if (!hts.isTokenAssociated(address(this), _composition[i].token)) {
-                int64 associateResponse = hts.associateToken(address(this), _composition[i].token);
-                if (associateResponse != 0) {
-                    revert TransferFailed(_composition[i].token, associateResponse);
-                }
+            // Associate each token with this contract (will succeed if already associated)
+            int64 associateResponse = hts.associateToken(address(this), _composition[i].token);
+            if (associateResponse != 22 && associateResponse != 173) { // SUCCESS or ALREADY_ASSOCIATED
+                revert TransferFailed(_composition[i].token, associateResponse);
             }
         }
         
@@ -164,12 +162,9 @@ contract IndexVault {
             deposits[user][asset.token] -= requiredAmount;
         }
         
-        // Transfer the minted index tokens to the user
-        if (!hts.isTokenAssociated(user, indexToken)) {
-            revert TokenNotAssociated(indexToken, user);
-        }
-        
-        int64 transferResult = hts.transferToken(indexToken, address(this), user, amount);
+                // Transfer the minted index tokens to the user
+        // Note: User must be associated with index token before calling this function
+        int64 transferResult = hts.transferToken(indexToken, address(this), user, int64(uint64(amount)));
         if (transferResult != 0) {
             revert TransferFailed(indexToken, transferResult);
         }
@@ -195,13 +190,10 @@ contract IndexVault {
         }
         require(isValidToken, "Token not part of composition");
         
-        // Ensure tokens are associated with this contract
-        if (!hts.isTokenAssociated(address(this), token)) {
-            revert TokenNotAssociated(token, address(this));
-        }
+                // Note: Contract must be associated with token before accepting deposits
         
         // Transfer tokens from user to vault
-        int64 transferResult = hts.transferToken(token, msg.sender, address(this), amount);
+        int64 transferResult = hts.transferToken(token, msg.sender, address(this), int64(uint64(amount)));
         if (transferResult != 0) {
             revert TransferFailed(token, transferResult);
         }

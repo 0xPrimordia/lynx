@@ -36,7 +36,9 @@
     "setup-composition": "node scripts/setup-token-composition.js",
     "test-mint-index": "node scripts/test-mint-index-token.js",
     "check-balance": "ts-node scripts/check-balance.ts",
-    "check-contract-balance": "ts-node scripts/check-contract-balance.ts"
+    "check-contract-balance": "ts-node scripts/check-contract-balance.ts",
+    "validate-deployment": "ts-node scripts/validate-deployment.ts",
+    "deploy-fresh": "hardhat run scripts/deploy-and-track.ts --network hederaTestnet"
   },
   "dependencies": {
     "@hashgraph/hedera-wallet-connect": "^1.5.1",

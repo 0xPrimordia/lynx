@@ -26,6 +26,8 @@ import type {
 export interface SimpleTokenMinterInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "associateTokens"
+      | "checkAssociation"
       | "getTokenBalance"
       | "mintTokens"
       | "setTokenAddress"
@@ -33,9 +35,17 @@ export interface SimpleTokenMinterInterface extends Interface {
   ): FunctionFragment;
 
   getEvent(
-    nameOrSignatureOrTopic: "MintSuccessful" | "TokenSet"
+    nameOrSignatureOrTopic: "MintSuccessful" | "TokenAssociated" | "TokenSet"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "associateTokens",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "checkAssociation",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "getTokenBalance",
     values?: undefined
@@ -53,6 +63,14 @@ export interface SimpleTokenMinterInterface extends Interface {
     values?: undefined
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "associateTokens",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "checkAssociation",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getTokenBalance",
     data: BytesLike
@@ -82,6 +100,19 @@ export namespace MintSuccessfulEvent {
   export interface OutputObject {
     token: string;
     amount: bigint;
+    responseCode: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TokenAssociatedEvent {
+  export type InputTuple = [token: AddressLike, responseCode: BigNumberish];
+  export type OutputTuple = [token: string, responseCode: bigint];
+  export interface OutputObject {
+    token: string;
     responseCode: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -146,6 +177,10 @@ export interface SimpleTokenMinter extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  associateTokens: TypedContractMethod<[], [void], "nonpayable">;
+
+  checkAssociation: TypedContractMethod<[], [boolean], "view">;
+
   getTokenBalance: TypedContractMethod<[], [bigint], "view">;
 
   mintTokens: TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
@@ -162,6 +197,12 @@ export interface SimpleTokenMinter extends BaseContract {
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "associateTokens"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "checkAssociation"
+  ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
     nameOrSignature: "getTokenBalance"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -183,6 +224,13 @@ export interface SimpleTokenMinter extends BaseContract {
     MintSuccessfulEvent.OutputObject
   >;
   getEvent(
+    key: "TokenAssociated"
+  ): TypedContractEvent<
+    TokenAssociatedEvent.InputTuple,
+    TokenAssociatedEvent.OutputTuple,
+    TokenAssociatedEvent.OutputObject
+  >;
+  getEvent(
     key: "TokenSet"
   ): TypedContractEvent<
     TokenSetEvent.InputTuple,
@@ -200,6 +248,17 @@ export interface SimpleTokenMinter extends BaseContract {
       MintSuccessfulEvent.InputTuple,
       MintSuccessfulEvent.OutputTuple,
       MintSuccessfulEvent.OutputObject
+    >;
+
+    "TokenAssociated(address,int64)": TypedContractEvent<
+      TokenAssociatedEvent.InputTuple,
+      TokenAssociatedEvent.OutputTuple,
+      TokenAssociatedEvent.OutputObject
+    >;
+    TokenAssociated: TypedContractEvent<
+      TokenAssociatedEvent.InputTuple,
+      TokenAssociatedEvent.OutputTuple,
+      TokenAssociatedEvent.OutputObject
     >;
 
     "TokenSet(address,address)": TypedContractEvent<

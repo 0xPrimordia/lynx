@@ -9,7 +9,7 @@ export async function checkTokenAssociation(tokenId: string, accountId: string):
   // Server-side secure access to environment variables
   const operatorId = process.env.NEXT_PUBLIC_OPERATOR_ID;
   const operatorKey = process.env.OPERATOR_KEY;
-  const contractId = process.env.NEXT_PUBLIC_LYNX_CONTRACT_ID || '0.0.5758264';
+  const contractId = process.env.NEXT_PUBLIC_DEPOSIT_MINTER_HEDERA_ID || '0.0.6182580';
   
   console.log(`[SERVER] Checking association for token ${tokenId} with account ${accountId}`);
   

@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid';
 import { DAppConnector } from '@hashgraph/hedera-wallet-connect';
 import { TransactionQueueManager, QueuedTransaction, QueueStats, TransactionResult } from './TransactionQueueManager';
 import { TransactionService } from './transactionService';
-import { checkTokenAssociation } from '../actions/tokenActions';
+
 import { TOKEN_IDS, CONTRACT_IDS } from '../config/environment';
 
 // Token configuration
@@ -197,9 +197,10 @@ export class TokenQueueService {
     
     const { lynxAmount, onSuccess, onError } = params;
     
-    // Calculate required token amounts based on LYNX amount
-    const sauceAmount = (lynxAmount * this.getTokenRatios().sauceRatio).toString();
-    const clxyAmount = (lynxAmount * this.getTokenRatios().clxyRatio).toString();
+    // Calculate required token amounts based on LYNX amount (with proper decimals)
+    // SAUCE and CLXY have 6 decimals, so we need to multiply by 10^6 for base units
+    const sauceAmount = (lynxAmount * this.getTokenRatios().sauceRatio * Math.pow(10, 6)).toString();
+    const clxyAmount = (lynxAmount * this.getTokenRatios().clxyRatio * Math.pow(10, 6)).toString();
     
     try {
       console.log(`[QUEUE DEBUG] Starting LYNX minting process for ${lynxAmount} LYNX (requires ${sauceAmount} SAUCE and ${clxyAmount} CLXY)`);
@@ -210,67 +211,68 @@ export class TokenQueueService {
         throw new Error('Contract does not have supply key for LYNX token');
       }
 
-      // NOTE: For testnet account 0.0.4372449, we're skipping association checks since tokens are already associated
-      if (this.accountId === '0.0.4372449') {
-        console.log('[QUEUE DEBUG] Using testnet account with pre-associated tokens, skipping association checks');
+      // OPTIMIZED: Check token associations efficiently
+      console.log('[QUEUE DEBUG] Checking token associations...');
+      
+      // First, try to get current balances - if tokens have balances, they're already associated
+      let tokensNeedingAssociation: string[] = [];
+      
+      try {
+        // Use the balance service to check if tokens are associated (faster than individual checks)
+        const { BalanceService } = await import('../services/balanceService');
+        const balanceService = new BalanceService();
+        const balances = await balanceService.getTokenBalances(this.accountId);
+        
+        console.log('[QUEUE DEBUG] Current token balances:', balances);
+        
+        // If a token has a balance (even 0), it's associated
+        // If balance query fails or returns undefined, token needs association
+        const tokenChecks = [
+          { name: 'SAUCE', id: TOKEN_CONFIG.SAUCE.tokenId, balance: balances.SAUCE },
+          { name: 'CLXY', id: TOKEN_CONFIG.CLXY.tokenId, balance: balances.CLXY },
+          { name: 'LYNX', id: TOKEN_CONFIG.LYNX.tokenId, balance: balances.LYNX }
+        ];
+        
+        for (const token of tokenChecks) {
+          if (token.balance === undefined || token.balance === null) {
+            console.log(`[QUEUE DEBUG] ${token.name} token needs association (no balance data)`);
+            tokensNeedingAssociation.push(token.id);
+          } else {
+            console.log(`[QUEUE DEBUG] ${token.name} token already associated (balance: ${token.balance})`);
+          }
+        }
+        
+        balanceService.close();
+      } catch (error) {
+        console.warn('[QUEUE DEBUG] Could not check balances for association status, falling back to individual checks:', error);
+        // Fallback: assume all tokens need association check
+        tokensNeedingAssociation = [TOKEN_CONFIG.SAUCE.tokenId, TOKEN_CONFIG.CLXY.tokenId, TOKEN_CONFIG.LYNX.tokenId];
+      }
+      
+      // Only associate tokens that actually need it
+      if (tokensNeedingAssociation.length === 0) {
+        console.log('[QUEUE DEBUG] All tokens already associated, skipping association step');
       } else {
-        console.log('[QUEUE DEBUG] Checking token associations for non-testnet account...');
+        console.log(`[QUEUE DEBUG] Need to associate ${tokensNeedingAssociation.length} tokens:`, tokensNeedingAssociation);
         
-        // Check LYNX token association
-        let lynxAssociated = false;
-        try {
-          lynxAssociated = await checkTokenAssociation(TOKEN_CONFIG.LYNX.tokenId, this.accountId);
-          console.log(`[QUEUE DEBUG] LYNX token association status: ${lynxAssociated ? 'Associated' : 'Not Associated'}`);
-          
-          if (!lynxAssociated && this.transactionService) {
-            console.log('[QUEUE DEBUG] LYNX token needs to be associated');
-            const lynxResult = await this.transactionService.associateToken(TOKEN_CONFIG.LYNX.tokenId, this.accountId);
-            if (!lynxResult.success) {
-              throw new Error(`LYNX token association failed: ${lynxResult.message}`);
+        for (const tokenId of tokensNeedingAssociation) {
+          try {
+            const tokenName = tokenId === TOKEN_CONFIG.SAUCE.tokenId ? 'SAUCE' :
+                             tokenId === TOKEN_CONFIG.CLXY.tokenId ? 'CLXY' : 'LYNX';
+                             
+            console.log(`[QUEUE DEBUG] Associating ${tokenName} token...`);
+            const result = await this.transactionService.associateToken(tokenId, this.accountId);
+            
+            if (!result.success) {
+              throw new Error(`${tokenName} token association failed: ${result.message}`);
             }
+            
+            console.log(`[QUEUE DEBUG] ${tokenName} token associated successfully`);
+          } catch (error) {
+            console.error(`[QUEUE DEBUG] Error associating token ${tokenId}:`, error);
+            throw new Error(`Token association failed: ${error instanceof Error ? error.message : String(error)}`);
           }
-        } catch (error) {
-          console.error('[QUEUE DEBUG] Error checking/associating LYNX token:', error);
-          throw new Error(`Error with LYNX token: ${error instanceof Error ? error.message : String(error)}`);
         }
-        
-        // Check SAUCE token association
-        let sauceAssociated = false;
-        try {
-          sauceAssociated = await checkTokenAssociation(TOKEN_CONFIG.SAUCE.tokenId, this.accountId);
-          console.log(`[QUEUE DEBUG] SAUCE token association status: ${sauceAssociated ? 'Associated' : 'Not Associated'}`);
-          
-          if (!sauceAssociated && this.transactionService) {
-            console.log('[QUEUE DEBUG] SAUCE token needs to be associated');
-            const sauceResult = await this.transactionService.associateToken(TOKEN_CONFIG.SAUCE.tokenId, this.accountId);
-            if (!sauceResult.success) {
-              throw new Error(`SAUCE token association failed: ${sauceResult.message}`);
-            }
-          }
-        } catch (error) {
-          console.error('[QUEUE DEBUG] Error checking/associating SAUCE token:', error);
-          throw new Error(`Error with SAUCE token: ${error instanceof Error ? error.message : String(error)}`);
-        }
-        
-        // Check CLXY token association
-        let clxyAssociated = false;
-        try {
-          clxyAssociated = await checkTokenAssociation(TOKEN_CONFIG.CLXY.tokenId, this.accountId);
-          console.log(`[QUEUE DEBUG] CLXY token association status: ${clxyAssociated ? 'Associated' : 'Not Associated'}`);
-          
-          if (!clxyAssociated && this.transactionService) {
-            console.log('[QUEUE DEBUG] CLXY token needs to be associated');
-            const clxyResult = await this.transactionService.associateToken(TOKEN_CONFIG.CLXY.tokenId, this.accountId);
-            if (!clxyResult.success) {
-              throw new Error(`CLXY token association failed: ${clxyResult.message}`);
-            }
-          }
-        } catch (error) {
-          console.error('[QUEUE DEBUG] Error checking/associating CLXY token:', error);
-          throw new Error(`Error with CLXY token: ${error instanceof Error ? error.message : String(error)}`);
-        }
-        
-        console.log('[QUEUE DEBUG] Token association checks/operations completed');
       }
       
       console.log('[QUEUE DEBUG] Proceeding with token approvals');
@@ -393,9 +395,9 @@ export class TokenQueueService {
    */
   public getTokenRatios(): { hbarRatio: number; sauceRatio: number; clxyRatio: number; } {
     return {
-      hbarRatio: 10,    // 10 tinybar per LYNX
-      sauceRatio: 100,  // 100 SAUCE per LYNX
-      clxyRatio: 50     // 50 CLXY per LYNX
+      hbarRatio: 10,    // 10 HBAR per LYNX
+      sauceRatio: 5,    // 5 SAUCE per LYNX (matches contract)
+      clxyRatio: 2      // 2 CLXY per LYNX (matches contract)
     };
   }
   

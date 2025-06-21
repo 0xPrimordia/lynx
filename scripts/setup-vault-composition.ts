@@ -3,7 +3,7 @@ import fs from "fs";
 
 // Constants for the composition tokens
 const SAUCE_TOKEN_ID = process.env.SAUCE_TOKEN_ID || "0.0.1183558";
-const CLXY_TOKEN_ID = process.env.CLXY_TOKEN_ID || "0.0.1318237";
+const CLXY_TOKEN_ID = process.env.CLXY_TOKEN_ID || "0.0.5365";
 
 async function main() {
   try {

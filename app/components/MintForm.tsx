@@ -28,6 +28,8 @@ export function MintForm() {
   // Calculate token requirements based on LYNX amount
   const required = calculateRequiredTokens(lynxAmount);
   
+
+  
   // Check transaction status regularly
   useEffect(() => {
     if (!isSubmitting || !mintTxId) return;
@@ -55,7 +57,7 @@ export function MintForm() {
   }, [mintTxId, isSubmitting, getTransactionStatus, toast, lynxAmount]);
   
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
     }
@@ -244,7 +246,10 @@ export function MintForm() {
           ) : (
             <Button
               color="primary"
-              onClick={handleSubmit}
+              onClick={() => {
+                console.log('[MintForm] Mint button clicked!');
+                handleSubmit();
+              }}
               disabled={
                 !isConnected || 
                 isSubmitting || 

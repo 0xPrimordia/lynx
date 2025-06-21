@@ -41,11 +41,12 @@ export interface SaucerSwapContextType {
 // Actual implementation of useTokens hook
 import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '../providers/WalletProvider';
+import { BalanceService } from '../services/balanceService';
 
 // Token IDs from environment variables or defaults
-const LYNX_TOKEN_ID = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.3059001";
+const LYNX_TOKEN_ID = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.5948419";
 const SAUCE_TOKEN_ID = process.env.NEXT_PUBLIC_SAUCE_TOKEN_ID || "0.0.1183558";
-const CLXY_TOKEN_ID = process.env.NEXT_PUBLIC_CLXY_TOKEN_ID || "0.0.1318237";
+const CLXY_TOKEN_ID = process.env.NEXT_PUBLIC_CLXY_TOKEN_ID || "0.0.5365";
 const LYNX_CONTRACT_ID = process.env.NEXT_PUBLIC_LYNX_CONTRACT_ID || "0.0.5758264";
 
 export interface TokenIds {
@@ -103,7 +104,7 @@ export const useSaucerSwapContext = () => {
 };
 
 export function useTokens(): UseTokensResult {
-  const { dAppConnector, accountId, isConnected } = useWallet();
+  const { accountId, isConnected } = useWallet();
   const [tokenBalances, setTokenBalances] = useState<TokenBalances>({
     HBAR: '0',
     SAUCE: '0',
@@ -123,6 +124,7 @@ export function useTokens(): UseTokensResult {
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
+  const [balanceService] = useState<BalanceService>(() => new BalanceService());
   
   // Token IDs are constant
   const tokenIds: TokenIds = {
@@ -132,9 +134,10 @@ export function useTokens(): UseTokensResult {
     CONTRACT: LYNX_CONTRACT_ID
   };
 
-  // Function to refresh balances
+  // Function to refresh balances using real Hedera SDK queries
   const refreshBalances = useCallback(async (): Promise<boolean> => {
-    if (!isConnected || !dAppConnector || !accountId) {
+    if (!isConnected || !accountId) {
+      console.log('[useTokens] Wallet not connected, skipping balance refresh');
       return false;
     }
 
@@ -142,23 +145,32 @@ export function useTokens(): UseTokensResult {
     setError(null);
     
     try {
-      // In a real implementation, this would query the actual balances
-      // For now, we'll just return dummy values
-      setTokenBalances({
-        HBAR: '100',
-        SAUCE: '1000',
-        CLXY: '1000',
-        LYNX: '10'
-      });
+      console.log('[useTokens] Fetching real balances from Hedera network...');
+      
+      // Use the BalanceService to get real balances
+      const realBalances = await balanceService.getTokenBalances(accountId);
+      
+      console.log('[useTokens] Real balances fetched:', realBalances);
+      setTokenBalances(realBalances);
       
       return true;
     } catch (err) {
+      console.error('[useTokens] Error fetching real balances:', err);
       setError(err instanceof Error ? err : new Error('Failed to refresh balances'));
+      
+      // Fallback to default values on error
+      setTokenBalances({
+        HBAR: '0',
+        SAUCE: '0',
+        CLXY: '0',
+        LYNX: '0'
+      });
+      
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [isConnected, dAppConnector, accountId]);
+  }, [isConnected, accountId, balanceService]);
 
   // Calculate required tokens based on LYNX amount
   const calculateRequiredTokens = useCallback((lynxAmount: number): RequiredTokens => {
@@ -167,12 +179,14 @@ export function useTokens(): UseTokensResult {
     }
     
     try {
-      // This calculation would ideally come from TokenService.getTokenRatios()
-      // For now using default values
+      // Match the contract ratios:
+      // 5 SAUCE per 1 LYNX
+      // 2 CLXY per 1 LYNX  
+      // 10 HBAR per 1 LYNX
       return {
-        SAUCE: 50 * lynxAmount / 10,
-        CLXY: 20 * lynxAmount / 10,
-        HBAR: 100 * lynxAmount / 10
+        SAUCE: 5 * lynxAmount,
+        CLXY: 2 * lynxAmount,
+        HBAR: 10 * lynxAmount
       };
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to calculate required tokens'));
@@ -180,12 +194,30 @@ export function useTokens(): UseTokensResult {
     }
   }, []);
 
-  // Load initial data
+  // Load initial data when wallet connects
   useEffect(() => {
-    if (isConnected) {
+    if (isConnected && accountId) {
+      console.log('[useTokens] Wallet connected, refreshing balances...');
       refreshBalances();
+    } else {
+      // Reset balances when wallet disconnects
+      setTokenBalances({
+        HBAR: '0',
+        SAUCE: '0',
+        CLXY: '0',
+        LYNX: '0'
+      });
     }
-  }, [isConnected, refreshBalances]);
+  }, [isConnected, accountId, refreshBalances]);
+
+  // Cleanup balance service on unmount
+  useEffect(() => {
+    return () => {
+      if (balanceService) {
+        balanceService.close();
+      }
+    };
+  }, [balanceService]);
 
   return {
     tokenIds,

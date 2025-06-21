@@ -6,6 +6,7 @@ import { useTokenQueue } from '../providers/TokenQueueProvider';
 import { useTokens } from '../hooks/useTokens';
 import { useDaoParameters } from '../providers/DaoParametersProvider';
 import { MintForm } from '../components/MintForm';
+import { vt323 } from '../fonts';
 
 export default function MintPage() {
   const { isConnected, accountId } = useWallet();
@@ -14,12 +15,12 @@ export default function MintPage() {
   const { parameters } = useDaoParameters();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-[#0159E0]">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-4">
+          <div className="text-center mb-8 pt-8">
+            <h1 className={`text-4xl font-bold text-white mb-4 ${vt323.className}`}>
               Mint LYNX Tokens
             </h1>
             <p className="text-gray-300 text-lg">
@@ -61,7 +62,7 @@ export default function MintPage() {
                 <button
                   onClick={() => refreshBalances()}
                   disabled={isLoadingTokens}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-2"
+                  className="px-4 py-2 bg-[#0159E0] hover:bg-[#0147c4] disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-2"
                 >
                   {isLoadingTokens ? (
                     <>
@@ -89,7 +90,7 @@ export default function MintPage() {
               
               {isLoadingTokens ? (
                 <div className="text-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0159E0] mx-auto"></div>
                   <p className="text-gray-400 mt-2">Loading balances from Hedera network...</p>
                 </div>
               ) : (

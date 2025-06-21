@@ -21,7 +21,6 @@ export function MintForm() {
   
   const [lynxAmount, setLynxAmount] = useState<number>(10);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [mintTxId, setMintTxId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   
@@ -99,9 +98,6 @@ export function MintForm() {
           setCurrentStep('');
         }
       });
-      
-      // Store mint transaction ID
-      setMintTxId(result.mintId);
       
       // Set current step to inform user
       setCurrentStep('Processing token approvals');

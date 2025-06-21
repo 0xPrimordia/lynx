@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/icons/tokens/**',
       },
-    ],
+        ],
   },
 };
 

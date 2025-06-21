@@ -45,7 +45,7 @@ const config: HardhatUserConfig = {
     }
   },
   paths: {
-    sources: "./app/contracts",
+    sources: "./hardhat/contracts",
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts"
@@ -54,7 +54,9 @@ const config: HardhatUserConfig = {
     outDir: "typechain-types",
     target: "ethers-v6",
     alwaysGenerateOverloads: true,
-    discriminateTypes: true
+    discriminateTypes: true,
+    dontOverrideCompile: false,
+    externalArtifacts: []
   },
   mocha: {
     timeout: 100000

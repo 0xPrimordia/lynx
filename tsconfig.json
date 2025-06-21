@@ -29,6 +29,10 @@
     "moduleResolution": "node",
     "isolatedModules": true,
     "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
     "plugins": [
       {
         "name": "next"
@@ -36,13 +40,18 @@
     ]
   },
   "include": [
-    "./typechain-types",
-    "test/**/*.ts",
+    "app/**/*",
+    "lib/**/*",
     ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "typechain-types/**/*",
+    "hardhat/**/*",
+    "test/**/*",
+    "artifacts/**/*",
+    "cache/**/*"
   ],
   "files": [
     "./hardhat.config.ts"

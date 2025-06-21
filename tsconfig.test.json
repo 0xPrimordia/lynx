@@ -1,0 +1,43 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types"
+    ],
+    "types": [
+      "mocha",
+      "chai",
+      "node"
+    ],
+    "declaration": true,
+    "lib": [
+      "es2020",
+      "dom"
+    ],
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "moduleResolution": "node",
+    "isolatedModules": true
+  },
+  "include": [
+    "./typechain-types/**/*",
+    "test/**/*.ts",
+    "hardhat/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "app"
+  ]
+} 

@@ -31,5 +31,20 @@
       "decimals": 8,
       "initialSupply": 500000000000
     }
-  }
+  },
+  "lastMintDate": "2025-06-22T19:03:23.649Z",
+  "mintHistory": [
+    {
+      "date": "2025-06-22T19:03:23.649Z",
+      "results": [
+        {
+          "symbol": "WBTC",
+          "tokenId": "0.0.6212930",
+          "previousSupply": "1000000",
+          "newSupply": "200001000000",
+          "amountMinted": 200000000000
+        }
+      ]
+    }
+  ]
 }

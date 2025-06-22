@@ -1,79 +1,6 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "/Users/kevincompton/Sites/lynx/hardhat/contracts/debug/IHederaTokenService.sol": {
-      "lastModificationDate": 1750203861706,
-      "contentHash": "624c71dfcb0d463e59c738dc05f6d3c3",
-      "sourceName": "contracts/debug/IHederaTokenService.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IHederaTokenService"
-      ]
-    },
-    "/Users/kevincompton/Sites/lynx/hardhat/contracts/debug/SimpleTokenMinter.sol": {
-      "lastModificationDate": 1750454057171,
-      "contentHash": "e2487e959dd3d2d63bb6509cd8a71795",
-      "sourceName": "contracts/debug/SimpleTokenMinter.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "../HederaResponseCodes.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IHederaTokenService",
-        "SimpleTokenMinter"
-      ]
-    },
     "/Users/kevincompton/Sites/lynx/hardhat/contracts/index-token/interfaces/IHederaTokenService.sol": {
       "lastModificationDate": 1744224163801,
       "contentHash": "c48a7590c26082fe38ccb100c711a936",
@@ -329,80 +256,6 @@
         "IndexTokenController"
       ]
     },
-    "/Users/kevincompton/Sites/lynx/hardhat/contracts/debug/TestHTSWithCombinedKeys.sol": {
-      "lastModificationDate": 1746204776617,
-      "contentHash": "250d69177f448dcadb7750493e4e78f8",
-      "sourceName": "contracts/debug/TestHTSWithCombinedKeys.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "../index-token/interfaces/IHederaTokenService.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.18"
-      ],
-      "artifacts": [
-        "TestHTSWithCombinedKeys"
-      ]
-    },
-    "/Users/kevincompton/Sites/lynx/hardhat/contracts/debug/TestHTS.sol": {
-      "lastModificationDate": 1746204087388,
-      "contentHash": "d9b323d5ba6e4e7a236c4a1d73a27a00",
-      "sourceName": "contracts/debug/TestHTS.sol",
-      "solcConfig": {
-        "version": "0.8.19",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "../index-token/interfaces/IHederaTokenService.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.18"
-      ],
-      "artifacts": [
-        "TestHTS"
-      ]
-    },
     "/Users/kevincompton/Sites/lynx/hardhat/contracts/index-token/IHederaTokenService.sol": {
       "lastModificationDate": 1744224558778,
       "contentHash": "c48a7590c26082fe38ccb100c711a936",
@@ -511,10 +364,10 @@
         "HederaResponseCodes"
       ]
     },
-    "/Users/kevincompton/Sites/lynx/hardhat/contracts/SimpleTokenMinter.sol": {
-      "lastModificationDate": 1750455824578,
-      "contentHash": "1fb674f9951b4f73644aad5182d94b53",
-      "sourceName": "contracts/SimpleTokenMinter.sol",
+    "/Users/kevincompton/Sites/lynx/hardhat/contracts/DepositMinterV2.sol": {
+      "lastModificationDate": 1750616416907,
+      "contentHash": "12d8f262d5f053649120a85cc7dbd718",
+      "sourceName": "contracts/DepositMinterV2.sol",
       "solcConfig": {
         "version": "0.8.19",
         "settings": {
@@ -545,8 +398,8 @@
         "^0.8.0"
       ],
       "artifacts": [
-        "IHederaTokenService",
-        "SimpleTokenMinter"
+        "DepositMinterV2",
+        "IHederaTokenService"
       ]
     }
   }

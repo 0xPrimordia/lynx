@@ -23,10 +23,10 @@ if (!operatorId || !operatorKey) {
 
 // Additional mint amounts (you can modify these as needed)
 const ADDITIONAL_MINT_AMOUNTS = {
-  WBTC: 500000,        // 0.005 WBTC (8 decimals)
-  USDC: 50000000000,   // 50,000 USDC (6 decimals)
-  JAM: 500000000000,   // 5,000 JAM (8 decimals)
-  HEADSTART: 250000000000  // 2,500 HEADSTART (8 decimals)
+  WBTC: 200000000000,  // 2,000 WBTC (8 decimals) - plenty for many tests
+  USDC: 0,             // Skip USDC for now
+  JAM: 0,              // Skip JAM for now  
+  HEADSTART: 0         // Skip HEADSTART for now
 };
 
 async function main() {

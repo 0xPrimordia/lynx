@@ -192,7 +192,7 @@ export function MintForm() {
       <CardHeader className="flex gap-3">
         <div className="flex flex-col">
           <p className="text-md">Mint LYNX Tokens</p>
-          <p className="text-small text-default-500">Exchange SAUCE and CLXY for LYNX</p>
+          <p className="text-small text-default-500">Exchange 6 tokens for LYNX</p>
         </div>
       </CardHeader>
       <CardBody>
@@ -217,10 +217,16 @@ export function MintForm() {
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="text-gray-500">HBAR:</div>
               <div className="font-medium">{required.HBAR} HBAR</div>
+              <div className="text-gray-500">WBTC:</div>
+              <div className="font-medium">{required.WBTC} WBTC</div>
               <div className="text-gray-500">SAUCE:</div>
               <div className="font-medium">{required.SAUCE} SAUCE</div>
-              <div className="text-gray-500">CLXY:</div>
-              <div className="font-medium">{required.CLXY} CLXY</div>
+              <div className="text-gray-500">USDC:</div>
+              <div className="font-medium">{required.USDC} USDC</div>
+              <div className="text-gray-500">JAM:</div>
+              <div className="font-medium">{required.JAM} JAM</div>
+              <div className="text-gray-500">HEADSTART:</div>
+              <div className="font-medium">{required.HEADSTART} HEADSTART</div>
             </div>
           </div>
         </div>
@@ -288,9 +294,12 @@ export function MintForm() {
                 !isConnected || 
                 isSubmitting || 
                 isProcessing || 
+                Number(tokenBalances.HBAR) < required.HBAR ||
+                Number(tokenBalances.WBTC) < required.WBTC ||
                 Number(tokenBalances.SAUCE) < required.SAUCE ||
-                Number(tokenBalances.CLXY) < required.CLXY ||
-                Number(tokenBalances.HBAR) < required.HBAR
+                Number(tokenBalances.USDC) < required.USDC ||
+                Number(tokenBalances.JAM) < required.JAM ||
+                Number(tokenBalances.HEADSTART) < required.HEADSTART
               }
               className="w-full"
             >

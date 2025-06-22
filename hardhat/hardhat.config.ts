@@ -28,7 +28,7 @@ const config: HardhatUserConfig = {
     hederaTestnet: {
       url: process.env.HEDERA_TESTNET_ENDPOINT || "https://testnet.hashio.io/api",
       chainId: 296,
-      gasPrice: 620000000000, // 620 gwei
+      gasPrice: 700000000000, // 700 gwei (above minimum of 680)
       loggingEnabled: true,
       throwOnTransactionFailures: true,
       throwOnCallFailures: true,

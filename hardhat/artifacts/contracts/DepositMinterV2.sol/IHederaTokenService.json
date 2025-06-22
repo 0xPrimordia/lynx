@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "IHederaTokenService",
-  "sourceName": "contracts/SimpleTokenMinter.sol",
+  "sourceName": "contracts/DepositMinterV2.sol",
   "abi": [
     {
       "inputs": [

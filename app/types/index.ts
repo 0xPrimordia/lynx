@@ -75,33 +75,30 @@ export interface TreasuryParameters {
 }
 
 export interface TokenWeights {
-  HBAR: ParameterValue<number>;      // 20, 25, 30, 35, 40 %
-  HSUITE: ParameterValue<number>;    // 10, 15, 20 %
-  SAUCERSWAP: ParameterValue<number>; // 10, 15, 20 %
-  HTS: ParameterValue<number>;       // 5, 10, 15 %
-  HELI: ParameterValue<number>;      // 5, 10, 15 %
-  KARATE: ParameterValue<number>;    // 5, 10, 15 %
-  HASHPACK: ParameterValue<number>;  // 5, 10, 15 %
+  HBAR: ParameterValue<number>;      // Core Hedera
+  WBTC: ParameterValue<number>;      // Smart Contract Platforms
+  SAUCE: ParameterValue<number>;     // DeFi & DEX Tokens
+  USDC: ParameterValue<number>;      // Stablecoins
+  JAM: ParameterValue<number>;       // Enterprise & Utility Tokens
+  HEADSTART: ParameterValue<number>; // GameFi & NFT Infrastructure
 }
 
 export interface TokenSlippage {
-  HBAR: ParameterValue<number>;      // 0.1, 0.5, 1.0, 2.0 %
-  HSUITE: ParameterValue<number>;    // 1.0, 2.0, 3.0, 5.0 %
-  SAUCERSWAP: ParameterValue<number>; // 1.0, 2.0, 3.0, 5.0 %
-  HTS: ParameterValue<number>;       // 1.0, 2.0, 3.0, 5.0 %
-  HELI: ParameterValue<number>;      // 1.0, 2.0, 3.0, 5.0 %
-  KARATE: ParameterValue<number>;    // 1.0, 2.0, 3.0, 5.0 %
-  HASHPACK: ParameterValue<number>;  // 1.0, 2.0, 3.0, 5.0 %
+  HBAR: ParameterValue<number>;      // Core Hedera
+  WBTC: ParameterValue<number>;      // Smart Contract Platforms
+  SAUCE: ParameterValue<number>;     // DeFi & DEX Tokens
+  USDC: ParameterValue<number>;      // Stablecoins
+  JAM: ParameterValue<number>;       // Enterprise & Utility Tokens
+  HEADSTART: ParameterValue<number>; // GameFi & NFT Infrastructure
 }
 
 export interface TokenSwapSizes {
-  HBAR: ParameterValue<number>;      // 100000, 500000, 1000000, 2000000 USD
-  HSUITE: ParameterValue<number>;    // 50000, 100000, 250000, 500000 USD
-  SAUCERSWAP: ParameterValue<number>; // 50000, 100000, 250000, 500000 USD
-  HTS: ParameterValue<number>;       // 50000, 100000, 250000, 500000 USD
-  HELI: ParameterValue<number>;      // 50000, 100000, 250000, 500000 USD
-  KARATE: ParameterValue<number>;    // 50000, 100000, 250000, 500000 USD
-  HASHPACK: ParameterValue<number>;  // 50000, 100000, 250000, 500000 USD
+  HBAR: ParameterValue<number>;      // Core Hedera
+  WBTC: ParameterValue<number>;      // Smart Contract Platforms
+  SAUCE: ParameterValue<number>;     // DeFi & DEX Tokens
+  USDC: ParameterValue<number>;      // Stablecoins
+  JAM: ParameterValue<number>;       // Enterprise & Utility Tokens
+  HEADSTART: ParameterValue<number>; // GameFi & NFT Infrastructure
 }
 
 // Fee Parameters
@@ -127,8 +124,8 @@ export interface ParameterMetadata {
   sequenceNumber?: number;
 }
 
-// Supported tokens in the Lynx index
-export const LYNX_TOKENS = ['HBAR', 'HSUITE', 'SAUCERSWAP', 'HTS', 'HELI', 'KARATE', 'HASHPACK'] as const;
+// Supported tokens in the Lynx index (6 tokens representing 6 sectors)
+export const LYNX_TOKENS = ['HBAR', 'WBTC', 'SAUCE', 'USDC', 'JAM', 'HEADSTART'] as const;
 export type LynxTokenSymbol = typeof LYNX_TOKENS[number];
 
 // Token metadata for display
@@ -147,50 +144,44 @@ export const TOKEN_INFO: Record<LynxTokenSymbol, LynxTokenInfo> = {
     symbol: 'HBAR',
     name: 'Hedera Hashgraph',
     description: 'Native Hedera network token',
-    sector: 'Layer 1',
+    sector: 'Core Hedera',
     website: 'https://hedera.com',
     tokenId: '0.0.0'
   },
-  HSUITE: {
-    symbol: 'HSUITE',
-    name: 'HashSuite',
-    description: 'Hedera development and infrastructure suite',
-    sector: 'Infrastructure',
-    website: 'https://hsuite.finance'
+  WBTC: {
+    symbol: 'WBTC',
+    name: 'Wrapped Bitcoin',
+    description: 'Bitcoin wrapped for smart contract platforms',
+    sector: 'Smart Contract Platforms',
+    website: 'https://wbtc.network'
   },
-  SAUCERSWAP: {
-    symbol: 'SAUCERSWAP',
+  SAUCE: {
+    symbol: 'SAUCE',
     name: 'SaucerSwap',
     description: 'Leading DEX on Hedera',
-    sector: 'DeFi',
+    sector: 'DeFi & DEX Tokens',
     website: 'https://saucerswap.finance'
   },
-  HTS: {
-    symbol: 'HTS',
-    name: 'Hedera Token Service',
-    description: 'Hedera native token standard',
-    sector: 'Infrastructure'
+  USDC: {
+    symbol: 'USDC',
+    name: 'USD Coin',
+    description: 'Fully-backed US dollar stablecoin',
+    sector: 'Stablecoins',
+    website: 'https://www.centre.io'
   },
-  HELI: {
-    symbol: 'HELI',
-    name: 'HeliSwap',
-    description: 'Hedera DeFi protocol',
-    sector: 'DeFi',
-    website: 'https://heliswap.io'
+  JAM: {
+    symbol: 'JAM',
+    name: 'JAM Token',
+    description: 'Enterprise utility token',
+    sector: 'Enterprise & Utility Tokens',
+    website: 'https://jam.gg'
   },
-  KARATE: {
-    symbol: 'KARATE',
-    name: 'Karate Combat',
-    description: 'Sports and entertainment token',
-    sector: 'Entertainment',
-    website: 'https://karate.com'
-  },
-  HASHPACK: {
-    symbol: 'HASHPACK',
-    name: 'HashPack',
-    description: 'Leading Hedera wallet',
-    sector: 'Infrastructure',
-    website: 'https://hashpack.app'
+  HEADSTART: {
+    symbol: 'HEADSTART',
+    name: 'HeadStarter',
+    description: 'GameFi and NFT infrastructure token',
+    sector: 'GameFi & NFT Infrastructure',
+    website: 'https://headstarter.org'
   }
 };
 
@@ -209,13 +200,12 @@ export const PARAMETER_RANGES = {
   },
   treasury: {
     weights: {
-      HBAR: [20, 25, 30, 35, 40],
-      HSUITE: [10, 15, 20],
-      SAUCERSWAP: [10, 15, 20],
-      HTS: [5, 10, 15],
-      HELI: [5, 10, 15],
-      KARATE: [5, 10, 15],
-      HASHPACK: [5, 10, 15]
+      HBAR: [20, 25, 30, 35, 40],      // Core Hedera
+      WBTC: [10, 15, 20, 25],          // Smart Contract Platforms
+      SAUCE: [10, 15, 20],             // DeFi & DEX Tokens
+      USDC: [5, 10, 15, 20],           // Stablecoins
+      JAM: [5, 10, 15],                // Enterprise & Utility Tokens
+      HEADSTART: [5, 10, 15]           // GameFi & NFT Infrastructure
     },
     maxSlippage: {
       HBAR: [0.1, 0.5, 1.0, 2.0],
@@ -254,31 +244,28 @@ export function createDefaultDaoParameters(): DaoParameters {
     },
     treasury: {
       weights: {
-        HBAR: 30,      // 30% allocation to HBAR
-        HSUITE: 15,    // 15% allocation to HSUITE
-        SAUCERSWAP: 15, // 15% allocation to SAUCERSWAP
-        HTS: 10,       // 10% allocation to HTS
-        HELI: 10,      // 10% allocation to HELI
-        KARATE: 10,    // 10% allocation to KARATE
-        HASHPACK: 10   // 10% allocation to HASHPACK
+        HBAR: 25,      // 25% allocation to Core Hedera
+        WBTC: 20,      // 20% allocation to Smart Contract Platforms
+        SAUCE: 15,     // 15% allocation to DeFi & DEX Tokens
+        USDC: 15,      // 15% allocation to Stablecoins
+        JAM: 15,       // 15% allocation to Enterprise & Utility Tokens
+        HEADSTART: 10  // 10% allocation to GameFi & NFT Infrastructure
       },
       maxSlippage: {
-        HBAR: 1.0,      // 1% max slippage for HBAR
-        HSUITE: 3.0,    // 3% max slippage for HSUITE
-        SAUCERSWAP: 3.0, // 3% max slippage for SAUCERSWAP
-        HTS: 3.0,       // 3% max slippage for HTS
-        HELI: 3.0,      // 3% max slippage for HELI
-        KARATE: 3.0,    // 3% max slippage for KARATE
-        HASHPACK: 3.0   // 3% max slippage for HASHPACK
+        HBAR: 1.0,      // 1% max slippage for Core Hedera
+        WBTC: 2.0,      // 2% max slippage for Smart Contract Platforms
+        SAUCE: 3.0,     // 3% max slippage for DeFi & DEX Tokens
+        USDC: 0.5,      // 0.5% max slippage for Stablecoins
+        JAM: 3.0,       // 3% max slippage for Enterprise & Utility Tokens
+        HEADSTART: 5.0  // 5% max slippage for GameFi & NFT Infrastructure
       },
       maxSwapSize: {
-        HBAR: 1000000,    // $1M max swap size for HBAR
-        HSUITE: 250000,   // $250K max swap size for HSUITE
-        SAUCERSWAP: 250000, // $250K max swap size for SAUCERSWAP
-        HTS: 100000,      // $100K max swap size for HTS
-        HELI: 100000,     // $100K max swap size for HELI
-        KARATE: 100000,   // $100K max swap size for KARATE
-        HASHPACK: 100000  // $100K max swap size for HASHPACK
+        HBAR: 1000000,    // $1M max swap size for Core Hedera
+        WBTC: 500000,     // $500K max swap size for Smart Contract Platforms
+        SAUCE: 250000,    // $250K max swap size for DeFi & DEX Tokens
+        USDC: 1000000,    // $1M max swap size for Stablecoins
+        JAM: 100000,      // $100K max swap size for Enterprise & Utility Tokens
+        HEADSTART: 50000  // $50K max swap size for GameFi & NFT Infrastructure
       }
     },
     fees: {

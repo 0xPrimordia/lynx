@@ -52,12 +52,11 @@ export default function CompositionPage() {
   const getTokenIconUrl = (symbol: string): string => {
     const tokenMap: Record<string, string> = {
       'HBAR': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.15058.png',
-      'HSUITE': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.1055.png',
-      'SAUCERSWAP': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.1188.png',
-      'HTS': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.1062.png',
-      'HELI': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.1063.png',
-      'KARATE': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.1159.png',
-      'HASHPACK': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.1362.png',
+      'WBTC': '/images/tokens/fallback.png', // Use fallback
+      'SAUCE': 'https://d1grbdlekdv9wn.cloudfront.net/icons/tokens/0.0.1188.png',
+      'USDC': '/images/tokens/fallback.png', // Use fallback
+      'JAM': 'https://assets.coingecko.com/coins/images/28731/thumb/jam.png', // Using CoinGecko as backup
+      'HEADSTART': '/images/tokens/default.png' // Will fall back to text circle
     };
     
     return tokenMap[symbol] || '/images/tokens/default.png';
@@ -76,36 +75,7 @@ export default function CompositionPage() {
     }));
   };
 
-  const generateAIRecommendation = (): { composition: TokenComposition[], reasoning: string } => {
-    if (!parameters) return { composition: [], reasoning: "" };
 
-    // Generate slight variations for AI recommendation
-    const aiComposition = LYNX_TOKENS.map(token => {
-      const currentWeight = getParameterValue(parameters.treasury.weights[token]);
-      // Add some variation (-2% to +2%)
-      const variation = (Math.random() - 0.5) * 4;
-      const newWeight = Math.max(5, Math.min(40, currentWeight + variation));
-      
-      return {
-        symbol: token,
-        name: TOKEN_INFO[token].name,
-        sector: TOKEN_INFO[token].sector,
-        allocation: Math.round(newWeight),
-        maxSlippage: getParameterValue(parameters.treasury.maxSlippage[token]),
-        maxSwapSize: getParameterValue(parameters.treasury.maxSwapSize[token])
-      };
-    });
-
-    // Normalize to 100%
-    const total = aiComposition.reduce((sum, token) => sum + token.allocation, 0);
-    aiComposition.forEach(token => {
-      token.allocation = Math.round((token.allocation / total) * 100);
-    });
-
-    const reasoning = "AI analysis suggests minor rebalancing based on recent market volatility and liquidity conditions. HBAR allocation may be adjusted due to network growth, while DeFi tokens show varying performance metrics.";
-
-    return { composition: aiComposition, reasoning };
-  };
 
   const handleAllocationChange = (symbol: LynxTokenSymbol, newAllocation: number) => {
     setProposedChanges(prev => ({
@@ -114,6 +84,18 @@ export default function CompositionPage() {
     }));
     setShowVoteButton(true);
   };
+
+  // Calculate total allocation percentage
+  const calculateTotalAllocation = (): number => {
+    if (!parameters) return 0;
+    return LYNX_TOKENS.reduce((total, token) => {
+      const allocation = proposedChanges[token] ?? getParameterValue(parameters.treasury.weights[token]);
+      return total + allocation;
+    }, 0);
+  };
+
+  const totalAllocation = calculateTotalAllocation();
+  const allocationDifference = totalAllocation - 100;
 
   // Mock function to get LYNX token balance for voting power
   // In a real implementation, this would query the actual token balance
@@ -280,10 +262,10 @@ export default function CompositionPage() {
     const currentAllocation = proposedChanges[token.symbol] ?? token.allocation;
     
     return (
-      <div 
-        key={token.symbol} 
-        className="bg-gray-800 rounded-lg p-6 mb-6 flex flex-col items-center justify-between w-[200px] h-[320px]"
-      >
+              <div 
+          key={token.symbol} 
+          className="bg-gray-800 rounded-lg p-6 pb-4 mb-6 flex flex-col items-center justify-between w-[200px] h-[380px]"
+        >
         <div className="flex flex-col items-center">
           <div className="rounded-full p-2 mb-2">
             <TokenImage symbol={token.symbol} />
@@ -318,11 +300,11 @@ export default function CompositionPage() {
             <div className="text-xs text-gray-400">Allocation</div>
           </div>
           
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <div className="text-gray-400">Max Slippage</div>
-              <div className="text-white">{token.maxSlippage}%</div>
-            </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <div className="text-gray-400">Max Slip</div>
+                <div className="text-white">{token.maxSlippage}%</div>
+              </div>
             <div>
               <div className="text-gray-400">Max Swap</div>
               <div className="text-white">${(token.maxSwapSize / 1000)}K</div>
@@ -359,7 +341,6 @@ export default function CompositionPage() {
   }
 
   const currentComposition = generateComposition();
-  const aiRecommendation = generateAIRecommendation();
 
   return (
     <div className="p-8">
@@ -375,28 +356,29 @@ export default function CompositionPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-8">
-          {/* AI Recommended Composition */}
-          <div className="mb-8">
-            <h2 className={`text-xl text-white mb-6 ${vt323.className}`}>AI Recommended Allocation</h2>
-            
-            <div className="flex flex-wrap gap-4 justify-center">
-              {aiRecommendation.composition.map(token => (
-                renderTokenCard(token, false)
-              ))}
+          {/* Allocation Validation */}
+          {showVoteButton && (
+            <div className={`p-3 rounded-lg border text-center ${
+              Math.abs(allocationDifference) < 0.01 
+                ? 'bg-green-900/10 border-green-800/30 text-green-400' 
+                : 'bg-yellow-900/10 border-yellow-800/30 text-yellow-400'
+            }`}>
+              <div className="text-sm">
+                Total Allocation: {totalAllocation.toFixed(1)}%
+                {Math.abs(allocationDifference) >= 0.01 && (
+                  <span className="ml-2">
+                    ({allocationDifference > 0 
+                      ? `+${allocationDifference.toFixed(1)}%` 
+                      : `${allocationDifference.toFixed(1)}%`
+                    })
+                  </span>
+                )}
+              </div>
             </div>
-            
-            <div className="mt-6 bg-blue-900/30 border border-blue-800 p-4 rounded-lg">
-              <h3 className="text-lg font-medium text-white mb-2">AI Reasoning</h3>
-              <p className="text-gray-300">
-                {aiRecommendation.reasoning}
-              </p>
-            </div>
-          </div>
-          
+          )}
+
           {/* Current Composition */}
           <div className="mb-8">
-            <h2 className={`text-xl text-white mb-6 ${vt323.className}`}>Current Allocation (Editable)</h2>
-            
             <div className="flex flex-wrap gap-4 justify-center">
               {currentComposition.map(token => (
                 renderTokenCard(token, true)
@@ -407,9 +389,9 @@ export default function CompositionPage() {
               <div className="flex justify-center mt-6">
                 <button 
                   onClick={handleVoteSubmit}
-                  disabled={isSubmitting || !isConnected}
+                  disabled={isSubmitting || !isConnected || Math.abs(allocationDifference) >= 0.01}
                   className={`border border-white text-white py-3 px-8 rounded-md text-sm font-medium hover:bg-white/10 transition-colors ${
-                    (isSubmitting || !isConnected) ? 'opacity-50 cursor-not-allowed' : ''
+                    (isSubmitting || !isConnected || Math.abs(allocationDifference) >= 0.01) ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
                   {isSubmitting 

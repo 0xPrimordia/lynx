@@ -260,6 +260,8 @@ export default function CompositionPage() {
 
   const renderTokenCard = (token: TokenComposition, isEditable: boolean = false) => {
     const currentAllocation = proposedChanges[token.symbol] ?? token.allocation;
+    const hasChanged = proposedChanges[token.symbol] !== undefined;
+    const originalAllocation = token.allocation;
     
     return (
               <div 
@@ -292,7 +294,14 @@ export default function CompositionPage() {
                   onChange={(e) => handleAllocationChange(token.symbol, parseInt(e.target.value))}
                   className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
                 />
-                <div className="text-xl font-bold text-white mt-2">{currentAllocation}%</div>
+                <div className="text-xl font-bold text-white mt-2">
+                  {currentAllocation}%
+                  {hasChanged && (
+                    <span className="text-sm text-gray-400 ml-2">
+                      (was {originalAllocation}%)
+                    </span>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="text-xl font-bold text-white">{token.allocation}%</div>
@@ -356,26 +365,26 @@ export default function CompositionPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-8">
-          {/* Allocation Validation */}
-          {showVoteButton && (
-            <div className={`p-3 rounded-lg border text-center ${
-              Math.abs(allocationDifference) < 0.01 
+          {/* Allocation Validation - Always visible to prevent layout jump */}
+          <div className={`p-3 rounded-lg border text-center transition-all duration-200 ${
+            showVoteButton 
+              ? Math.abs(allocationDifference) < 0.01 
                 ? 'bg-green-900/10 border-green-800/30 text-green-400' 
                 : 'bg-yellow-900/10 border-yellow-800/30 text-yellow-400'
-            }`}>
-              <div className="text-sm">
-                Total Allocation: {totalAllocation.toFixed(1)}%
-                {Math.abs(allocationDifference) >= 0.01 && (
-                  <span className="ml-2">
-                    ({allocationDifference > 0 
-                      ? `+${allocationDifference.toFixed(1)}%` 
-                      : `${allocationDifference.toFixed(1)}%`
-                    })
-                  </span>
-                )}
-              </div>
+              : 'bg-gray-900/10 border-gray-800/30 text-gray-400'
+          }`}>
+            <div className="text-sm">
+              Total Allocation: {totalAllocation.toFixed(1)}%
+              {showVoteButton && Math.abs(allocationDifference) >= 0.01 && (
+                <span className="ml-2">
+                  ({allocationDifference > 0 
+                    ? `+${allocationDifference.toFixed(1)}%` 
+                    : `${allocationDifference.toFixed(1)}%`
+                  })
+                </span>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Current Composition */}
           <div className="mb-8">

@@ -219,7 +219,6 @@ export class TokenQueueService {
     const { lynxAmount, onSuccess, onError } = params;
     
     // Calculate required token amounts for 6-token system (using DepositMinterV2 ratios)
-    const { useTokens } = await import('../hooks/useTokens');
     const ratios = this.getTokenRatios();
     
     const wbtcAmount = (lynxAmount * ratios.wbtcRatio * Math.pow(10, 8)).toString(); // 8 decimals

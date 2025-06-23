@@ -1,0 +1,50 @@
+{
+  "createdAt": "2025-06-22T17:39:42.958Z",
+  "network": "testnet",
+  "operatorAccount": "0.0.4340026",
+  "tokens": {
+    "WBTC": {
+      "tokenId": "0.0.6212930",
+      "evmAddress": "0x00000000000000000000000000000000005ecd42",
+      "name": "Wrapped Bitcoin (Test)",
+      "decimals": 8,
+      "initialSupply": 1000000
+    },
+    "USDC": {
+      "tokenId": "0.0.6212931",
+      "evmAddress": "0x00000000000000000000000000000000005ecd43",
+      "name": "USD Coin (Test)",
+      "decimals": 6,
+      "initialSupply": 100000000000
+    },
+    "JAM": {
+      "tokenId": "0.0.6212932",
+      "evmAddress": "0x00000000000000000000000000000000005ecd44",
+      "name": "Jam Token (Test)",
+      "decimals": 8,
+      "initialSupply": 1000000000000
+    },
+    "HEADSTART": {
+      "tokenId": "0.0.6212933",
+      "evmAddress": "0x00000000000000000000000000000000005ecd45",
+      "name": "HeadStarter (Test)",
+      "decimals": 8,
+      "initialSupply": 500000000000
+    }
+  },
+  "lastMintDate": "2025-06-22T19:03:23.649Z",
+  "mintHistory": [
+    {
+      "date": "2025-06-22T19:03:23.649Z",
+      "results": [
+        {
+          "symbol": "WBTC",
+          "tokenId": "0.0.6212930",
+          "previousSupply": "1000000",
+          "newSupply": "200001000000",
+          "amountMinted": 200000000000
+        }
+      ]
+    }
+  ]
+}

@@ -7,13 +7,19 @@ import {
 
 // Token IDs from environment variables
 const SAUCE_TOKEN_ID = process.env.NEXT_PUBLIC_SAUCE_TOKEN_ID || "0.0.1183558";
-const CLXY_TOKEN_ID = process.env.NEXT_PUBLIC_CLXY_TOKEN_ID || "0.0.5365";
+const WBTC_TOKEN_ID = process.env.NEXT_PUBLIC_WBTC_TOKEN_ID || "0.0.6212930";
+const USDC_TOKEN_ID = process.env.NEXT_PUBLIC_USDC_TOKEN_ID || "0.0.6212931";
+const JAM_TOKEN_ID = process.env.NEXT_PUBLIC_JAM_TOKEN_ID || "0.0.6212932";
+const HEADSTART_TOKEN_ID = process.env.NEXT_PUBLIC_HEADSTART_TOKEN_ID || "0.0.6212933";
 const LYNX_TOKEN_ID = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.5948419";
 
 export interface TokenBalances {
   HBAR: string;
   SAUCE: string;
-  CLXY: string;
+  WBTC: string;
+  USDC: string;
+  JAM: string;
+  HEADSTART: string;
   LYNX: string;
 }
 
@@ -43,15 +49,33 @@ export class BalanceService {
           symbol: 'SAUCE',
           name: 'SaucerSwap Token'
         };
-      case CLXY_TOKEN_ID:
+      case WBTC_TOKEN_ID:
+        return {
+          decimals: 8,
+          symbol: 'WBTC',
+          name: 'Wrapped Bitcoin'
+        };
+      case USDC_TOKEN_ID:
         return {
           decimals: 6,
-          symbol: 'CLXY',
-          name: 'CLXY Token'
+          symbol: 'USDC',
+          name: 'USD Coin'
+        };
+      case JAM_TOKEN_ID:
+        return {
+          decimals: 8,
+          symbol: 'JAM',
+          name: 'JAM Token'
+        };
+      case HEADSTART_TOKEN_ID:
+        return {
+          decimals: 8,
+          symbol: 'HEADSTART',
+          name: 'HeadStarter Token'
         };
       case LYNX_TOKEN_ID:
         return {
-          decimals: 8, // Assuming LYNX uses 8 decimals, update if different
+          decimals: 8,
           symbol: 'LYNX',
           name: 'LYNX Token'
         };
@@ -114,7 +138,10 @@ export class BalanceService {
       
              // Get token info for proper decimal handling
        const sauceInfo = this.getTokenInfo(SAUCE_TOKEN_ID);
-       const clxyInfo = this.getTokenInfo(CLXY_TOKEN_ID);
+       const wbtcInfo = this.getTokenInfo(WBTC_TOKEN_ID);
+       const usdcInfo = this.getTokenInfo(USDC_TOKEN_ID);
+       const jamInfo = this.getTokenInfo(JAM_TOKEN_ID);
+       const headstartInfo = this.getTokenInfo(HEADSTART_TOKEN_ID);
        const lynxInfo = this.getTokenInfo(LYNX_TOKEN_ID);
       
              // Extract and format token balances with proper decimals
@@ -123,10 +150,25 @@ export class BalanceService {
          : BigInt(0);
        const sauceBalance = this.formatTokenBalance(sauceRawBalance, sauceInfo.decimals);
          
-       const clxyRawBalance = tokens && tokens.get(TokenId.fromString(CLXY_TOKEN_ID)) 
-         ? BigInt(tokens.get(TokenId.fromString(CLXY_TOKEN_ID))!.toString()) 
+       const wbtcRawBalance = tokens && tokens.get(TokenId.fromString(WBTC_TOKEN_ID)) 
+         ? BigInt(tokens.get(TokenId.fromString(WBTC_TOKEN_ID))!.toString()) 
          : BigInt(0);
-       const clxyBalance = this.formatTokenBalance(clxyRawBalance, clxyInfo.decimals);
+       const wbtcBalance = this.formatTokenBalance(wbtcRawBalance, wbtcInfo.decimals);
+         
+       const usdcRawBalance = tokens && tokens.get(TokenId.fromString(USDC_TOKEN_ID)) 
+         ? BigInt(tokens.get(TokenId.fromString(USDC_TOKEN_ID))!.toString()) 
+         : BigInt(0);
+       const usdcBalance = this.formatTokenBalance(usdcRawBalance, usdcInfo.decimals);
+         
+       const jamRawBalance = tokens && tokens.get(TokenId.fromString(JAM_TOKEN_ID)) 
+         ? BigInt(tokens.get(TokenId.fromString(JAM_TOKEN_ID))!.toString()) 
+         : BigInt(0);
+       const jamBalance = this.formatTokenBalance(jamRawBalance, jamInfo.decimals);
+         
+       const headstartRawBalance = tokens && tokens.get(TokenId.fromString(HEADSTART_TOKEN_ID)) 
+         ? BigInt(tokens.get(TokenId.fromString(HEADSTART_TOKEN_ID))!.toString()) 
+         : BigInt(0);
+       const headstartBalance = this.formatTokenBalance(headstartRawBalance, headstartInfo.decimals);
          
        const lynxRawBalance = tokens && tokens.get(TokenId.fromString(LYNX_TOKEN_ID)) 
          ? BigInt(tokens.get(TokenId.fromString(LYNX_TOKEN_ID))!.toString()) 
@@ -136,12 +178,15 @@ export class BalanceService {
       const balances: TokenBalances = {
         HBAR: hbarBalance,
         SAUCE: sauceBalance,
-        CLXY: clxyBalance,
+        WBTC: wbtcBalance,
+        USDC: usdcBalance,
+        JAM: jamBalance,
+        HEADSTART: headstartBalance,
         LYNX: lynxBalance
       };
 
       console.log(`[BalanceService] Successfully fetched and formatted balances:`, balances);
-      console.log(`[BalanceService] Token decimals - SAUCE: ${sauceInfo.decimals}, CLXY: ${clxyInfo.decimals}, LYNX: ${lynxInfo.decimals}`);
+      console.log(`[BalanceService] Token decimals - SAUCE: ${sauceInfo.decimals}, WBTC: ${wbtcInfo.decimals}, USDC: ${usdcInfo.decimals}, JAM: ${jamInfo.decimals}, HEADSTART: ${headstartInfo.decimals}, LYNX: ${lynxInfo.decimals}`);
       
       return balances;
 
@@ -153,7 +198,10 @@ export class BalanceService {
       return {
         HBAR: '0',
         SAUCE: '0',
-        CLXY: '0',
+        WBTC: '0',
+        USDC: '0',
+        JAM: '0',
+        HEADSTART: '0',
         LYNX: '0'
       };
     }

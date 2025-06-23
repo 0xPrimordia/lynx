@@ -5,30 +5,48 @@ import { TransactionService } from './transactionService';
 
 import { TOKEN_IDS, CONTRACT_IDS } from '../config/environment';
 
-// Token configuration
+// Token configuration for 6-token system
 const TOKEN_CONFIG = {
-  SAUCE: {
-    tokenId: TOKEN_IDS.SAUCE,
-    contractId: CONTRACT_IDS.LYNX, // Using the same contract for all tokens
+  WBTC: {
+    tokenId: TOKEN_IDS.WBTC,
+    contractId: CONTRACT_IDS.DEPOSIT_MINTER_V2, // Using DepositMinterV2 contract
     delay: 500,
     maxRetries: 2
   },
-  CLXY: {
-    tokenId: TOKEN_IDS.CLXY,
-    contractId: CONTRACT_IDS.LYNX, // Using the same contract for all tokens
+  SAUCE: {
+    tokenId: TOKEN_IDS.SAUCE,
+    contractId: CONTRACT_IDS.DEPOSIT_MINTER_V2, // Using DepositMinterV2 contract
+    delay: 500,
+    maxRetries: 2
+  },
+  USDC: {
+    tokenId: TOKEN_IDS.USDC,
+    contractId: CONTRACT_IDS.DEPOSIT_MINTER_V2, // Using DepositMinterV2 contract
+    delay: 500,
+    maxRetries: 2
+  },
+  JAM: {
+    tokenId: TOKEN_IDS.JAM,
+    contractId: CONTRACT_IDS.DEPOSIT_MINTER_V2, // Using DepositMinterV2 contract
+    delay: 500,
+    maxRetries: 2
+  },
+  HEADSTART: {
+    tokenId: TOKEN_IDS.HEADSTART,
+    contractId: CONTRACT_IDS.DEPOSIT_MINTER_V2, // Using DepositMinterV2 contract
     delay: 500,
     maxRetries: 2
   },
   LYNX: {
     tokenId: TOKEN_IDS.LYNX,
-    contractId: CONTRACT_IDS.LYNX,
+    contractId: CONTRACT_IDS.DEPOSIT_MINTER_V2,
     delay: 500,
     maxRetries: 1
   }
 };
 
 export interface TokenApprovalParams {
-  tokenType: 'SAUCE' | 'CLXY' | 'LYNX';
+  tokenType: 'WBTC' | 'SAUCE' | 'USDC' | 'JAM' | 'HEADSTART' | 'LYNX';
   tokenName: string;
   tokenId: string;
   contractId: string;
@@ -44,8 +62,11 @@ export interface MintParams {
 }
 
 export interface MintLynxResult {
+  wbtcApprovalId: string;
   sauceApprovalId: string;
-  clxyApprovalId: string;
+  usdcApprovalId: string;
+  jamApprovalId: string;
+  headstartApprovalId: string;
   mintId: string;
 }
 
@@ -197,39 +218,39 @@ export class TokenQueueService {
     
     const { lynxAmount, onSuccess, onError } = params;
     
-    // Calculate required token amounts based on LYNX amount (with proper decimals)
-    // SAUCE and CLXY have 6 decimals, so we need to multiply by 10^6 for base units
-    const sauceAmount = (lynxAmount * this.getTokenRatios().sauceRatio * Math.pow(10, 6)).toString();
-    const clxyAmount = (lynxAmount * this.getTokenRatios().clxyRatio * Math.pow(10, 6)).toString();
+    // Calculate required token amounts for 6-token system (using DepositMinterV2 ratios)
+    const ratios = this.getTokenRatios();
+    
+    const wbtcAmount = (lynxAmount * ratios.wbtcRatio * Math.pow(10, 8)).toString(); // 8 decimals
+    const sauceAmount = (lynxAmount * ratios.sauceRatio * Math.pow(10, 6)).toString(); // 6 decimals
+    const usdcAmount = (lynxAmount * ratios.usdcRatio * Math.pow(10, 6)).toString(); // 6 decimals
+    const jamAmount = (lynxAmount * ratios.jamRatio * Math.pow(10, 6)).toString(); // 6 decimals
+    const headstartAmount = (lynxAmount * ratios.headstartRatio * Math.pow(10, 6)).toString(); // 6 decimals
     
     try {
-      console.log(`[QUEUE DEBUG] Starting LYNX minting process for ${lynxAmount} LYNX (requires ${sauceAmount} SAUCE and ${clxyAmount} CLXY)`);
+      console.log(`[QUEUE DEBUG] Starting LYNX minting process for ${lynxAmount} LYNX`);
+      console.log(`[QUEUE DEBUG] Required amounts: WBTC=${wbtcAmount}, SAUCE=${sauceAmount}, USDC=${usdcAmount}, JAM=${jamAmount}, HEADSTART=${headstartAmount}`);
       
-      // Check if contract has supply key
-      const hasSupplyKey = await this.transactionService.checkSupplyKey(TOKEN_CONFIG.LYNX.contractId);
-      if (!hasSupplyKey) {
-        throw new Error('Contract does not have supply key for LYNX token');
-      }
-
-      // OPTIMIZED: Check token associations efficiently
+      // Check token associations for all 6 tokens
       console.log('[QUEUE DEBUG] Checking token associations...');
       
-      // First, try to get current balances - if tokens have balances, they're already associated
       let tokensNeedingAssociation: string[] = [];
       
       try {
-        // Use the balance service to check if tokens are associated (faster than individual checks)
+        // Use the balance service to check if tokens are associated
         const { BalanceService } = await import('../services/balanceService');
         const balanceService = new BalanceService();
         const balances = await balanceService.getTokenBalances(this.accountId);
         
         console.log('[QUEUE DEBUG] Current token balances:', balances);
         
-        // If a token has a balance (even 0), it's associated
-        // If balance query fails or returns undefined, token needs association
+        // Check all 6 tokens
         const tokenChecks = [
+          { name: 'WBTC', id: TOKEN_CONFIG.WBTC.tokenId, balance: balances.WBTC },
           { name: 'SAUCE', id: TOKEN_CONFIG.SAUCE.tokenId, balance: balances.SAUCE },
-          { name: 'CLXY', id: TOKEN_CONFIG.CLXY.tokenId, balance: balances.CLXY },
+          { name: 'USDC', id: TOKEN_CONFIG.USDC.tokenId, balance: balances.USDC },
+          { name: 'JAM', id: TOKEN_CONFIG.JAM.tokenId, balance: balances.JAM },
+          { name: 'HEADSTART', id: TOKEN_CONFIG.HEADSTART.tokenId, balance: balances.HEADSTART },
           { name: 'LYNX', id: TOKEN_CONFIG.LYNX.tokenId, balance: balances.LYNX }
         ];
         
@@ -246,10 +267,17 @@ export class TokenQueueService {
       } catch (error) {
         console.warn('[QUEUE DEBUG] Could not check balances for association status, falling back to individual checks:', error);
         // Fallback: assume all tokens need association check
-        tokensNeedingAssociation = [TOKEN_CONFIG.SAUCE.tokenId, TOKEN_CONFIG.CLXY.tokenId, TOKEN_CONFIG.LYNX.tokenId];
+        tokensNeedingAssociation = [
+          TOKEN_CONFIG.WBTC.tokenId, 
+          TOKEN_CONFIG.SAUCE.tokenId, 
+          TOKEN_CONFIG.USDC.tokenId,
+          TOKEN_CONFIG.JAM.tokenId,
+          TOKEN_CONFIG.HEADSTART.tokenId,
+          TOKEN_CONFIG.LYNX.tokenId
+        ];
       }
       
-      // Only associate tokens that actually need it
+      // Associate tokens that need it
       if (tokensNeedingAssociation.length === 0) {
         console.log('[QUEUE DEBUG] All tokens already associated, skipping association step');
       } else {
@@ -257,8 +285,11 @@ export class TokenQueueService {
         
         for (const tokenId of tokensNeedingAssociation) {
           try {
-            const tokenName = tokenId === TOKEN_CONFIG.SAUCE.tokenId ? 'SAUCE' :
-                             tokenId === TOKEN_CONFIG.CLXY.tokenId ? 'CLXY' : 'LYNX';
+            const tokenName = tokenId === TOKEN_CONFIG.WBTC.tokenId ? 'WBTC' :
+                             tokenId === TOKEN_CONFIG.SAUCE.tokenId ? 'SAUCE' :
+                             tokenId === TOKEN_CONFIG.USDC.tokenId ? 'USDC' :
+                             tokenId === TOKEN_CONFIG.JAM.tokenId ? 'JAM' :
+                             tokenId === TOKEN_CONFIG.HEADSTART.tokenId ? 'HEADSTART' : 'LYNX';
                              
             console.log(`[QUEUE DEBUG] Associating ${tokenName} token...`);
             const result = await this.transactionService.associateToken(tokenId, this.accountId);
@@ -275,9 +306,17 @@ export class TokenQueueService {
         }
       }
       
-      console.log('[QUEUE DEBUG] Proceeding with token approvals');
+      console.log('[QUEUE DEBUG] Proceeding with token approvals for 5 tokens (HBAR is native)');
       
-      // Queue SAUCE approval first
+      // Queue all 5 token approvals (HBAR doesn't need approval)
+      const wbtcApprovalId = await this.queueTokenApproval({
+        tokenType: 'WBTC',
+        tokenName: 'WBTC',
+        tokenId: TOKEN_CONFIG.WBTC.tokenId,
+        contractId: TOKEN_CONFIG.WBTC.contractId,
+        amount: wbtcAmount
+      });
+      
       const sauceApprovalId = await this.queueTokenApproval({
         tokenType: 'SAUCE',
         tokenName: 'SAUCE',
@@ -286,55 +325,67 @@ export class TokenQueueService {
         amount: sauceAmount
       });
       
-      console.log(`[QUEUE DEBUG] SAUCE approval queued with ID: ${sauceApprovalId}`);
-      
-      // Queue CLXY approval next
-      const clxyApprovalId = await this.queueTokenApproval({
-        tokenType: 'CLXY',
-        tokenName: 'CLXY',
-        tokenId: TOKEN_CONFIG.CLXY.tokenId,
-        contractId: TOKEN_CONFIG.CLXY.contractId,
-        amount: clxyAmount
+      const usdcApprovalId = await this.queueTokenApproval({
+        tokenType: 'USDC',
+        tokenName: 'USDC',
+        tokenId: TOKEN_CONFIG.USDC.tokenId,
+        contractId: TOKEN_CONFIG.USDC.contractId,
+        amount: usdcAmount
       });
       
-      console.log(`[QUEUE DEBUG] CLXY approval queued with ID: ${clxyApprovalId}`);
+      const jamApprovalId = await this.queueTokenApproval({
+        tokenType: 'JAM',
+        tokenName: 'JAM',
+        tokenId: TOKEN_CONFIG.JAM.tokenId,
+        contractId: TOKEN_CONFIG.JAM.contractId,
+        amount: jamAmount
+      });
+      
+      const headstartApprovalId = await this.queueTokenApproval({
+        tokenType: 'HEADSTART',
+        tokenName: 'HEADSTART',
+        tokenId: TOKEN_CONFIG.HEADSTART.tokenId,
+        contractId: TOKEN_CONFIG.HEADSTART.contractId,
+        amount: headstartAmount
+      });
+      
+      console.log(`[QUEUE DEBUG] All token approvals queued`);
       
       // Create a unique ID for the mint transaction
       const mintTxId = `mint-lynx-${uuid().slice(0, 8)}`;
       
-      // Queue the mint transaction after approvals
+      // Queue the mint transaction after all approvals
       this.queueManager.enqueue({
         id: mintTxId,
         name: `Mint ${lynxAmount} LYNX`,
         createTransaction: async () => {
-          // Check that both approvals completed successfully
-          console.log(`[QUEUE DEBUG] Verifying approval transactions before minting...`);
+          // Check that all approvals completed successfully
+          console.log(`[QUEUE DEBUG] Verifying all approval transactions before minting...`);
           
-          const sauceApproval = this.queueManager.getTransaction(sauceApprovalId);
-          if (!sauceApproval) {
-            console.error(`[QUEUE DEBUG] SAUCE approval transaction not found`);
-            throw new Error('SAUCE approval transaction not found');
+          const approvals = [
+            { id: wbtcApprovalId, name: 'WBTC' },
+            { id: sauceApprovalId, name: 'SAUCE' },
+            { id: usdcApprovalId, name: 'USDC' },
+            { id: jamApprovalId, name: 'JAM' },
+            { id: headstartApprovalId, name: 'HEADSTART' }
+          ];
+          
+          for (const approval of approvals) {
+            const transaction = this.queueManager.getTransaction(approval.id);
+            if (!transaction) {
+              console.error(`[QUEUE DEBUG] ${approval.name} approval transaction not found`);
+              throw new Error(`${approval.name} approval transaction not found`);
+            }
+            
+            if (transaction.status !== 'completed') {
+              console.error(`[QUEUE DEBUG] ${approval.name} approval status: ${transaction.status}`);
+              throw new Error(`${approval.name} approval not completed - status: ${transaction.status}`);
+            }
           }
           
-          if (sauceApproval.status !== 'completed') {
-            console.error(`[QUEUE DEBUG] SAUCE approval status: ${sauceApproval.status}`);
-            throw new Error(`SAUCE approval not completed - status: ${sauceApproval.status}`);
-          }
+          console.log(`[QUEUE DEBUG] All approvals completed successfully, executing mint`);
           
-          const clxyApproval = this.queueManager.getTransaction(clxyApprovalId);
-          if (!clxyApproval) {
-            console.error(`[QUEUE DEBUG] CLXY approval transaction not found`);
-            throw new Error('CLXY approval transaction not found');
-          }
-          
-          if (clxyApproval.status !== 'completed') {
-            console.error(`[QUEUE DEBUG] CLXY approval status: ${clxyApproval.status}`);
-            throw new Error(`CLXY approval not completed - status: ${clxyApproval.status}`);
-          }
-          
-          console.log(`[QUEUE DEBUG] Both approvals completed successfully, executing mint`);
-          
-          // Execute the mint transaction
+          // Execute the mint transaction using DepositMinterV2
           const mintResult = await this.transactionService!.mintLynx(lynxAmount);
           
           if (mintResult.status === 'error') {
@@ -343,7 +394,6 @@ export class TokenQueueService {
           }
           
           console.log(`[QUEUE DEBUG] LYNX minting completed successfully`);
-          // Convert TransactionResponse to TransactionResult
           return {
             txId: mintResult.txId || 'unknown',
             transactionId: mintResult.txId || 'unknown',
@@ -365,8 +415,11 @@ export class TokenQueueService {
       console.log(`[QUEUE DEBUG] LYNX mint transaction queued with ID: ${mintTxId}`);
       
       return {
+        wbtcApprovalId,
         sauceApprovalId,
-        clxyApprovalId,
+        usdcApprovalId,
+        jamApprovalId,
+        headstartApprovalId,
         mintId: mintTxId
       };
     } catch (error) {
@@ -391,13 +444,16 @@ export class TokenQueueService {
   }
   
   /**
-   * Get token ratios for calculating required tokens
+   * Get token ratios for calculating required tokens (6-token system)
    */
-  public getTokenRatios(): { hbarRatio: number; sauceRatio: number; clxyRatio: number; } {
+  public getTokenRatios(): { hbarRatio: number; wbtcRatio: number; sauceRatio: number; usdcRatio: number; jamRatio: number; headstartRatio: number; } {
     return {
-      hbarRatio: 10,    // 10 HBAR per LYNX
-      sauceRatio: 5,    // 5 SAUCE per LYNX (matches contract)
-      clxyRatio: 2      // 2 CLXY per LYNX (matches contract)
+      hbarRatio: 2.5,       // 2.5 HBAR per LYNX (25% allocation)
+      wbtcRatio: 0.02,      // 0.02 WBTC per LYNX (20% allocation)
+      sauceRatio: 1.5,      // 1.5 SAUCE per LYNX (15% allocation)
+      usdcRatio: 1.5,       // 1.5 USDC per LYNX (15% allocation)
+      jamRatio: 1.5,        // 1.5 JAM per LYNX (15% allocation)
+      headstartRatio: 1.0   // 1.0 HEADSTART per LYNX (10% allocation)
     };
   }
   

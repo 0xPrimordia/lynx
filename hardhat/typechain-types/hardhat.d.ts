@@ -14,29 +14,17 @@ import * as Contracts from ".";
 declare module "hardhat/types/runtime" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
-      name: "IHederaTokenService",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IHederaTokenService__factory>;
-    getContractFactory(
-      name: "IHederaTokenService",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IHederaTokenService__factory>;
-    getContractFactory(
-      name: "SimpleTokenMinter",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.SimpleTokenMinter__factory>;
-    getContractFactory(
-      name: "TestHTS",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.TestHTS__factory>;
-    getContractFactory(
-      name: "TestHTSWithCombinedKeys",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.TestHTSWithCombinedKeys__factory>;
-    getContractFactory(
       name: "DepositMinter",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.DepositMinter__factory>;
+    getContractFactory(
+      name: "IHederaTokenService",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IHederaTokenService__factory>;
+    getContractFactory(
+      name: "DepositMinterV2",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.DepositMinterV2__factory>;
     getContractFactory(
       name: "IHederaTokenService",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -69,45 +57,22 @@ declare module "hardhat/types/runtime" {
       name: "MockHederaTokenService",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MockHederaTokenService__factory>;
-    getContractFactory(
-      name: "IHederaTokenService",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IHederaTokenService__factory>;
-    getContractFactory(
-      name: "SimpleTokenMinter",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.SimpleTokenMinter__factory>;
 
-    getContractAt(
-      name: "IHederaTokenService",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IHederaTokenService>;
-    getContractAt(
-      name: "IHederaTokenService",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IHederaTokenService>;
-    getContractAt(
-      name: "SimpleTokenMinter",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.SimpleTokenMinter>;
-    getContractAt(
-      name: "TestHTS",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.TestHTS>;
-    getContractAt(
-      name: "TestHTSWithCombinedKeys",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.TestHTSWithCombinedKeys>;
     getContractAt(
       name: "DepositMinter",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.DepositMinter>;
+    getContractAt(
+      name: "IHederaTokenService",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IHederaTokenService>;
+    getContractAt(
+      name: "DepositMinterV2",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.DepositMinterV2>;
     getContractAt(
       name: "IHederaTokenService",
       address: string | ethers.Addressable,
@@ -148,41 +113,19 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.MockHederaTokenService>;
-    getContractAt(
-      name: "IHederaTokenService",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IHederaTokenService>;
-    getContractAt(
-      name: "SimpleTokenMinter",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.SimpleTokenMinter>;
 
-    deployContract(
-      name: "IHederaTokenService",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IHederaTokenService>;
-    deployContract(
-      name: "IHederaTokenService",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IHederaTokenService>;
-    deployContract(
-      name: "SimpleTokenMinter",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.SimpleTokenMinter>;
-    deployContract(
-      name: "TestHTS",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.TestHTS>;
-    deployContract(
-      name: "TestHTSWithCombinedKeys",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.TestHTSWithCombinedKeys>;
     deployContract(
       name: "DepositMinter",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.DepositMinter>;
+    deployContract(
+      name: "IHederaTokenService",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IHederaTokenService>;
+    deployContract(
+      name: "DepositMinterV2",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.DepositMinterV2>;
     deployContract(
       name: "IHederaTokenService",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -215,45 +158,22 @@ declare module "hardhat/types/runtime" {
       name: "MockHederaTokenService",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockHederaTokenService>;
-    deployContract(
-      name: "IHederaTokenService",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IHederaTokenService>;
-    deployContract(
-      name: "SimpleTokenMinter",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.SimpleTokenMinter>;
 
-    deployContract(
-      name: "IHederaTokenService",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IHederaTokenService>;
-    deployContract(
-      name: "IHederaTokenService",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IHederaTokenService>;
-    deployContract(
-      name: "SimpleTokenMinter",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.SimpleTokenMinter>;
-    deployContract(
-      name: "TestHTS",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.TestHTS>;
-    deployContract(
-      name: "TestHTSWithCombinedKeys",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.TestHTSWithCombinedKeys>;
     deployContract(
       name: "DepositMinter",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.DepositMinter>;
+    deployContract(
+      name: "IHederaTokenService",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IHederaTokenService>;
+    deployContract(
+      name: "DepositMinterV2",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.DepositMinterV2>;
     deployContract(
       name: "IHederaTokenService",
       args: any[],
@@ -294,16 +214,6 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockHederaTokenService>;
-    deployContract(
-      name: "IHederaTokenService",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IHederaTokenService>;
-    deployContract(
-      name: "SimpleTokenMinter",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.SimpleTokenMinter>;
 
     // default types
     getContractFactory(

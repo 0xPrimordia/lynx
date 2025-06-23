@@ -24,7 +24,7 @@ export default function MintPage() {
               Mint LYNX Tokens
             </h1>
             <p className="text-gray-300 text-lg">
-              Convert your HBAR, SAUCE, and CLXY tokens into LYNX
+              Convert your HBAR, WBTC, SAUCE, USDC, JAM, and HEADSTART tokens into LYNX
             </p>
           </div>
 

@@ -8,25 +8,28 @@ import { QueueStats, QueuedTransaction } from '../services/TransactionQueueManag
 interface TokenQueueContextProps {
   queueTokenApproval: (tokenName: string, amount: number) => Promise<string>;
   mintLynx: (params: MintParams) => Promise<{
+    wbtcApprovalId: string;
     sauceApprovalId: string;
-    clxyApprovalId: string;
+    usdcApprovalId: string;
+    jamApprovalId: string;
+    headstartApprovalId: string;
     mintId: string;
   }>;
   getTransactionStatus: (id: string) => QueuedTransaction | undefined;
   queueStats: QueueStats;
   isProcessing: boolean;
-  getTokenRatios: () => { hbarRatio: number; sauceRatio: number; clxyRatio: number; };
+  getTokenRatios: () => { hbarRatio: number; wbtcRatio: number; sauceRatio: number; usdcRatio: number; jamRatio: number; headstartRatio: number; };
   calculateRequiredHBAR: (lynxAmount: number) => number;
 }
 
 // Create context with default values
 const TokenQueueContext = createContext<TokenQueueContextProps>({
   queueTokenApproval: async () => '',
-  mintLynx: async () => ({ sauceApprovalId: '', clxyApprovalId: '', mintId: '' }),
+  mintLynx: async () => ({ wbtcApprovalId: '', sauceApprovalId: '', usdcApprovalId: '', jamApprovalId: '', headstartApprovalId: '', mintId: '' }),
   getTransactionStatus: () => undefined,
   queueStats: { totalTransactions: 0, completedTransactions: 0, failedTransactions: 0, pendingTransactions: 0 },
   isProcessing: false,
-  getTokenRatios: () => ({ hbarRatio: 0, sauceRatio: 0, clxyRatio: 0 }),
+  getTokenRatios: () => ({ hbarRatio: 0, wbtcRatio: 0, sauceRatio: 0, usdcRatio: 0, jamRatio: 0, headstartRatio: 0 }),
   calculateRequiredHBAR: () => 0
 });
 
@@ -81,7 +84,7 @@ export const TokenQueueProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
     
     return tokenQueueService.queueTokenApproval({
-      tokenType: tokenName.toUpperCase() as 'SAUCE' | 'CLXY' | 'LYNX',
+      tokenType: tokenName.toUpperCase() as 'WBTC' | 'SAUCE' | 'USDC' | 'JAM' | 'HEADSTART' | 'LYNX',
       tokenName,
       amount: amount.toString(),
       tokenId: tokenConfig.tokenId || '',
@@ -110,7 +113,7 @@ export const TokenQueueProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Get token ratios
   const getTokenRatios = useCallback(() => {
     if (!tokenQueueService) {
-      return { hbarRatio: 0, sauceRatio: 0, clxyRatio: 0 };
+      return { hbarRatio: 0, wbtcRatio: 0, sauceRatio: 0, usdcRatio: 0, jamRatio: 0, headstartRatio: 0 };
     }
     
     return tokenQueueService.getTokenRatios();

@@ -46,12 +46,18 @@ import { BalanceService } from '../services/balanceService';
 // Token IDs from environment variables or defaults
 const LYNX_TOKEN_ID = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.5948419";
 const SAUCE_TOKEN_ID = process.env.NEXT_PUBLIC_SAUCE_TOKEN_ID || "0.0.1183558";
-const CLXY_TOKEN_ID = process.env.NEXT_PUBLIC_CLXY_TOKEN_ID || "0.0.5365";
+const WBTC_TOKEN_ID = process.env.NEXT_PUBLIC_WBTC_TOKEN_ID || "0.0.6212930";
+const USDC_TOKEN_ID = process.env.NEXT_PUBLIC_USDC_TOKEN_ID || "0.0.6212931";
+const JAM_TOKEN_ID = process.env.NEXT_PUBLIC_JAM_TOKEN_ID || "0.0.6212932";
+const HEADSTART_TOKEN_ID = process.env.NEXT_PUBLIC_HEADSTART_TOKEN_ID || "0.0.6212933";
 const LYNX_CONTRACT_ID = process.env.NEXT_PUBLIC_LYNX_CONTRACT_ID || "0.0.5758264";
 
 export interface TokenIds {
   SAUCE: string;
-  CLXY: string;
+  WBTC: string;
+  USDC: string;
+  JAM: string;
+  HEADSTART: string;
   LYNX: string;
   CONTRACT: string;
 }
@@ -59,21 +65,30 @@ export interface TokenIds {
 export interface TokenBalances {
   HBAR: string;
   SAUCE: string;
-  CLXY: string;
+  WBTC: string;
+  USDC: string;
+  JAM: string;
+  HEADSTART: string;
   LYNX: string;
 }
 
 export interface TokenPrices {
   HBAR: number;
   SAUCE: number;
-  CLXY: number;
+  WBTC: number;
+  USDC: number;
+  JAM: number;
+  HEADSTART: number;
   LYNX: number;
 }
 
 export interface RequiredTokens {
   HBAR: number;
   SAUCE: number;
-  CLXY: number;
+  WBTC: number;
+  USDC: number;
+  JAM: number;
+  HEADSTART: number;
 }
 
 export interface UseTokensResult {
@@ -108,19 +123,28 @@ export function useTokens(): UseTokensResult {
   const [tokenBalances, setTokenBalances] = useState<TokenBalances>({
     HBAR: '0',
     SAUCE: '0',
-    CLXY: '0',
+    WBTC: '0',
+    USDC: '0',
+    JAM: '0',
+    HEADSTART: '0',
     LYNX: '0'
   });
   const [tokenPrices] = useState<TokenPrices>({
     HBAR: 0.065,
     SAUCE: 0.01,
-    CLXY: 0.02,
+    WBTC: 45000,
+    USDC: 1.00,
+    JAM: 0.15,
+    HEADSTART: 0.05,
     LYNX: 0.03
   });
   const [requiredTokens] = useState<RequiredTokens>({
     HBAR: 0,
     SAUCE: 0,
-    CLXY: 0
+    WBTC: 0,
+    USDC: 0,
+    JAM: 0,
+    HEADSTART: 0
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
@@ -129,7 +153,10 @@ export function useTokens(): UseTokensResult {
   // Token IDs are constant
   const tokenIds: TokenIds = {
     SAUCE: SAUCE_TOKEN_ID,
-    CLXY: CLXY_TOKEN_ID,
+    WBTC: WBTC_TOKEN_ID,
+    USDC: USDC_TOKEN_ID,
+    JAM: JAM_TOKEN_ID,
+    HEADSTART: HEADSTART_TOKEN_ID,
     LYNX: LYNX_TOKEN_ID,
     CONTRACT: LYNX_CONTRACT_ID
   };
@@ -162,7 +189,10 @@ export function useTokens(): UseTokensResult {
       setTokenBalances({
         HBAR: '0',
         SAUCE: '0',
-        CLXY: '0',
+        WBTC: '0',
+        USDC: '0',
+        JAM: '0',
+        HEADSTART: '0',
         LYNX: '0'
       });
       
@@ -175,22 +205,28 @@ export function useTokens(): UseTokensResult {
   // Calculate required tokens based on LYNX amount
   const calculateRequiredTokens = useCallback((lynxAmount: number): RequiredTokens => {
     if (!lynxAmount || lynxAmount <= 0) {
-      return { HBAR: 0, SAUCE: 0, CLXY: 0 };
+      return { HBAR: 0, SAUCE: 0, WBTC: 0, USDC: 0, JAM: 0, HEADSTART: 0 };
     }
     
     try {
-      // Match the contract ratios:
-      // 5 SAUCE per 1 LYNX
-      // 2 CLXY per 1 LYNX  
-      // 10 HBAR per 1 LYNX
+      // Match the DepositMinterV2 contract ratios:
+      // 2.5 HBAR per 1 LYNX
+      // 0.02 WBTC per 1 LYNX
+      // 1.5 SAUCE per 1 LYNX
+      // 1.5 USDC per 1 LYNX
+      // 1.5 JAM per 1 LYNX
+      // 1.0 HEADSTART per 1 LYNX
       return {
-        SAUCE: 5 * lynxAmount,
-        CLXY: 2 * lynxAmount,
-        HBAR: 10 * lynxAmount
+        HBAR: 2.5 * lynxAmount,
+        WBTC: 0.02 * lynxAmount,
+        SAUCE: 1.5 * lynxAmount,
+        USDC: 1.5 * lynxAmount,
+        JAM: 1.5 * lynxAmount,
+        HEADSTART: 1.0 * lynxAmount
       };
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to calculate required tokens'));
-      return { HBAR: 0, SAUCE: 0, CLXY: 0 };
+      return { HBAR: 0, SAUCE: 0, WBTC: 0, USDC: 0, JAM: 0, HEADSTART: 0 };
     }
   }, []);
 
@@ -204,7 +240,10 @@ export function useTokens(): UseTokensResult {
       setTokenBalances({
         HBAR: '0',
         SAUCE: '0',
-        CLXY: '0',
+        WBTC: '0',
+        USDC: '0',
+        JAM: '0',
+        HEADSTART: '0',
         LYNX: '0'
       });
     }

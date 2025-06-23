@@ -9,7 +9,7 @@ async function main() {
   
   // Token and contract info
   const lynxTokenId = "0.0.6200902"; // Current LYNX token
-  const depositMinterHederaId = "0.0.6213127"; // New DepositMinterV2 contract
+  const depositMinterHederaId = "0.0.6213533"; // New DepositMinterV2 contract (fixed decimals)
   
   console.log(`LYNX Token ID: ${lynxTokenId}`);
   console.log(`DepositMinterV2 Contract ID: ${depositMinterHederaId}`);

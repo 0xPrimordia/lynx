@@ -55,8 +55,8 @@ contract DepositMinterV2 {
     // Token decimals
     uint8 public constant SAUCE_DECIMALS = 6;
     uint8 public constant USDC_DECIMALS = 6;
-    uint8 public constant JAM_DECIMALS = 8;
-    uint8 public constant HEADSTART_DECIMALS = 8;
+    uint8 public constant JAM_DECIMALS = 6;
+    uint8 public constant HEADSTART_DECIMALS = 6;
     uint8 public constant WBTC_DECIMALS = 8;
     uint8 public constant LYNX_DECIMALS = 8;
     

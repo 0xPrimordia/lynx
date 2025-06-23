@@ -1,6 +1,6 @@
 {
-  "contractId": "0.0.6213127",
-  "contractAddress": "0x00000000000000000000000000000000005ece07",
+  "contractId": "0.0.6213533",
+  "contractAddress": "0x00000000000000000000000000000000005ecf9d",
   "adminAddress": "000000000000000000000000000000000042393a",
   "operatorId": "0.0.4340026",
   "operatorEVMAddress": "000000000000000000000000000000000042393a",
@@ -19,5 +19,5 @@
     "jam": true,
     "headstart": true
   },
-  "deployedAt": "2025-06-22T18:34:40.326Z"
+  "deployedAt": "2025-06-22T19:39:35.199Z"
 }

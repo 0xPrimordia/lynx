@@ -45,7 +45,7 @@ async function testDepositMinterV2Operations() {
     const client = Client.forTestnet();
     client.setOperator(accountId, privateKey);
     
-    const contractHederaId = "0.0.6213127"; // New DepositMinterV2 contract
+    const contractHederaId = "0.0.6213533"; // New DepositMinterV2 contract (fixed decimals)
     const contractId = ContractId.fromString(contractHederaId);
     
     // Get token info from environment

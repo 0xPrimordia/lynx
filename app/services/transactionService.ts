@@ -90,9 +90,8 @@ export class TransactionService {
         amount: amount
       });
       
-      // Convert Hedera token ID to EVM-compatible address format
-      const tokenAddress = AccountId.fromString(tokenId).toSolidityAddress();
-      console.log(`[DEBUG] Token ID converted to EVM address: ${tokenId} -> ${tokenAddress}`);
+      // Token ID is used directly in HTS allowance transaction
+      console.log(`[DEBUG] Using Hedera token ID directly: ${tokenId}`);
       
       // 1. Create a client for the network FIRST (critical step)
       const client = Client.forTestnet();
@@ -103,10 +102,10 @@ export class TransactionService {
       // 3. Create HTS token allowance transaction instead of ERC20 approve
       // For native HTS tokens, we use AccountAllowanceApproveTransaction
       // Use the Hedera ID directly from environment variable
-      const depositMinterHederaId = process.env.NEXT_PUBLIC_DEPOSIT_MINTER_HEDERA_ID;
+      const depositMinterHederaId = process.env.NEXT_PUBLIC_DEPOSIT_MINTER_V2_HEDERA_ID;
       
       if (!depositMinterHederaId) {
-        throw new Error('NEXT_PUBLIC_DEPOSIT_MINTER_HEDERA_ID environment variable not set');
+        throw new Error('NEXT_PUBLIC_DEPOSIT_MINTER_V2_HEDERA_ID environment variable not set');
       }
       
       console.log(`[DEBUG] Approving for DepositMinter Hedera ID: ${depositMinterHederaId}`);
@@ -207,11 +206,11 @@ export class TransactionService {
         transactionType: 'mint'
       });
       
-      // Use the DepositMinter contract Hedera ID from environment
-      const contractHederaId = process.env.NEXT_PUBLIC_DEPOSIT_MINTER_HEDERA_ID;
+      // Use the DepositMinterV2 contract Hedera ID from environment
+      const contractHederaId = process.env.NEXT_PUBLIC_DEPOSIT_MINTER_V2_HEDERA_ID;
       
       if (!contractHederaId) {
-        throw new Error('NEXT_PUBLIC_DEPOSIT_MINTER_HEDERA_ID environment variable not set');
+        throw new Error('NEXT_PUBLIC_DEPOSIT_MINTER_V2_HEDERA_ID environment variable not set');
       }
       
       // 1. Create the client FIRST (critical step)
@@ -220,32 +219,41 @@ export class TransactionService {
       // 2. Parse account ID properly
       const sender = AccountId.fromString(this.accountId);
       
-      // 3. Send whole token amounts - contract calculates base units internally
-      const lynxAmountRaw = amount;                            // Send exactly what user inputs (1, 2, 3, etc.)
-      const sauceRequired = amount * 5 * Math.pow(10, 6);     // 5 SAUCE per LYNX (in base units)
-      const clxyRequired = amount * 2 * Math.pow(10, 6);      // 2 CLXY per LYNX (in base units)
-      const hbarRequiredTinybars = amount * 10 * Math.pow(10, 8); // 10 HBAR per LYNX (in tinybars)
+      // 3. Calculate required amounts for 6-token system (DepositMinterV2)
+      const lynxAmountRaw = amount;                                    // Send exactly what user inputs (1, 2, 3, etc.)
+      const hbarRequiredTinybars = amount * 2.5 * Math.pow(10, 8);   // 2.5 HBAR per LYNX (in tinybars)
+      const wbtcRequired = amount * 0.02 * Math.pow(10, 8);          // 0.02 WBTC per LYNX (8 decimals)
+      const sauceRequired = amount * 1.5 * Math.pow(10, 6);          // 1.5 SAUCE per LYNX (6 decimals)
+      const usdcRequired = amount * 1.5 * Math.pow(10, 6);           // 1.5 USDC per LYNX (6 decimals)
+      const jamRequired = amount * 1.5 * Math.pow(10, 6);            // 1.5 JAM per LYNX (6 decimals)
+      const headstartRequired = amount * 1.0 * Math.pow(10, 6);      // 1.0 HEADSTART per LYNX (6 decimals)
       
-      console.log('[CRITICAL] Creating mint transaction for DepositMinter contract', contractHederaId);
-      console.log('[CRITICAL] Calling mintWithDeposits with:', {
+      console.log('[CRITICAL] Creating mint transaction for DepositMinterV2 contract', contractHederaId);
+      console.log('[CRITICAL] Calling mintWithDeposits with 6-token system:', {
         lynxAmount: lynxAmountRaw,
+        hbarAmount: hbarRequiredTinybars,
+        wbtcAmount: wbtcRequired,
         sauceAmount: sauceRequired,
-        clxyAmount: clxyRequired,
-        hbarAmount: hbarRequiredTinybars
+        usdcAmount: usdcRequired,
+        jamAmount: jamRequired,
+        headstartAmount: headstartRequired
       });
       
       const transaction = new ContractExecuteTransaction()
         .setContractId(ContractId.fromString(contractHederaId))
-        .setGas(2000000)
+        .setGas(3000000) // Increased gas for 6-token system
         .setFunction(
           "mintWithDeposits", 
           new ContractFunctionParameters()
-            .addUint256(lynxAmountRaw) // lynxAmount (raw user input)
-            .addUint256(sauceRequired)          // sauceAmount (in base units)
-            .addUint256(clxyRequired)           // clxyAmount (in base units)
+            .addUint256(lynxAmountRaw)     // lynxAmount (raw user input)
+            .addUint256(wbtcRequired)      // wbtcAmount (in base units)
+            .addUint256(sauceRequired)     // sauceAmount (in base units)
+            .addUint256(usdcRequired)      // usdcAmount (in base units)
+            .addUint256(jamRequired)       // jamAmount (in base units)
+            .addUint256(headstartRequired) // headstartAmount (in base units)
         )
         .setTransactionId(TransactionId.generate(sender))
-        .setTransactionMemo(`Mint ${amount} LYNX tokens via DepositMinter`)
+        .setTransactionMemo(`Mint ${amount} LYNX tokens via DepositMinterV2`)
         .setPayableAmount(Hbar.fromTinybars(hbarRequiredTinybars)) // Convert tinybars to HBAR
         .setMaxTransactionFee(new Hbar(5))
         .freezeWith(client);

@@ -9,7 +9,7 @@ async function main() {
   
   // Token and contract info - using LYNX token and DepositMinterV2
   const lynxTokenId = "0.0.6200902"; // Hardcoded LYNX token ID
-  const depositMinterHederaId = "0.0.6213127"; // New DepositMinterV2 contract ID
+  const depositMinterHederaId = "0.0.6213533"; // New DepositMinterV2 contract ID (fixed decimals)
   
   if (!lynxTokenId) {
     throw new Error("NEXT_PUBLIC_LYNX_TOKEN_ID environment variable not set");

@@ -110,14 +110,23 @@ export function MintForm() {
       
       // Monitor approval statuses
       checkApprovalsRef.current = setInterval(() => {
+        const wbtcStatus = getTransactionStatus(result.wbtcApprovalId);
         const sauceStatus = getTransactionStatus(result.sauceApprovalId);
-        const clxyStatus = getTransactionStatus(result.clxyApprovalId);
+        const usdcStatus = getTransactionStatus(result.usdcApprovalId);
+        const jamStatus = getTransactionStatus(result.jamApprovalId);
+        const headstartStatus = getTransactionStatus(result.headstartApprovalId);
         const mintStatus = getTransactionStatus(result.mintId);
         
-        if (sauceStatus?.status === 'processing') {
+        if (wbtcStatus?.status === 'processing') {
+          setCurrentStep('Processing WBTC approval');
+        } else if (sauceStatus?.status === 'processing') {
           setCurrentStep('Processing SAUCE approval');
-        } else if (clxyStatus?.status === 'processing') {
-          setCurrentStep('Processing CLXY approval');
+        } else if (usdcStatus?.status === 'processing') {
+          setCurrentStep('Processing USDC approval');
+        } else if (jamStatus?.status === 'processing') {
+          setCurrentStep('Processing JAM approval');
+        } else if (headstartStatus?.status === 'processing') {
+          setCurrentStep('Processing HEADSTART approval');
         } else if (mintStatus?.status === 'processing') {
           setCurrentStep('Processing LYNX mint');
         }
@@ -142,6 +151,16 @@ export function MintForm() {
             clearInterval(checkApprovalsRef.current);
             checkApprovalsRef.current = null;
           }
+        } else if (wbtcStatus?.status === 'failed') {
+          const errorMessage = wbtcStatus.error?.message || 'WBTC approval failed';
+          toast.error(`Failed to approve WBTC: ${errorMessage}`);
+          setIsSubmitting(false);
+          setCurrentStep('');
+          setError(errorMessage);
+          if (checkApprovalsRef.current) {
+            clearInterval(checkApprovalsRef.current);
+            checkApprovalsRef.current = null;
+          }
         } else if (sauceStatus?.status === 'failed') {
           const errorMessage = sauceStatus.error?.message || 'SAUCE approval failed';
           toast.error(`Failed to approve SAUCE: ${errorMessage}`);
@@ -152,9 +171,29 @@ export function MintForm() {
             clearInterval(checkApprovalsRef.current);
             checkApprovalsRef.current = null;
           }
-        } else if (clxyStatus?.status === 'failed') {
-          const errorMessage = clxyStatus.error?.message || 'CLXY approval failed';
-          toast.error(`Failed to approve CLXY: ${errorMessage}`);
+        } else if (usdcStatus?.status === 'failed') {
+          const errorMessage = usdcStatus.error?.message || 'USDC approval failed';
+          toast.error(`Failed to approve USDC: ${errorMessage}`);
+          setIsSubmitting(false);
+          setCurrentStep('');
+          setError(errorMessage);
+          if (checkApprovalsRef.current) {
+            clearInterval(checkApprovalsRef.current);
+            checkApprovalsRef.current = null;
+          }
+        } else if (jamStatus?.status === 'failed') {
+          const errorMessage = jamStatus.error?.message || 'JAM approval failed';
+          toast.error(`Failed to approve JAM: ${errorMessage}`);
+          setIsSubmitting(false);
+          setCurrentStep('');
+          setError(errorMessage);
+          if (checkApprovalsRef.current) {
+            clearInterval(checkApprovalsRef.current);
+            checkApprovalsRef.current = null;
+          }
+        } else if (headstartStatus?.status === 'failed') {
+          const errorMessage = headstartStatus.error?.message || 'HEADSTART approval failed';
+          toast.error(`Failed to approve HEADSTART: ${errorMessage}`);
           setIsSubmitting(false);
           setCurrentStep('');
           setError(errorMessage);
@@ -315,7 +354,7 @@ export function MintForm() {
           
           {!isSubmitting && !error && (
             <div className="mt-2 text-xs text-center text-gray-400">
-              Note: You will need to approve SAUCE and CLXY tokens before minting
+              Note: You will need to approve WBTC, SAUCE, USDC, JAM, and HEADSTART tokens before minting
             </div>
           )}
         </div>

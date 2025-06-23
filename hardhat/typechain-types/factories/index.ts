@@ -3,6 +3,4 @@
 /* eslint-disable */
 export * as depositMinterSol from "./DepositMinter.sol";
 export * as depositMinterV2Sol from "./DepositMinterV2.sol";
-export * as simpleTokenMinterSol from "./SimpleTokenMinter.sol";
-export * as debug from "./debug";
 export * as indexToken from "./index-token";

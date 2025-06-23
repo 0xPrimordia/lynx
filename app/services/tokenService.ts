@@ -59,8 +59,11 @@ export interface TokenServiceResponse {
 
 export interface TokenBalances {
   hbar: number;
+  wbtc: number;
   sauce: number;
-  clxy: number;
+  usdc: number;
+  jam: number;
+  headstart: number;
   lynx: number;
 }
 
@@ -482,8 +485,11 @@ export class TokenService {
       
       const result = {
         hbar: hbarValue,
+        wbtc: parseInt(realBalances.WBTC) || 0,
         sauce: parseInt(realBalances.SAUCE) || 0,
-        clxy: parseInt(realBalances.CLXY) || 0,
+        usdc: parseInt(realBalances.USDC) || 0,
+        jam: parseInt(realBalances.JAM) || 0,
+        headstart: parseInt(realBalances.HEADSTART) || 0,
         lynx: parseInt(realBalances.LYNX) || 0
       };
       
@@ -500,8 +506,11 @@ export class TokenService {
       console.log("[TokenService] Using fallback balances due to query error");
       return {
         hbar: 0,
+        wbtc: 0,
         sauce: 0,
-        clxy: 0,
+        usdc: 0,
+        jam: 0,
+        headstart: 0,
         lynx: 0
       };
     }
@@ -525,8 +534,6 @@ export class TokenService {
     switch(tokenId) {
       case TOKEN_IDS.SAUCE:
         return 500;
-      case TOKEN_IDS.CLXY:
-        return 200;
       case TOKEN_IDS.LYNX:
         return 50;
       default:

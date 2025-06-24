@@ -5,14 +5,14 @@ import * as dotenv from "dotenv";
 dotenv.config({ path: "../.env.local" });
 
 async function main() {
-  console.log("🔑 Setting up operator allowance for DepositMinterV2...");
+  console.log("🔑 Setting up operator allowance for DepositMinterV2 V3...");
   
   // Token and contract info
-  const lynxTokenId = "0.0.6200902"; // Current LYNX token
-  const depositMinterHederaId = "0.0.6213533"; // New DepositMinterV2 contract (fixed decimals)
+  const lynxTokenId = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.6200902"; // Main LYNX token
+  const depositMinterHederaId = process.env.NEXT_PUBLIC_DEPOSIT_MINTER_V3_ID || "0.0.6216949"; // DepositMinterV2 V3 with governance
   
   console.log(`LYNX Token ID: ${lynxTokenId}`);
-  console.log(`DepositMinterV2 Contract ID: ${depositMinterHederaId}`);
+  console.log(`DepositMinterV2 V3 Contract ID: ${depositMinterHederaId}`);
   
   // Setup Hedera credentials
   const operatorId = process.env.NEXT_PUBLIC_OPERATOR_ID || "";
@@ -34,16 +34,16 @@ async function main() {
 
     console.log(`\n💰 Setting up allowance for LYNX token transfers...`);
     console.log(`From: Operator (${operatorId})`);
-    console.log(`To: DepositMinterV2 (${depositMinterHederaId})`);
+    console.log(`To: DepositMinterV2 V3 (${depositMinterHederaId})`);
 
     // Set a large allowance (1 billion LYNX tokens in base units)
     const allowanceAmount = 100000000000000000; // 1 billion LYNX (8 decimals)
 
     const allowanceTx = new AccountAllowanceApproveTransaction()
       .approveTokenAllowance(
-        TokenId.fromString(lynxTokenId),                    // LYNX token
+        TokenId.fromString(lynxTokenId),                    // Main LYNX token
         AccountId.fromString(operatorId),                   // Operator (owner/treasury)
-        AccountId.fromString(depositMinterHederaId),        // DepositMinterV2 (spender)
+        AccountId.fromString(depositMinterHederaId),        // DepositMinterV2 V3 (spender)
         allowanceAmount                                     // Amount
       )
       .setMaxTransactionFee(new Hbar(5));
@@ -58,7 +58,7 @@ async function main() {
     console.log(`Allowance amount: ${allowanceAmount.toString()} LYNX base units`);
 
     console.log("\n🎉 SUCCESS!");
-    console.log("The DepositMinterV2 contract can now transfer LYNX tokens from the operator (treasury) to users.");
+    console.log("The DepositMinterV2 V3 contract can now transfer LYNX tokens from the operator (treasury) to users.");
     console.log("This allowance will persist on the network until modified.");
 
     client.close();

@@ -16,13 +16,7 @@ interface IHederaTokenService {
 /**
  * @title DepositMinterV2
  * @dev Updated token minter that accepts 6-token deposits and mints proportional LYNX tokens
- * Based on current DAO parameters snapshot:
- * - HBAR: 25% (2.5 HBAR per 1 LYNX)
- * - WBTC: 20% (0.02 WBTC per 1 LYNX)
- * - SAUCE: 15% (1.5 SAUCE per 1 LYNX) 
- * - USDC: 15% (1.5 USDC per 1 LYNX)
- * - JAM: 15% (1.5 JAM per 1 LYNX)
- * - HEADSTART: 10% (1.0 HEADSTART per 1 LYNX)
+ * With governance-adjustable ratios for DAO parameter updates
  */
 contract DepositMinterV2 {
     
@@ -38,25 +32,30 @@ contract DepositMinterV2 {
     address public JAM_TOKEN;
     address public HEADSTART_TOKEN;
     
-    // Admin address (set in constructor)
+    // Access control
     address public ADMIN;
+    address public GOVERNANCE;
     
     // Treasury address - where minted tokens go (usually the operator account)
     address public TREASURY;
     
-    // Minting ratios (tokens required per 1 LYNX)
-    uint256 public constant HBAR_RATIO = 25;      // 2.5 HBAR per 1 LYNX (25 tinybars per 10^7 LYNX base units)
-    uint256 public constant WBTC_RATIO = 2;       // 0.02 WBTC per 1 LYNX (2 satoshi per 10^6 LYNX base units)
-    uint256 public constant SAUCE_RATIO = 15;     // 1.5 SAUCE per 1 LYNX (15 per 10 LYNX)
-    uint256 public constant USDC_RATIO = 15;      // 1.5 USDC per 1 LYNX (15 per 10 LYNX)
-    uint256 public constant JAM_RATIO = 15;       // 1.5 JAM per 1 LYNX (15 per 10 LYNX)
-    uint256 public constant HEADSTART_RATIO = 10; // 1.0 HEADSTART per 1 LYNX (10 per 10 LYNX)
+    // Minting ratios (now adjustable via governance)
+    uint256 public HBAR_RATIO = 25;      // 2.5 HBAR per 1 LYNX (25 tinybars per 10^7 LYNX base units)
+    uint256 public WBTC_RATIO = 2;       // 0.02 WBTC per 1 LYNX (2 satoshi per 10^6 LYNX base units)
+    uint256 public SAUCE_RATIO = 15;     // 1.5 SAUCE per 1 LYNX (15 per 10 LYNX)
+    uint256 public USDC_RATIO = 15;      // 1.5 USDC per 1 LYNX (15 per 10 LYNX)
+    uint256 public JAM_RATIO = 15;       // 1.5 JAM per 1 LYNX (15 per 10 LYNX)
+    uint256 public HEADSTART_RATIO = 10; // 1.0 HEADSTART per 1 LYNX (10 per 10 LYNX)
+    
+    // Ratio bounds for safety
+    uint256 public constant MIN_RATIO = 1;
+    uint256 public constant MAX_RATIO = 100;
     
     // Token decimals
     uint8 public constant SAUCE_DECIMALS = 6;
     uint8 public constant USDC_DECIMALS = 6;
-    uint8 public constant JAM_DECIMALS = 6;
-    uint8 public constant HEADSTART_DECIMALS = 6;
+    uint8 public constant JAM_DECIMALS = 8;
+    uint8 public constant HEADSTART_DECIMALS = 8;
     uint8 public constant WBTC_DECIMALS = 8;
     uint8 public constant LYNX_DECIMALS = 8;
     
@@ -78,16 +77,45 @@ contract DepositMinterV2 {
     event TransferResult(int64 responseCode);
     event DepositsProcessed(address indexed user, uint256 totalTokensProcessed);
     
+    // Governance events
+    event GovernanceAddressUpdated(address indexed oldGovernance, address indexed newGovernance);
+    event RatiosUpdated(
+        uint256 hbarRatio,
+        uint256 wbtcRatio,
+        uint256 sauceRatio,
+        uint256 usdcRatio,
+        uint256 jamRatio,
+        uint256 headstartRatio,
+        address indexed updatedBy
+    );
+    
     // Errors
     error OnlyAdmin();
+    error OnlyGovernance();
     error InvalidAmount();
+    error InvalidRatio(string ratioName, uint256 value);
     error TokenNotSet(string tokenType);
     error InsufficientDeposit(string tokenType, uint256 required, uint256 provided);
     error HTSOperationFailed(string operation, int64 responseCode);
+    error GovernanceNotSet();
     
     modifier onlyAdmin() {
         if (msg.sender != ADMIN) {
             revert OnlyAdmin();
+        }
+        _;
+    }
+    
+    modifier onlyGovernance() {
+        if (msg.sender != GOVERNANCE) {
+            revert OnlyGovernance();
+        }
+        _;
+    }
+    
+    modifier onlyAdminOrGovernance() {
+        if (msg.sender != ADMIN && msg.sender != GOVERNANCE) {
+            revert OnlyGovernance();
         }
         _;
     }
@@ -110,6 +138,97 @@ contract DepositMinterV2 {
         HEADSTART_TOKEN = headstartToken;
         ADMIN = msg.sender; // Deployer becomes admin
         TREASURY = treasury; // Treasury address where minted tokens go
+        // GOVERNANCE starts as address(0) - admin must set it
+    }
+    
+    /**
+     * @dev Set governance address (admin only)
+     */
+    function setGovernanceAddress(address newGovernance) external onlyAdmin {
+        address oldGovernance = GOVERNANCE;
+        GOVERNANCE = newGovernance;
+        emit GovernanceAddressUpdated(oldGovernance, newGovernance);
+    }
+    
+    /**
+     * @dev Update all ratios (governance only)
+     */
+    function updateRatios(
+        uint256 hbarRatio,
+        uint256 wbtcRatio,
+        uint256 sauceRatio,
+        uint256 usdcRatio,
+        uint256 jamRatio,
+        uint256 headstartRatio
+    ) external onlyGovernance {
+        if (GOVERNANCE == address(0)) revert GovernanceNotSet();
+        
+        _validateRatio("HBAR", hbarRatio);
+        _validateRatio("WBTC", wbtcRatio);
+        _validateRatio("SAUCE", sauceRatio);
+        _validateRatio("USDC", usdcRatio);
+        _validateRatio("JAM", jamRatio);
+        _validateRatio("HEADSTART", headstartRatio);
+        
+        HBAR_RATIO = hbarRatio;
+        WBTC_RATIO = wbtcRatio;
+        SAUCE_RATIO = sauceRatio;
+        USDC_RATIO = usdcRatio;
+        JAM_RATIO = jamRatio;
+        HEADSTART_RATIO = headstartRatio;
+        
+        emit RatiosUpdated(hbarRatio, wbtcRatio, sauceRatio, usdcRatio, jamRatio, headstartRatio, msg.sender);
+    }
+    
+    /**
+     * @dev Emergency ratio update (admin only)
+     */
+    function adminUpdateRatios(
+        uint256 hbarRatio,
+        uint256 wbtcRatio,
+        uint256 sauceRatio,
+        uint256 usdcRatio,
+        uint256 jamRatio,
+        uint256 headstartRatio
+    ) external onlyAdmin {
+        _validateRatio("HBAR", hbarRatio);
+        _validateRatio("WBTC", wbtcRatio);
+        _validateRatio("SAUCE", sauceRatio);
+        _validateRatio("USDC", usdcRatio);
+        _validateRatio("JAM", jamRatio);
+        _validateRatio("HEADSTART", headstartRatio);
+        
+        HBAR_RATIO = hbarRatio;
+        WBTC_RATIO = wbtcRatio;
+        SAUCE_RATIO = sauceRatio;
+        USDC_RATIO = usdcRatio;
+        JAM_RATIO = jamRatio;
+        HEADSTART_RATIO = headstartRatio;
+        
+        emit RatiosUpdated(hbarRatio, wbtcRatio, sauceRatio, usdcRatio, jamRatio, headstartRatio, msg.sender);
+    }
+    
+    /**
+     * @dev Get current ratios
+     */
+    function getCurrentRatios() external view returns (
+        uint256 hbarRatio,
+        uint256 wbtcRatio,
+        uint256 sauceRatio,
+        uint256 usdcRatio,
+        uint256 jamRatio,
+        uint256 headstartRatio
+    ) {
+        return (HBAR_RATIO, WBTC_RATIO, SAUCE_RATIO, USDC_RATIO, JAM_RATIO, HEADSTART_RATIO);
+    }
+    
+    /**
+     * @dev Internal function to validate ratio bounds
+     */
+    function _validateRatio(string memory ratioName, uint256 value) internal pure {
+        if (value < MIN_RATIO || value > MAX_RATIO) {
+            revert InvalidRatio(ratioName, value);
+        }
     }
     
     /**
@@ -176,7 +295,7 @@ contract DepositMinterV2 {
      */
     function calculateRequiredDeposits(uint256 lynxAmount) 
         external 
-        pure 
+        view 
         returns (
             uint256 hbarRequired,
             uint256 wbtcRequired,
@@ -186,13 +305,13 @@ contract DepositMinterV2 {
             uint256 headstartRequired
         ) 
     {
-        // Calculate based on hardcoded ratios
-        hbarRequired = lynxAmount * HBAR_RATIO * (10 ** 8) / 10; // 2.5 HBAR per LYNX
-        wbtcRequired = lynxAmount * WBTC_RATIO * (10 ** WBTC_DECIMALS) / 100; // 0.02 WBTC per LYNX
-        sauceRequired = lynxAmount * SAUCE_RATIO * (10 ** SAUCE_DECIMALS) / 10; // 1.5 SAUCE per LYNX
-        usdcRequired = lynxAmount * USDC_RATIO * (10 ** USDC_DECIMALS) / 10; // 1.5 USDC per LYNX
-        jamRequired = lynxAmount * JAM_RATIO * (10 ** JAM_DECIMALS) / 10; // 1.5 JAM per LYNX
-        headstartRequired = lynxAmount * HEADSTART_RATIO * (10 ** HEADSTART_DECIMALS) / 10; // 1.0 HEADSTART per LYNX
+        // Calculate based on current ratios
+        hbarRequired = lynxAmount * HBAR_RATIO * (10 ** 8) / 10; // HBAR per LYNX
+        wbtcRequired = lynxAmount * WBTC_RATIO * (10 ** WBTC_DECIMALS) / 100; // WBTC per LYNX
+        sauceRequired = lynxAmount * SAUCE_RATIO * (10 ** SAUCE_DECIMALS) / 10; // SAUCE per LYNX
+        usdcRequired = lynxAmount * USDC_RATIO * (10 ** USDC_DECIMALS) / 10; // USDC per LYNX
+        jamRequired = lynxAmount * JAM_RATIO * (10 ** JAM_DECIMALS) / 10; // JAM per LYNX
+        headstartRequired = lynxAmount * HEADSTART_RATIO * (10 ** HEADSTART_DECIMALS) / 10; // HEADSTART per LYNX
     }
     
     /**

@@ -36,7 +36,7 @@ async function checkBalanceViaMirror(accountId: string, tokenId: string): Promis
 }
 
 async function testDepositMinterV2Operations() {
-    console.log("🔍 Testing DepositMinterV2 - verifying 6-token minting and deposits...");
+    console.log("🔍 Testing DepositMinterV2 V3 - verifying 6-token minting with governance features...");
     
     // Initialize client with test account
     const accountId = AccountId.fromString(process.env.TEST_ACCOUNT!);
@@ -45,11 +45,12 @@ async function testDepositMinterV2Operations() {
     const client = Client.forTestnet();
     client.setOperator(accountId, privateKey);
     
-    const contractHederaId = "0.0.6213533"; // New DepositMinterV2 contract (fixed decimals)
+    // Use the new DepositMinterV2 V3 contract with governance features
+    const contractHederaId = process.env.NEXT_PUBLIC_DEPOSIT_MINTER_V3_ID || "0.0.6216949";
     const contractId = ContractId.fromString(contractHederaId);
     
-    // Get token info from environment
-    const lynxTokenId = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID!;
+    // Get token info from environment - using main LYNX token
+    const lynxTokenId = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.6200902"; // Main LYNX token
     const sauceTokenId = process.env.NEXT_PUBLIC_SAUCE_TOKEN_ID!;
     const wbtcTokenId = process.env.NEXT_PUBLIC_WBTC_TOKEN_ID!;
     const usdcTokenId = process.env.NEXT_PUBLIC_USDC_TOKEN_ID!;
@@ -59,7 +60,7 @@ async function testDepositMinterV2Operations() {
     // Get operator ID for balance checking
     const operatorId = process.env.NEXT_PUBLIC_OPERATOR_ID!;
     
-    console.log("Contract ID:", contractHederaId);
+    console.log("Contract ID (V3 with Governance):", contractHederaId);
     console.log("Test Account ID:", accountId.toString());
     console.log("Operator ID (Treasury):", operatorId);
     console.log("LYNX Token ID:", lynxTokenId);
@@ -72,6 +73,27 @@ async function testDepositMinterV2Operations() {
     });
     
     try {
+        // Step 0: Verify governance features are working
+        console.log("\n0️⃣ Verifying governance features...");
+        
+        const adminQuery = new ContractCallQuery()
+            .setContractId(contractId)
+            .setGas(100000)
+            .setFunction("ADMIN");
+        const adminResult = await adminQuery.execute(client);
+        const adminAddress = adminResult.getAddress(0);
+        
+        const governanceQuery = new ContractCallQuery()
+            .setContractId(contractId)
+            .setGas(100000)
+            .setFunction("GOVERNANCE");
+        const governanceResult = await governanceQuery.execute(client);
+        const governanceAddress = governanceResult.getAddress(0);
+        
+        console.log("✅ Governance features verified:");
+        console.log("- Admin Address:", adminAddress);
+        console.log("- Governance Address:", governanceAddress);
+        
         // Step 1: Get required deposit amounts for all 6 tokens
         console.log("\n1️⃣ Getting required deposit amounts...");
         const depositsQuery = new ContractCallQuery()
@@ -114,7 +136,7 @@ async function testDepositMinterV2Operations() {
         const initialContractJam = await checkBalanceViaMirror(contractHederaId, jamTokenId);
         const initialContractHeadstart = await checkBalanceViaMirror(contractHederaId, headstartTokenId);
         
-        console.log("Initial LYNX balances:");
+        console.log("Initial LYNX token balances:");
         console.log("- User LYNX:", initialUserLynx);
         console.log("- Contract LYNX:", initialContractLynx);
         console.log("- Operator LYNX (Treasury):", initialOperatorLynx);

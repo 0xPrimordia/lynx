@@ -37,6 +37,19 @@ interface GovernanceVote {
   reason?: string;
 }
 
+interface MultiRatioGovernanceVote {
+  type: 'MULTI_RATIO_VOTE';
+  ratioChanges: Array<{
+    token: string;
+    newRatio: number;
+  }>;
+  voterAccountId: string;
+  votingPower: number;
+  timestamp: Date;
+  txId?: string;
+  reason?: string;
+}
+
 export default function CompositionPage() {
   const { parameters, isLoading, error } = useDaoParameters();
   const { account, isConnected, connector: dAppConnector } = useWallet();
@@ -139,69 +152,53 @@ export default function CompositionPage() {
       setIsSubmitting(true);
       toast.loading('Submitting governance votes to Hedera Consensus Service...');
 
-      // Create votes for each parameter change
-      const votes: GovernanceVote[] = [];
+      // Create a single multi-ratio vote containing all changes
+      const multiRatioVote: MultiRatioGovernanceVote = {
+        type: 'MULTI_RATIO_VOTE',
+        ratioChanges: Object.entries(proposedChanges).map(([symbol, newValue]) => ({
+          token: symbol,
+          newRatio: newValue
+        })),
+        voterAccountId: String(account.accountId),
+        votingPower: votingPower,
+        timestamp: new Date(),
+        reason: `Proposed ratio changes for ${Object.keys(proposedChanges).length} tokens`
+      };
+
+      console.log('Submitting multi-ratio vote:', multiRatioVote);
       
-      for (const [symbol, newValue] of Object.entries(proposedChanges)) {
-        const vote: GovernanceVote = {
-          type: 'PARAMETER_VOTE',
-          parameterPath: `treasury.weights.${symbol}`,
-          newValue: newValue,
-          voterAccountId: String(account.accountId),
-          votingPower: votingPower,
-          timestamp: new Date(),
-          reason: `Proposed allocation change for ${symbol} to ${newValue}%`
-        };
-        votes.push(vote);
+      // Create client for testnet
+      const client = Client.forTestnet();
+      
+      // Create single topic message submission transaction
+      const voteMessage = JSON.stringify(multiRatioVote, null, 2);
+      const transaction = new TopicMessageSubmitTransaction()
+        .setTopicId(governanceTopicId)
+        .setMessage(voteMessage)
+        .setTransactionId(TransactionId.generate(AccountId.fromString(String(account.accountId))))
+        .freezeWith(client);
+
+      // Convert to base64 for wallet submission
+      const txBase64 = transactionToBase64String(transaction);
+      
+      // Submit via wallet (single transaction)
+      if (!dAppConnector) {
+        throw new Error('Wallet connector not available');
       }
 
-      // Submit each vote as a separate message to the governance topic
-      const txIds: string[] = [];
-      
-      for (const vote of votes) {
-        try {
-          console.log('Submitting vote for parameter:', vote.parameterPath);
-          
-          // Create client for testnet
-          const client = Client.forTestnet();
-          
-          // Create topic message submission transaction
-          const voteMessage = JSON.stringify(vote, null, 2);
-          const transaction = new TopicMessageSubmitTransaction()
-            .setTopicId(governanceTopicId)
-            .setMessage(voteMessage)
-            .setTransactionId(TransactionId.generate(AccountId.fromString(String(account.accountId))))
-            .freezeWith(client);
+      const response = await dAppConnector.signAndExecuteTransaction({
+        signerAccountId: String(account.accountId),
+        transactionList: txBase64
+      });
 
-          // Convert to base64 for wallet submission
-          const txBase64 = transactionToBase64String(transaction);
-          
-          // Submit via wallet (using the pattern from the existing codebase)
-          if (!dAppConnector) {
-            throw new Error('Wallet connector not available');
-          }
-
-          const response = await dAppConnector.signAndExecuteTransaction({
-            signerAccountId: String(account.accountId),
-            transactionList: txBase64
-          });
-
-          const txId = String(response?.id) || `topic-${governanceTopicId}-${Date.now()}`;
-          txIds.push(txId);
-          console.log(`Vote submitted for ${vote.parameterPath}, TX: ${txId}`);
-
-        } catch (voteError) {
-          console.error(`Error submitting vote for ${vote.parameterPath}:`, voteError);
-          toast.error(`Failed to submit vote for ${vote.parameterPath}`);
-        }
-      }
+      const txId = String(response?.id) || `topic-${governanceTopicId}-${Date.now()}`;
 
       toast.dismiss();
       
-      if (txIds.length > 0) {
+      if (txId) {
         toast.success(
-          `Successfully submitted ${txIds.length} governance vote(s) to HCS topic ${governanceTopicId}! ` +
-          `Transaction IDs: ${txIds.join(', ')}`
+          `Successfully submitted multi-ratio governance vote to HCS topic ${governanceTopicId}! ` +
+          `Transaction ID: ${txId}`
         );
         
         // Reset the proposed changes
@@ -209,16 +206,16 @@ export default function CompositionPage() {
         setProposedChanges({});
         
         // Show summary
-        console.log('Governance votes submitted:', {
+        console.log('Multi-ratio governance vote submitted:', {
           voterAccountId: String(account.accountId),
           votingPower: votingPower,
           changes: proposedChanges,
-          transactionIds: txIds,
+          transactionId: txId,
           topicId: governanceTopicId,
-          message: 'Votes submitted via Hedera Consensus Service'
+          message: 'Multi-ratio vote submitted via Hedera Consensus Service'
         });
       } else {
-        toast.error('No votes were successfully submitted');
+        toast.error('Failed to submit governance vote');
       }
 
     } catch (error: unknown) {

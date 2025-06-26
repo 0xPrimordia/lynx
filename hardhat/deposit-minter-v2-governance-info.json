@@ -1,0 +1,33 @@
+{
+  "contractId": "0.0.6216949",
+  "contractAddress": "0x00000000000000000000000000000000005edcf5",
+  "adminAddress": "000000000000000000000000000000000042393a",
+  "governanceAddress": "0000000000000000000000000000000000000000",
+  "operatorId": "0.0.4340026",
+  "operatorEVMAddress": "000000000000000000000000000000000042393a",
+  "isAdminVerified": true,
+  "lynxToken": "0x00000000000000000000000000000000005e9e46",
+  "sauceToken": "0x0000000000000000000000000000000000120f46",
+  "wbtcToken": "0x00000000000000000000000000000000005ecd42",
+  "usdcToken": "0x00000000000000000000000000000000005ecd43",
+  "jamToken": "0x00000000000000000000000000000000005ecd44",
+  "headstartToken": "0x00000000000000000000000000000000005ecd45",
+  "associationsVerified": {
+    "lynx": true,
+    "sauce": true,
+    "wbtc": true,
+    "usdc": true,
+    "jam": true,
+    "headstart": true
+  },
+  "initialRatios": {
+    "hbar": "25",
+    "wbtc": "2",
+    "sauce": "15",
+    "usdc": "15",
+    "jam": "15",
+    "headstart": "10"
+  },
+  "hasGovernance": true,
+  "deployedAt": "2025-06-23T19:21:25.117Z"
+}

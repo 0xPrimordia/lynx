@@ -224,8 +224,8 @@ export class TokenQueueService {
     const wbtcAmount = (lynxAmount * ratios.wbtcRatio * Math.pow(10, 8)).toString(); // 8 decimals
     const sauceAmount = (lynxAmount * ratios.sauceRatio * Math.pow(10, 6)).toString(); // 6 decimals
     const usdcAmount = (lynxAmount * ratios.usdcRatio * Math.pow(10, 6)).toString(); // 6 decimals
-    const jamAmount = (lynxAmount * ratios.jamRatio * Math.pow(10, 6)).toString(); // 6 decimals
-    const headstartAmount = (lynxAmount * ratios.headstartRatio * Math.pow(10, 6)).toString(); // 6 decimals
+    const jamAmount = (lynxAmount * ratios.jamRatio * Math.pow(10, 8)).toString(); // 8 decimals
+    const headstartAmount = (lynxAmount * ratios.headstartRatio * Math.pow(10, 8)).toString(); // 8 decimals
     
     try {
       console.log(`[QUEUE DEBUG] Starting LYNX minting process for ${lynxAmount} LYNX`);

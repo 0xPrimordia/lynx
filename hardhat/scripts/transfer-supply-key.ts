@@ -7,20 +7,20 @@ dotenv.config({ path: "../.env.local" });
 async function main() {
   console.log("🔄 Transferring LYNX token supply key to DepositMinterV2 contract...");
   
-  // Token and contract info - using LYNX token and DepositMinterV2
-  const lynxTokenId = "0.0.6200902"; // Hardcoded LYNX token ID
-  const depositMinterHederaId = "0.0.6213533"; // New DepositMinterV2 contract ID (fixed decimals)
+  // Token and contract info - using main LYNX token and DepositMinterV2 V3 (with governance)
+  const lynxTokenId = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.6200902"; // Main LYNX token ID
+  const depositMinterHederaId = process.env.NEXT_PUBLIC_DEPOSIT_MINTER_V3_ID || "0.0.6216949"; // DepositMinterV2 V3 with governance
   
   if (!lynxTokenId) {
     throw new Error("NEXT_PUBLIC_LYNX_TOKEN_ID environment variable not set");
   }
   
   if (!depositMinterHederaId) {
-    throw new Error("NEXT_PUBLIC_DEPOSIT_MINTER_V2_HEDERA_ID environment variable not set");
+    throw new Error("NEXT_PUBLIC_DEPOSIT_MINTER_V3_ID environment variable not set");
   }
   
   console.log(`LYNX Token ID: ${lynxTokenId}`);
-  console.log(`DepositMinterV2 Contract ID: ${depositMinterHederaId}`);
+  console.log(`DepositMinterV2 V3 Contract ID: ${depositMinterHederaId}`);
   
   // Setup Hedera credentials
   const operatorId = process.env.NEXT_PUBLIC_OPERATOR_ID || "";
@@ -38,8 +38,8 @@ async function main() {
       PrivateKey.fromString(operatorKey)
     );
 
-    console.log(`\n🔑 Updating supply key for token ${lynxTokenId}...`);
-    console.log(`New supply key will be DepositMinterV2 contract: ${depositMinterHederaId}`);
+    console.log(`\n🔑 Updating supply key for LYNX token ${lynxTokenId}...`);
+    console.log(`New supply key will be DepositMinterV2 V3 contract: ${depositMinterHederaId}`);
 
     // Create token update transaction to change supply key
     const tokenUpdateTx = new TokenUpdateTransaction()
@@ -58,8 +58,8 @@ async function main() {
     console.log(`Status: ${tokenUpdateRx.status.toString()}`);
 
     console.log("\n🎉 SUCCESS!");
-    console.log(`The LYNX token ${lynxTokenId} supply key has been transferred to the DepositMinterV2 contract.`);
-    console.log(`The DepositMinterV2 contract can now mint LYNX tokens.`);
+    console.log(`The LYNX token ${lynxTokenId} supply key has been transferred to the DepositMinterV2 V3 contract.`);
+    console.log(`The DepositMinterV2 V3 contract can now mint LYNX tokens.`);
 
     client.close();
 

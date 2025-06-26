@@ -27,6 +27,7 @@ export interface DepositMinterV2Interface extends Interface {
   getFunction(
     nameOrSignature:
       | "ADMIN"
+      | "GOVERNANCE"
       | "HBAR_RATIO"
       | "HEADSTART_DECIMALS"
       | "HEADSTART_RATIO"
@@ -36,6 +37,8 @@ export interface DepositMinterV2Interface extends Interface {
       | "JAM_TOKEN"
       | "LYNX_DECIMALS"
       | "LYNX_TOKEN"
+      | "MAX_RATIO"
+      | "MIN_RATIO"
       | "SAUCE_DECIMALS"
       | "SAUCE_RATIO"
       | "SAUCE_TOKEN"
@@ -46,20 +49,26 @@ export interface DepositMinterV2Interface extends Interface {
       | "WBTC_DECIMALS"
       | "WBTC_RATIO"
       | "WBTC_TOKEN"
+      | "adminUpdateRatios"
       | "associateTokens"
       | "calculateRequiredDeposits"
       | "checkAssociations"
       | "emergencyWithdrawHbar"
+      | "getCurrentRatios"
       | "getHbarBalance"
       | "mintWithDeposits"
+      | "setGovernanceAddress"
+      | "updateRatios"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
       | "DepositsProcessed"
+      | "GovernanceAddressUpdated"
       | "LynxMinted"
       | "MintAttempt"
       | "MintResult"
+      | "RatiosUpdated"
       | "TokensAssociated"
       | "TokensDeposited"
       | "TransferAttempt"
@@ -67,6 +76,10 @@ export interface DepositMinterV2Interface extends Interface {
   ): EventFragment;
 
   encodeFunctionData(functionFragment: "ADMIN", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "GOVERNANCE",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "HBAR_RATIO",
     values?: undefined
@@ -97,6 +110,8 @@ export interface DepositMinterV2Interface extends Interface {
     functionFragment: "LYNX_TOKEN",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "MAX_RATIO", values?: undefined): string;
+  encodeFunctionData(functionFragment: "MIN_RATIO", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "SAUCE_DECIMALS",
     values?: undefined
@@ -135,6 +150,17 @@ export interface DepositMinterV2Interface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "adminUpdateRatios",
+    values: [
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "associateTokens",
     values?: undefined
   ): string;
@@ -151,6 +177,10 @@ export interface DepositMinterV2Interface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "getCurrentRatios",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getHbarBalance",
     values?: undefined
   ): string;
@@ -165,8 +195,24 @@ export interface DepositMinterV2Interface extends Interface {
       BigNumberish
     ]
   ): string;
+  encodeFunctionData(
+    functionFragment: "setGovernanceAddress",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "updateRatios",
+    values: [
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
+    ]
+  ): string;
 
   decodeFunctionResult(functionFragment: "ADMIN", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "GOVERNANCE", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "HBAR_RATIO", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "HEADSTART_DECIMALS",
@@ -191,6 +237,8 @@ export interface DepositMinterV2Interface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "LYNX_TOKEN", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "MAX_RATIO", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "MIN_RATIO", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "SAUCE_DECIMALS",
     data: BytesLike
@@ -217,6 +265,10 @@ export interface DepositMinterV2Interface extends Interface {
   decodeFunctionResult(functionFragment: "WBTC_RATIO", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "WBTC_TOKEN", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "adminUpdateRatios",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "associateTokens",
     data: BytesLike
   ): Result;
@@ -233,11 +285,23 @@ export interface DepositMinterV2Interface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getCurrentRatios",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getHbarBalance",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "mintWithDeposits",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setGovernanceAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "updateRatios",
     data: BytesLike
   ): Result;
 }
@@ -251,6 +315,22 @@ export namespace DepositsProcessedEvent {
   export interface OutputObject {
     user: string;
     totalTokensProcessed: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace GovernanceAddressUpdatedEvent {
+  export type InputTuple = [
+    oldGovernance: AddressLike,
+    newGovernance: AddressLike
+  ];
+  export type OutputTuple = [oldGovernance: string, newGovernance: string];
+  export interface OutputObject {
+    oldGovernance: string;
+    newGovernance: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -302,6 +382,40 @@ export namespace MintResultEvent {
   export interface OutputObject {
     responseCode: bigint;
     newTotalSupply: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace RatiosUpdatedEvent {
+  export type InputTuple = [
+    hbarRatio: BigNumberish,
+    wbtcRatio: BigNumberish,
+    sauceRatio: BigNumberish,
+    usdcRatio: BigNumberish,
+    jamRatio: BigNumberish,
+    headstartRatio: BigNumberish,
+    updatedBy: AddressLike
+  ];
+  export type OutputTuple = [
+    hbarRatio: bigint,
+    wbtcRatio: bigint,
+    sauceRatio: bigint,
+    usdcRatio: bigint,
+    jamRatio: bigint,
+    headstartRatio: bigint,
+    updatedBy: string
+  ];
+  export interface OutputObject {
+    hbarRatio: bigint;
+    wbtcRatio: bigint;
+    sauceRatio: bigint;
+    usdcRatio: bigint;
+    jamRatio: bigint;
+    headstartRatio: bigint;
+    updatedBy: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -431,6 +545,8 @@ export interface DepositMinterV2 extends BaseContract {
 
   ADMIN: TypedContractMethod<[], [string], "view">;
 
+  GOVERNANCE: TypedContractMethod<[], [string], "view">;
+
   HBAR_RATIO: TypedContractMethod<[], [bigint], "view">;
 
   HEADSTART_DECIMALS: TypedContractMethod<[], [bigint], "view">;
@@ -448,6 +564,10 @@ export interface DepositMinterV2 extends BaseContract {
   LYNX_DECIMALS: TypedContractMethod<[], [bigint], "view">;
 
   LYNX_TOKEN: TypedContractMethod<[], [string], "view">;
+
+  MAX_RATIO: TypedContractMethod<[], [bigint], "view">;
+
+  MIN_RATIO: TypedContractMethod<[], [bigint], "view">;
 
   SAUCE_DECIMALS: TypedContractMethod<[], [bigint], "view">;
 
@@ -468,6 +588,19 @@ export interface DepositMinterV2 extends BaseContract {
   WBTC_RATIO: TypedContractMethod<[], [bigint], "view">;
 
   WBTC_TOKEN: TypedContractMethod<[], [string], "view">;
+
+  adminUpdateRatios: TypedContractMethod<
+    [
+      hbarRatio: BigNumberish,
+      wbtcRatio: BigNumberish,
+      sauceRatio: BigNumberish,
+      usdcRatio: BigNumberish,
+      jamRatio: BigNumberish,
+      headstartRatio: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
   associateTokens: TypedContractMethod<[], [void], "nonpayable">;
 
@@ -507,6 +640,21 @@ export interface DepositMinterV2 extends BaseContract {
     "nonpayable"
   >;
 
+  getCurrentRatios: TypedContractMethod<
+    [],
+    [
+      [bigint, bigint, bigint, bigint, bigint, bigint] & {
+        hbarRatio: bigint;
+        wbtcRatio: bigint;
+        sauceRatio: bigint;
+        usdcRatio: bigint;
+        jamRatio: bigint;
+        headstartRatio: bigint;
+      }
+    ],
+    "view"
+  >;
+
   getHbarBalance: TypedContractMethod<[], [bigint], "view">;
 
   mintWithDeposits: TypedContractMethod<
@@ -522,12 +670,34 @@ export interface DepositMinterV2 extends BaseContract {
     "payable"
   >;
 
+  setGovernanceAddress: TypedContractMethod<
+    [newGovernance: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  updateRatios: TypedContractMethod<
+    [
+      hbarRatio: BigNumberish,
+      wbtcRatio: BigNumberish,
+      sauceRatio: BigNumberish,
+      usdcRatio: BigNumberish,
+      jamRatio: BigNumberish,
+      headstartRatio: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
     nameOrSignature: "ADMIN"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "GOVERNANCE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "HBAR_RATIO"
@@ -556,6 +726,12 @@ export interface DepositMinterV2 extends BaseContract {
   getFunction(
     nameOrSignature: "LYNX_TOKEN"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "MAX_RATIO"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "MIN_RATIO"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "SAUCE_DECIMALS"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -586,6 +762,20 @@ export interface DepositMinterV2 extends BaseContract {
   getFunction(
     nameOrSignature: "WBTC_TOKEN"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "adminUpdateRatios"
+  ): TypedContractMethod<
+    [
+      hbarRatio: BigNumberish,
+      wbtcRatio: BigNumberish,
+      sauceRatio: BigNumberish,
+      usdcRatio: BigNumberish,
+      jamRatio: BigNumberish,
+      headstartRatio: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "associateTokens"
   ): TypedContractMethod<[], [void], "nonpayable">;
@@ -625,6 +815,22 @@ export interface DepositMinterV2 extends BaseContract {
     nameOrSignature: "emergencyWithdrawHbar"
   ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "getCurrentRatios"
+  ): TypedContractMethod<
+    [],
+    [
+      [bigint, bigint, bigint, bigint, bigint, bigint] & {
+        hbarRatio: bigint;
+        wbtcRatio: bigint;
+        sauceRatio: bigint;
+        usdcRatio: bigint;
+        jamRatio: bigint;
+        headstartRatio: bigint;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "getHbarBalance"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
@@ -641,6 +847,23 @@ export interface DepositMinterV2 extends BaseContract {
     [void],
     "payable"
   >;
+  getFunction(
+    nameOrSignature: "setGovernanceAddress"
+  ): TypedContractMethod<[newGovernance: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "updateRatios"
+  ): TypedContractMethod<
+    [
+      hbarRatio: BigNumberish,
+      wbtcRatio: BigNumberish,
+      sauceRatio: BigNumberish,
+      usdcRatio: BigNumberish,
+      jamRatio: BigNumberish,
+      headstartRatio: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
   getEvent(
     key: "DepositsProcessed"
@@ -648,6 +871,13 @@ export interface DepositMinterV2 extends BaseContract {
     DepositsProcessedEvent.InputTuple,
     DepositsProcessedEvent.OutputTuple,
     DepositsProcessedEvent.OutputObject
+  >;
+  getEvent(
+    key: "GovernanceAddressUpdated"
+  ): TypedContractEvent<
+    GovernanceAddressUpdatedEvent.InputTuple,
+    GovernanceAddressUpdatedEvent.OutputTuple,
+    GovernanceAddressUpdatedEvent.OutputObject
   >;
   getEvent(
     key: "LynxMinted"
@@ -669,6 +899,13 @@ export interface DepositMinterV2 extends BaseContract {
     MintResultEvent.InputTuple,
     MintResultEvent.OutputTuple,
     MintResultEvent.OutputObject
+  >;
+  getEvent(
+    key: "RatiosUpdated"
+  ): TypedContractEvent<
+    RatiosUpdatedEvent.InputTuple,
+    RatiosUpdatedEvent.OutputTuple,
+    RatiosUpdatedEvent.OutputObject
   >;
   getEvent(
     key: "TokensAssociated"
@@ -711,6 +948,17 @@ export interface DepositMinterV2 extends BaseContract {
       DepositsProcessedEvent.OutputObject
     >;
 
+    "GovernanceAddressUpdated(address,address)": TypedContractEvent<
+      GovernanceAddressUpdatedEvent.InputTuple,
+      GovernanceAddressUpdatedEvent.OutputTuple,
+      GovernanceAddressUpdatedEvent.OutputObject
+    >;
+    GovernanceAddressUpdated: TypedContractEvent<
+      GovernanceAddressUpdatedEvent.InputTuple,
+      GovernanceAddressUpdatedEvent.OutputTuple,
+      GovernanceAddressUpdatedEvent.OutputObject
+    >;
+
     "LynxMinted(address,uint256)": TypedContractEvent<
       LynxMintedEvent.InputTuple,
       LynxMintedEvent.OutputTuple,
@@ -742,6 +990,17 @@ export interface DepositMinterV2 extends BaseContract {
       MintResultEvent.InputTuple,
       MintResultEvent.OutputTuple,
       MintResultEvent.OutputObject
+    >;
+
+    "RatiosUpdated(uint256,uint256,uint256,uint256,uint256,uint256,address)": TypedContractEvent<
+      RatiosUpdatedEvent.InputTuple,
+      RatiosUpdatedEvent.OutputTuple,
+      RatiosUpdatedEvent.OutputObject
+    >;
+    RatiosUpdated: TypedContractEvent<
+      RatiosUpdatedEvent.InputTuple,
+      RatiosUpdatedEvent.OutputTuple,
+      RatiosUpdatedEvent.OutputObject
     >;
 
     "TokensAssociated(address,int64)": TypedContractEvent<

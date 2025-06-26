@@ -26,17 +26,6 @@ interface TokenComposition {
   maxSwapSize: number;
 }
 
-interface GovernanceVote {
-  type: 'PARAMETER_VOTE';
-  parameterPath: string;
-  newValue: number;
-  voterAccountId: string;
-  votingPower: number;
-  timestamp: Date;
-  txId?: string;
-  reason?: string;
-}
-
 interface MultiRatioGovernanceVote {
   type: 'MULTI_RATIO_VOTE';
   ratioChanges: Array<{

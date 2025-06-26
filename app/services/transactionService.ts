@@ -225,8 +225,8 @@ export class TransactionService {
       const wbtcRequired = amount * 0.02 * Math.pow(10, 8);          // 0.02 WBTC per LYNX (8 decimals)
       const sauceRequired = amount * 1.5 * Math.pow(10, 6);          // 1.5 SAUCE per LYNX (6 decimals)
       const usdcRequired = amount * 1.5 * Math.pow(10, 6);           // 1.5 USDC per LYNX (6 decimals)
-      const jamRequired = amount * 1.5 * Math.pow(10, 6);            // 1.5 JAM per LYNX (6 decimals)
-      const headstartRequired = amount * 1.0 * Math.pow(10, 6);      // 1.0 HEADSTART per LYNX (6 decimals)
+      const jamRequired = amount * 1.5 * Math.pow(10, 8);            // 1.5 JAM per LYNX (8 decimals)
+      const headstartRequired = amount * 1.0 * Math.pow(10, 8);      // 1.0 HEADSTART per LYNX (8 decimals)
       
       console.log('[CRITICAL] Creating mint transaction for DepositMinterV2 contract', contractHederaId);
       console.log('[CRITICAL] Calling mintWithDeposits with 6-token system:', {

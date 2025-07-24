@@ -209,20 +209,20 @@ export function useTokens(): UseTokensResult {
     }
     
     try {
-      // Match the DepositMinterV2 contract ratios:
-      // 2.5 HBAR per 1 LYNX
-      // 0.02 WBTC per 1 LYNX
-      // 1.5 SAUCE per 1 LYNX
-      // 1.5 USDC per 1 LYNX
-      // 1.5 JAM per 1 LYNX
-      // 1.0 HEADSTART per 1 LYNX
+      // Match the DepositMinterV2 contract ratios (verified from contract test):
+      // 4 HBAR per 1 LYNX
+      // 0.04 WBTC per 1 LYNX
+      // 1.8 SAUCE per 1 LYNX
+      // 2.2 USDC per 1 LYNX
+      // 3 JAM per 1 LYNX
+      // 2 HEADSTART per 1 LYNX
       return {
-        HBAR: 2.5 * lynxAmount,
-        WBTC: 0.02 * lynxAmount,
-        SAUCE: 1.5 * lynxAmount,
-        USDC: 1.5 * lynxAmount,
-        JAM: 1.5 * lynxAmount,
-        HEADSTART: 1.0 * lynxAmount
+        HBAR: 4 * lynxAmount,
+        WBTC: 0.04 * lynxAmount,
+        SAUCE: 1.8 * lynxAmount,
+        USDC: 2.2 * lynxAmount,
+        JAM: 3 * lynxAmount,
+        HEADSTART: 2 * lynxAmount
       };
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to calculate required tokens'));

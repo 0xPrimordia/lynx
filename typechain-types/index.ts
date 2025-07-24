@@ -3,6 +3,8 @@
 /* eslint-disable */
 import type * as depositMinterSol from "./DepositMinter.sol";
 export type { depositMinterSol };
+import type * as depositMinterV2Sol from "./DepositMinterV2.sol";
+export type { depositMinterV2Sol };
 import type * as indexToken from "./index-token";
 export type { indexToken };
 export * as factories from "./factories";
@@ -10,6 +12,8 @@ export type { DepositMinter } from "./DepositMinter.sol/DepositMinter";
 export { DepositMinter__factory } from "./factories/DepositMinter.sol/DepositMinter__factory";
 export type { IHederaTokenService } from "./DepositMinter.sol/IHederaTokenService";
 export { IHederaTokenService__factory } from "./factories/DepositMinter.sol/IHederaTokenService__factory";
+export type { DepositMinterV2 } from "./DepositMinterV2.sol/DepositMinterV2";
+export { DepositMinterV2__factory } from "./factories/DepositMinterV2.sol/DepositMinterV2__factory";
 export type { IndexTokenController } from "./index-token/IndexTokenController";
 export { IndexTokenController__factory } from "./factories/index-token/IndexTokenController__factory";
 export type { IndexVault } from "./index-token/IndexVault";

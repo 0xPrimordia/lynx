@@ -220,13 +220,14 @@ export class TransactionService {
       const sender = AccountId.fromString(this.accountId);
       
       // 3. Calculate required amounts for 6-token system (DepositMinterV2)
+      // These values match the contract's calculateRequiredDeposits function
       const lynxAmountRaw = amount;                                    // Send exactly what user inputs (1, 2, 3, etc.)
-      const hbarRequiredTinybars = amount * 2.5 * Math.pow(10, 8);   // 2.5 HBAR per LYNX (in tinybars)
-      const wbtcRequired = amount * 0.02 * Math.pow(10, 8);          // 0.02 WBTC per LYNX (8 decimals)
-      const sauceRequired = amount * 1.5 * Math.pow(10, 6);          // 1.5 SAUCE per LYNX (6 decimals)
-      const usdcRequired = amount * 1.5 * Math.pow(10, 6);           // 1.5 USDC per LYNX (6 decimals)
-      const jamRequired = amount * 1.5 * Math.pow(10, 8);            // 1.5 JAM per LYNX (8 decimals)
-      const headstartRequired = amount * 1.0 * Math.pow(10, 8);      // 1.0 HEADSTART per LYNX (8 decimals)
+      const hbarRequiredTinybars = amount * 4 * Math.pow(10, 8);     // 4 HBAR per LYNX (in tinybars)
+      const wbtcRequired = amount * 0.04 * Math.pow(10, 8);          // 0.04 WBTC per LYNX (8 decimals)
+      const sauceRequired = amount * 1.8 * Math.pow(10, 6);          // 1.8 SAUCE per LYNX (6 decimals)
+      const usdcRequired = amount * 2.2 * Math.pow(10, 6);           // 2.2 USDC per LYNX (6 decimals)
+      const jamRequired = amount * 3 * Math.pow(10, 8);              // 3 JAM per LYNX (8 decimals)
+      const headstartRequired = amount * 2 * Math.pow(10, 8);        // 2 HEADSTART per LYNX (8 decimals)
       
       console.log('[CRITICAL] Creating mint transaction for DepositMinterV2 contract', contractHederaId);
       console.log('[CRITICAL] Calling mintWithDeposits with 6-token system:', {

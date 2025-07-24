@@ -27,59 +27,109 @@ export interface DepositMinterV2Interface extends Interface {
   getFunction(
     nameOrSignature:
       | "ADMIN"
+      | "ADMIN()"
       | "GOVERNANCE"
+      | "GOVERNANCE()"
       | "HBAR_RATIO"
+      | "HBAR_RATIO()"
       | "HEADSTART_DECIMALS"
+      | "HEADSTART_DECIMALS()"
       | "HEADSTART_RATIO"
+      | "HEADSTART_RATIO()"
       | "HEADSTART_TOKEN"
+      | "HEADSTART_TOKEN()"
       | "JAM_DECIMALS"
+      | "JAM_DECIMALS()"
       | "JAM_RATIO"
+      | "JAM_RATIO()"
       | "JAM_TOKEN"
+      | "JAM_TOKEN()"
       | "LYNX_DECIMALS"
+      | "LYNX_DECIMALS()"
       | "LYNX_TOKEN"
+      | "LYNX_TOKEN()"
       | "MAX_RATIO"
+      | "MAX_RATIO()"
       | "MIN_RATIO"
+      | "MIN_RATIO()"
       | "SAUCE_DECIMALS"
+      | "SAUCE_DECIMALS()"
       | "SAUCE_RATIO"
+      | "SAUCE_RATIO()"
       | "SAUCE_TOKEN"
+      | "SAUCE_TOKEN()"
       | "TREASURY"
+      | "TREASURY()"
       | "USDC_DECIMALS"
+      | "USDC_DECIMALS()"
       | "USDC_RATIO"
+      | "USDC_RATIO()"
       | "USDC_TOKEN"
+      | "USDC_TOKEN()"
       | "WBTC_DECIMALS"
+      | "WBTC_DECIMALS()"
       | "WBTC_RATIO"
+      | "WBTC_RATIO()"
       | "WBTC_TOKEN"
+      | "WBTC_TOKEN()"
       | "adminUpdateRatios"
+      | "adminUpdateRatios(uint256,uint256,uint256,uint256,uint256,uint256)"
       | "adminWithdrawToken"
+      | "adminWithdrawToken(address,uint256,string)"
       | "associateTokens"
+      | "associateTokens()"
       | "calculateRequiredDeposits"
+      | "calculateRequiredDeposits(uint256)"
       | "checkAssociations"
+      | "checkAssociations()"
       | "emergencyWithdrawHbar"
+      | "emergencyWithdrawHbar(uint256)"
       | "getCurrentRatios"
+      | "getCurrentRatios()"
       | "getHbarBalance"
+      | "getHbarBalance()"
       | "mintWithDeposits"
+      | "mintWithDeposits(uint256,uint256,uint256,uint256,uint256,uint256)"
       | "setGovernanceAddress"
+      | "setGovernanceAddress(address)"
       | "updateRatios"
+      | "updateRatios(uint256,uint256,uint256,uint256,uint256,uint256)"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
       | "AdminTokenWithdrawal"
+      | "AdminTokenWithdrawal(address,address,uint256,string)"
       | "DepositsProcessed"
+      | "DepositsProcessed(address,uint256)"
       | "GovernanceAddressUpdated"
+      | "GovernanceAddressUpdated(address,address)"
       | "LynxMinted"
+      | "LynxMinted(address,uint256)"
       | "MintAttempt"
+      | "MintAttempt(address,uint256,uint256)"
       | "MintResult"
+      | "MintResult(int64,int64)"
       | "RatiosUpdated"
+      | "RatiosUpdated(uint256,uint256,uint256,uint256,uint256,uint256,address)"
       | "TokensAssociated"
+      | "TokensAssociated(address,int64)"
       | "TokensDeposited"
+      | "TokensDeposited(address,uint256,uint256,uint256,uint256,uint256,uint256)"
       | "TransferAttempt"
+      | "TransferAttempt(address,address,uint256)"
       | "TransferResult"
+      | "TransferResult(int64)"
   ): EventFragment;
 
   encodeFunctionData(functionFragment: "ADMIN", values?: undefined): string;
+  encodeFunctionData(functionFragment: "ADMIN()", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "GOVERNANCE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "GOVERNANCE()",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -87,7 +137,15 @@ export interface DepositMinterV2Interface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "HBAR_RATIO()",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "HEADSTART_DECIMALS",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "HEADSTART_DECIMALS()",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -95,27 +153,67 @@ export interface DepositMinterV2Interface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "HEADSTART_RATIO()",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "HEADSTART_TOKEN",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "HEADSTART_TOKEN()",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "JAM_DECIMALS",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "JAM_DECIMALS()",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "JAM_RATIO", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "JAM_RATIO()",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "JAM_TOKEN", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "JAM_TOKEN()",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "LYNX_DECIMALS",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "LYNX_DECIMALS()",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "LYNX_TOKEN",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "LYNX_TOKEN()",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "MAX_RATIO", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "MAX_RATIO()",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "MIN_RATIO", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "MIN_RATIO()",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "SAUCE_DECIMALS",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "SAUCE_DECIMALS()",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -123,12 +221,28 @@ export interface DepositMinterV2Interface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "SAUCE_RATIO()",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "SAUCE_TOKEN",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "SAUCE_TOKEN()",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "TREASURY", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "TREASURY()",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "USDC_DECIMALS",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "USDC_DECIMALS()",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -136,7 +250,15 @@ export interface DepositMinterV2Interface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "USDC_RATIO()",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "USDC_TOKEN",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "USDC_TOKEN()",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -144,7 +266,15 @@ export interface DepositMinterV2Interface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "WBTC_DECIMALS()",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "WBTC_RATIO",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "WBTC_RATIO()",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -152,7 +282,22 @@ export interface DepositMinterV2Interface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "WBTC_TOKEN()",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "adminUpdateRatios",
+    values: [
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "adminUpdateRatios(uint256,uint256,uint256,uint256,uint256,uint256)",
     values: [
       BigNumberish,
       BigNumberish,
@@ -167,7 +312,15 @@ export interface DepositMinterV2Interface extends Interface {
     values: [AddressLike, BigNumberish, string]
   ): string;
   encodeFunctionData(
+    functionFragment: "adminWithdrawToken(address,uint256,string)",
+    values: [AddressLike, BigNumberish, string]
+  ): string;
+  encodeFunctionData(
     functionFragment: "associateTokens",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "associateTokens()",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -175,7 +328,15 @@ export interface DepositMinterV2Interface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "calculateRequiredDeposits(uint256)",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "checkAssociations",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "checkAssociations()",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -183,7 +344,15 @@ export interface DepositMinterV2Interface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "emergencyWithdrawHbar(uint256)",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getCurrentRatios",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getCurrentRatios()",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -191,7 +360,22 @@ export interface DepositMinterV2Interface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "getHbarBalance()",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "mintWithDeposits",
+    values: [
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "mintWithDeposits(uint256,uint256,uint256,uint256,uint256,uint256)",
     values: [
       BigNumberish,
       BigNumberish,
@@ -206,7 +390,22 @@ export interface DepositMinterV2Interface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "setGovernanceAddress(address)",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "updateRatios",
+    values: [
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "updateRatios(uint256,uint256,uint256,uint256,uint256,uint256)",
     values: [
       BigNumberish,
       BigNumberish,
@@ -218,10 +417,23 @@ export interface DepositMinterV2Interface extends Interface {
   ): string;
 
   decodeFunctionResult(functionFragment: "ADMIN", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "ADMIN()", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "GOVERNANCE", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "GOVERNANCE()",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "HBAR_RATIO", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "HBAR_RATIO()",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "HEADSTART_DECIMALS",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "HEADSTART_DECIMALS()",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -229,24 +441,64 @@ export interface DepositMinterV2Interface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "HEADSTART_RATIO()",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "HEADSTART_TOKEN",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "HEADSTART_TOKEN()",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "JAM_DECIMALS",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "JAM_DECIMALS()",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "JAM_RATIO", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "JAM_RATIO()",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "JAM_TOKEN", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "JAM_TOKEN()",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "LYNX_DECIMALS",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "LYNX_DECIMALS()",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "LYNX_TOKEN", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "LYNX_TOKEN()",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "MAX_RATIO", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "MAX_RATIO()",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "MIN_RATIO", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "MIN_RATIO()",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "SAUCE_DECIMALS",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "SAUCE_DECIMALS()",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -254,24 +506,61 @@ export interface DepositMinterV2Interface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "SAUCE_RATIO()",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "SAUCE_TOKEN",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "SAUCE_TOKEN()",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "TREASURY", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "TREASURY()", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "USDC_DECIMALS",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "USDC_DECIMALS()",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "USDC_RATIO", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "USDC_RATIO()",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "USDC_TOKEN", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "USDC_TOKEN()",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "WBTC_DECIMALS",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "WBTC_DECIMALS()",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "WBTC_RATIO", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "WBTC_RATIO()",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "WBTC_TOKEN", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "WBTC_TOKEN()",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "adminUpdateRatios",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "adminUpdateRatios(uint256,uint256,uint256,uint256,uint256,uint256)",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -279,7 +568,15 @@ export interface DepositMinterV2Interface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "adminWithdrawToken(address,uint256,string)",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "associateTokens",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "associateTokens()",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -287,7 +584,15 @@ export interface DepositMinterV2Interface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "calculateRequiredDeposits(uint256)",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "checkAssociations",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "checkAssociations()",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -295,7 +600,15 @@ export interface DepositMinterV2Interface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "emergencyWithdrawHbar(uint256)",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getCurrentRatios",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getCurrentRatios()",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -303,7 +616,15 @@ export interface DepositMinterV2Interface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getHbarBalance()",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "mintWithDeposits",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "mintWithDeposits(uint256,uint256,uint256,uint256,uint256,uint256)",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -311,7 +632,15 @@ export interface DepositMinterV2Interface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setGovernanceAddress(address)",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "updateRatios",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "updateRatios(uint256,uint256,uint256,uint256,uint256,uint256)",
     data: BytesLike
   ): Result;
 }
@@ -536,6 +865,8 @@ export namespace TransferResultEvent {
 }
 
 export interface DepositMinterV2 extends BaseContract {
+  contractName: "DepositMinterV2";
+
   connect(runner?: ContractRunner | null): DepositMinterV2;
   waitForDeployment(): Promise<this>;
 
@@ -580,51 +911,110 @@ export interface DepositMinterV2 extends BaseContract {
 
   ADMIN: TypedContractMethod<[], [string], "view">;
 
+  "ADMIN()": TypedContractMethod<[], [string], "view">;
+
   GOVERNANCE: TypedContractMethod<[], [string], "view">;
+
+  "GOVERNANCE()": TypedContractMethod<[], [string], "view">;
 
   HBAR_RATIO: TypedContractMethod<[], [bigint], "view">;
 
+  "HBAR_RATIO()": TypedContractMethod<[], [bigint], "view">;
+
   HEADSTART_DECIMALS: TypedContractMethod<[], [bigint], "view">;
+
+  "HEADSTART_DECIMALS()": TypedContractMethod<[], [bigint], "view">;
 
   HEADSTART_RATIO: TypedContractMethod<[], [bigint], "view">;
 
+  "HEADSTART_RATIO()": TypedContractMethod<[], [bigint], "view">;
+
   HEADSTART_TOKEN: TypedContractMethod<[], [string], "view">;
+
+  "HEADSTART_TOKEN()": TypedContractMethod<[], [string], "view">;
 
   JAM_DECIMALS: TypedContractMethod<[], [bigint], "view">;
 
+  "JAM_DECIMALS()": TypedContractMethod<[], [bigint], "view">;
+
   JAM_RATIO: TypedContractMethod<[], [bigint], "view">;
+
+  "JAM_RATIO()": TypedContractMethod<[], [bigint], "view">;
 
   JAM_TOKEN: TypedContractMethod<[], [string], "view">;
 
+  "JAM_TOKEN()": TypedContractMethod<[], [string], "view">;
+
   LYNX_DECIMALS: TypedContractMethod<[], [bigint], "view">;
+
+  "LYNX_DECIMALS()": TypedContractMethod<[], [bigint], "view">;
 
   LYNX_TOKEN: TypedContractMethod<[], [string], "view">;
 
+  "LYNX_TOKEN()": TypedContractMethod<[], [string], "view">;
+
   MAX_RATIO: TypedContractMethod<[], [bigint], "view">;
+
+  "MAX_RATIO()": TypedContractMethod<[], [bigint], "view">;
 
   MIN_RATIO: TypedContractMethod<[], [bigint], "view">;
 
+  "MIN_RATIO()": TypedContractMethod<[], [bigint], "view">;
+
   SAUCE_DECIMALS: TypedContractMethod<[], [bigint], "view">;
+
+  "SAUCE_DECIMALS()": TypedContractMethod<[], [bigint], "view">;
 
   SAUCE_RATIO: TypedContractMethod<[], [bigint], "view">;
 
+  "SAUCE_RATIO()": TypedContractMethod<[], [bigint], "view">;
+
   SAUCE_TOKEN: TypedContractMethod<[], [string], "view">;
+
+  "SAUCE_TOKEN()": TypedContractMethod<[], [string], "view">;
 
   TREASURY: TypedContractMethod<[], [string], "view">;
 
+  "TREASURY()": TypedContractMethod<[], [string], "view">;
+
   USDC_DECIMALS: TypedContractMethod<[], [bigint], "view">;
+
+  "USDC_DECIMALS()": TypedContractMethod<[], [bigint], "view">;
 
   USDC_RATIO: TypedContractMethod<[], [bigint], "view">;
 
+  "USDC_RATIO()": TypedContractMethod<[], [bigint], "view">;
+
   USDC_TOKEN: TypedContractMethod<[], [string], "view">;
+
+  "USDC_TOKEN()": TypedContractMethod<[], [string], "view">;
 
   WBTC_DECIMALS: TypedContractMethod<[], [bigint], "view">;
 
+  "WBTC_DECIMALS()": TypedContractMethod<[], [bigint], "view">;
+
   WBTC_RATIO: TypedContractMethod<[], [bigint], "view">;
+
+  "WBTC_RATIO()": TypedContractMethod<[], [bigint], "view">;
 
   WBTC_TOKEN: TypedContractMethod<[], [string], "view">;
 
+  "WBTC_TOKEN()": TypedContractMethod<[], [string], "view">;
+
   adminUpdateRatios: TypedContractMethod<
+    [
+      hbarRatio: BigNumberish,
+      wbtcRatio: BigNumberish,
+      sauceRatio: BigNumberish,
+      usdcRatio: BigNumberish,
+      jamRatio: BigNumberish,
+      headstartRatio: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  "adminUpdateRatios(uint256,uint256,uint256,uint256,uint256,uint256)": TypedContractMethod<
     [
       hbarRatio: BigNumberish,
       wbtcRatio: BigNumberish,
@@ -643,9 +1033,32 @@ export interface DepositMinterV2 extends BaseContract {
     "nonpayable"
   >;
 
+  "adminWithdrawToken(address,uint256,string)": TypedContractMethod<
+    [token: AddressLike, amount: BigNumberish, reason: string],
+    [void],
+    "nonpayable"
+  >;
+
   associateTokens: TypedContractMethod<[], [void], "nonpayable">;
 
+  "associateTokens()": TypedContractMethod<[], [void], "nonpayable">;
+
   calculateRequiredDeposits: TypedContractMethod<
+    [lynxAmount: BigNumberish],
+    [
+      [bigint, bigint, bigint, bigint, bigint, bigint] & {
+        hbarRequired: bigint;
+        wbtcRequired: bigint;
+        sauceRequired: bigint;
+        usdcRequired: bigint;
+        jamRequired: bigint;
+        headstartRequired: bigint;
+      }
+    ],
+    "view"
+  >;
+
+  "calculateRequiredDeposits(uint256)": TypedContractMethod<
     [lynxAmount: BigNumberish],
     [
       [bigint, bigint, bigint, bigint, bigint, bigint] & {
@@ -675,7 +1088,28 @@ export interface DepositMinterV2 extends BaseContract {
     "nonpayable"
   >;
 
+  "checkAssociations()": TypedContractMethod<
+    [],
+    [
+      [boolean, boolean, boolean, boolean, boolean, boolean] & {
+        lynxAssociated: boolean;
+        wbtcAssociated: boolean;
+        sauceAssociated: boolean;
+        usdcAssociated: boolean;
+        jamAssociated: boolean;
+        headstartAssociated: boolean;
+      }
+    ],
+    "nonpayable"
+  >;
+
   emergencyWithdrawHbar: TypedContractMethod<
+    [amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  "emergencyWithdrawHbar(uint256)": TypedContractMethod<
     [amount: BigNumberish],
     [void],
     "nonpayable"
@@ -696,9 +1130,39 @@ export interface DepositMinterV2 extends BaseContract {
     "view"
   >;
 
+  "getCurrentRatios()": TypedContractMethod<
+    [],
+    [
+      [bigint, bigint, bigint, bigint, bigint, bigint] & {
+        hbarRatio: bigint;
+        wbtcRatio: bigint;
+        sauceRatio: bigint;
+        usdcRatio: bigint;
+        jamRatio: bigint;
+        headstartRatio: bigint;
+      }
+    ],
+    "view"
+  >;
+
   getHbarBalance: TypedContractMethod<[], [bigint], "view">;
 
+  "getHbarBalance()": TypedContractMethod<[], [bigint], "view">;
+
   mintWithDeposits: TypedContractMethod<
+    [
+      lynxAmount: BigNumberish,
+      wbtcAmount: BigNumberish,
+      sauceAmount: BigNumberish,
+      usdcAmount: BigNumberish,
+      jamAmount: BigNumberish,
+      headstartAmount: BigNumberish
+    ],
+    [void],
+    "payable"
+  >;
+
+  "mintWithDeposits(uint256,uint256,uint256,uint256,uint256,uint256)": TypedContractMethod<
     [
       lynxAmount: BigNumberish,
       wbtcAmount: BigNumberish,
@@ -717,7 +1181,26 @@ export interface DepositMinterV2 extends BaseContract {
     "nonpayable"
   >;
 
+  "setGovernanceAddress(address)": TypedContractMethod<
+    [newGovernance: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
   updateRatios: TypedContractMethod<
+    [
+      hbarRatio: BigNumberish,
+      wbtcRatio: BigNumberish,
+      sauceRatio: BigNumberish,
+      usdcRatio: BigNumberish,
+      jamRatio: BigNumberish,
+      headstartRatio: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  "updateRatios(uint256,uint256,uint256,uint256,uint256,uint256)": TypedContractMethod<
     [
       hbarRatio: BigNumberish,
       wbtcRatio: BigNumberish,
@@ -738,73 +1221,156 @@ export interface DepositMinterV2 extends BaseContract {
     nameOrSignature: "ADMIN"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "ADMIN()"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "GOVERNANCE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "GOVERNANCE()"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "HBAR_RATIO"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "HBAR_RATIO()"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "HEADSTART_DECIMALS"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "HEADSTART_DECIMALS()"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "HEADSTART_RATIO"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "HEADSTART_RATIO()"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "HEADSTART_TOKEN"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "HEADSTART_TOKEN()"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "JAM_DECIMALS"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "JAM_DECIMALS()"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "JAM_RATIO"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "JAM_RATIO()"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "JAM_TOKEN"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "JAM_TOKEN()"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "LYNX_DECIMALS"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "LYNX_DECIMALS()"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "LYNX_TOKEN"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "LYNX_TOKEN()"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "MAX_RATIO"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "MAX_RATIO()"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "MIN_RATIO"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "MIN_RATIO()"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "SAUCE_DECIMALS"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "SAUCE_DECIMALS()"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "SAUCE_RATIO"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "SAUCE_RATIO()"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "SAUCE_TOKEN"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "SAUCE_TOKEN()"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "TREASURY"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "TREASURY()"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "USDC_DECIMALS"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "USDC_DECIMALS()"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "USDC_RATIO"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "USDC_RATIO()"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "USDC_TOKEN"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "USDC_TOKEN()"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "WBTC_DECIMALS"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "WBTC_DECIMALS()"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "WBTC_RATIO"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "WBTC_RATIO()"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "WBTC_TOKEN"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "WBTC_TOKEN()"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "adminUpdateRatios"
+  ): TypedContractMethod<
+    [
+      hbarRatio: BigNumberish,
+      wbtcRatio: BigNumberish,
+      sauceRatio: BigNumberish,
+      usdcRatio: BigNumberish,
+      jamRatio: BigNumberish,
+      headstartRatio: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "adminUpdateRatios(uint256,uint256,uint256,uint256,uint256,uint256)"
   ): TypedContractMethod<
     [
       hbarRatio: BigNumberish,
@@ -825,10 +1391,36 @@ export interface DepositMinterV2 extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "adminWithdrawToken(address,uint256,string)"
+  ): TypedContractMethod<
+    [token: AddressLike, amount: BigNumberish, reason: string],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "associateTokens"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "associateTokens()"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "calculateRequiredDeposits"
+  ): TypedContractMethod<
+    [lynxAmount: BigNumberish],
+    [
+      [bigint, bigint, bigint, bigint, bigint, bigint] & {
+        hbarRequired: bigint;
+        wbtcRequired: bigint;
+        sauceRequired: bigint;
+        usdcRequired: bigint;
+        jamRequired: bigint;
+        headstartRequired: bigint;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "calculateRequiredDeposits(uint256)"
   ): TypedContractMethod<
     [lynxAmount: BigNumberish],
     [
@@ -860,7 +1452,26 @@ export interface DepositMinterV2 extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "checkAssociations()"
+  ): TypedContractMethod<
+    [],
+    [
+      [boolean, boolean, boolean, boolean, boolean, boolean] & {
+        lynxAssociated: boolean;
+        wbtcAssociated: boolean;
+        sauceAssociated: boolean;
+        usdcAssociated: boolean;
+        jamAssociated: boolean;
+        headstartAssociated: boolean;
+      }
+    ],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "emergencyWithdrawHbar"
+  ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "emergencyWithdrawHbar(uint256)"
   ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "getCurrentRatios"
@@ -879,7 +1490,26 @@ export interface DepositMinterV2 extends BaseContract {
     "view"
   >;
   getFunction(
+    nameOrSignature: "getCurrentRatios()"
+  ): TypedContractMethod<
+    [],
+    [
+      [bigint, bigint, bigint, bigint, bigint, bigint] & {
+        hbarRatio: bigint;
+        wbtcRatio: bigint;
+        sauceRatio: bigint;
+        usdcRatio: bigint;
+        jamRatio: bigint;
+        headstartRatio: bigint;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "getHbarBalance"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getHbarBalance()"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "mintWithDeposits"
@@ -896,10 +1526,41 @@ export interface DepositMinterV2 extends BaseContract {
     "payable"
   >;
   getFunction(
+    nameOrSignature: "mintWithDeposits(uint256,uint256,uint256,uint256,uint256,uint256)"
+  ): TypedContractMethod<
+    [
+      lynxAmount: BigNumberish,
+      wbtcAmount: BigNumberish,
+      sauceAmount: BigNumberish,
+      usdcAmount: BigNumberish,
+      jamAmount: BigNumberish,
+      headstartAmount: BigNumberish
+    ],
+    [void],
+    "payable"
+  >;
+  getFunction(
     nameOrSignature: "setGovernanceAddress"
   ): TypedContractMethod<[newGovernance: AddressLike], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "setGovernanceAddress(address)"
+  ): TypedContractMethod<[newGovernance: AddressLike], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "updateRatios"
+  ): TypedContractMethod<
+    [
+      hbarRatio: BigNumberish,
+      wbtcRatio: BigNumberish,
+      sauceRatio: BigNumberish,
+      usdcRatio: BigNumberish,
+      jamRatio: BigNumberish,
+      headstartRatio: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "updateRatios(uint256,uint256,uint256,uint256,uint256,uint256)"
   ): TypedContractMethod<
     [
       hbarRatio: BigNumberish,
@@ -921,11 +1582,25 @@ export interface DepositMinterV2 extends BaseContract {
     AdminTokenWithdrawalEvent.OutputObject
   >;
   getEvent(
+    key: "AdminTokenWithdrawal(address,address,uint256,string)"
+  ): TypedContractEvent<
+    AdminTokenWithdrawal_address_address_uint256_string_Event.InputTuple,
+    AdminTokenWithdrawal_address_address_uint256_string_Event.OutputTuple,
+    AdminTokenWithdrawal_address_address_uint256_string_Event.OutputObject
+  >;
+  getEvent(
     key: "DepositsProcessed"
   ): TypedContractEvent<
     DepositsProcessedEvent.InputTuple,
     DepositsProcessedEvent.OutputTuple,
     DepositsProcessedEvent.OutputObject
+  >;
+  getEvent(
+    key: "DepositsProcessed(address,uint256)"
+  ): TypedContractEvent<
+    DepositsProcessed_address_uint256_Event.InputTuple,
+    DepositsProcessed_address_uint256_Event.OutputTuple,
+    DepositsProcessed_address_uint256_Event.OutputObject
   >;
   getEvent(
     key: "GovernanceAddressUpdated"
@@ -935,11 +1610,25 @@ export interface DepositMinterV2 extends BaseContract {
     GovernanceAddressUpdatedEvent.OutputObject
   >;
   getEvent(
+    key: "GovernanceAddressUpdated(address,address)"
+  ): TypedContractEvent<
+    GovernanceAddressUpdated_address_address_Event.InputTuple,
+    GovernanceAddressUpdated_address_address_Event.OutputTuple,
+    GovernanceAddressUpdated_address_address_Event.OutputObject
+  >;
+  getEvent(
     key: "LynxMinted"
   ): TypedContractEvent<
     LynxMintedEvent.InputTuple,
     LynxMintedEvent.OutputTuple,
     LynxMintedEvent.OutputObject
+  >;
+  getEvent(
+    key: "LynxMinted(address,uint256)"
+  ): TypedContractEvent<
+    LynxMinted_address_uint256_Event.InputTuple,
+    LynxMinted_address_uint256_Event.OutputTuple,
+    LynxMinted_address_uint256_Event.OutputObject
   >;
   getEvent(
     key: "MintAttempt"
@@ -949,11 +1638,25 @@ export interface DepositMinterV2 extends BaseContract {
     MintAttemptEvent.OutputObject
   >;
   getEvent(
+    key: "MintAttempt(address,uint256,uint256)"
+  ): TypedContractEvent<
+    MintAttempt_address_uint256_uint256_Event.InputTuple,
+    MintAttempt_address_uint256_uint256_Event.OutputTuple,
+    MintAttempt_address_uint256_uint256_Event.OutputObject
+  >;
+  getEvent(
     key: "MintResult"
   ): TypedContractEvent<
     MintResultEvent.InputTuple,
     MintResultEvent.OutputTuple,
     MintResultEvent.OutputObject
+  >;
+  getEvent(
+    key: "MintResult(int64,int64)"
+  ): TypedContractEvent<
+    MintResult_int64_int64_Event.InputTuple,
+    MintResult_int64_int64_Event.OutputTuple,
+    MintResult_int64_int64_Event.OutputObject
   >;
   getEvent(
     key: "RatiosUpdated"
@@ -963,11 +1666,25 @@ export interface DepositMinterV2 extends BaseContract {
     RatiosUpdatedEvent.OutputObject
   >;
   getEvent(
+    key: "RatiosUpdated(uint256,uint256,uint256,uint256,uint256,uint256,address)"
+  ): TypedContractEvent<
+    RatiosUpdated_uint256_uint256_uint256_uint256_uint256_uint256_address_Event.InputTuple,
+    RatiosUpdated_uint256_uint256_uint256_uint256_uint256_uint256_address_Event.OutputTuple,
+    RatiosUpdated_uint256_uint256_uint256_uint256_uint256_uint256_address_Event.OutputObject
+  >;
+  getEvent(
     key: "TokensAssociated"
   ): TypedContractEvent<
     TokensAssociatedEvent.InputTuple,
     TokensAssociatedEvent.OutputTuple,
     TokensAssociatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "TokensAssociated(address,int64)"
+  ): TypedContractEvent<
+    TokensAssociated_address_int64_Event.InputTuple,
+    TokensAssociated_address_int64_Event.OutputTuple,
+    TokensAssociated_address_int64_Event.OutputObject
   >;
   getEvent(
     key: "TokensDeposited"
@@ -977,6 +1694,13 @@ export interface DepositMinterV2 extends BaseContract {
     TokensDepositedEvent.OutputObject
   >;
   getEvent(
+    key: "TokensDeposited(address,uint256,uint256,uint256,uint256,uint256,uint256)"
+  ): TypedContractEvent<
+    TokensDeposited_address_uint256_uint256_uint256_uint256_uint256_uint256_Event.InputTuple,
+    TokensDeposited_address_uint256_uint256_uint256_uint256_uint256_uint256_Event.OutputTuple,
+    TokensDeposited_address_uint256_uint256_uint256_uint256_uint256_uint256_Event.OutputObject
+  >;
+  getEvent(
     key: "TransferAttempt"
   ): TypedContractEvent<
     TransferAttemptEvent.InputTuple,
@@ -984,11 +1708,25 @@ export interface DepositMinterV2 extends BaseContract {
     TransferAttemptEvent.OutputObject
   >;
   getEvent(
+    key: "TransferAttempt(address,address,uint256)"
+  ): TypedContractEvent<
+    TransferAttempt_address_address_uint256_Event.InputTuple,
+    TransferAttempt_address_address_uint256_Event.OutputTuple,
+    TransferAttempt_address_address_uint256_Event.OutputObject
+  >;
+  getEvent(
     key: "TransferResult"
   ): TypedContractEvent<
     TransferResultEvent.InputTuple,
     TransferResultEvent.OutputTuple,
     TransferResultEvent.OutputObject
+  >;
+  getEvent(
+    key: "TransferResult(int64)"
+  ): TypedContractEvent<
+    TransferResult_int64_Event.InputTuple,
+    TransferResult_int64_Event.OutputTuple,
+    TransferResult_int64_Event.OutputObject
   >;
 
   filters: {

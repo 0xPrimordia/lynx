@@ -88,6 +88,8 @@ contract DepositMinterV2 {
         uint256 headstartRatio,
         address indexed updatedBy
     );
+    // Admin withdrawal event
+    event AdminTokenWithdrawal(address indexed token, address indexed to, uint256 amount, string reason);
     
     // Errors
     error OnlyAdmin();
@@ -484,4 +486,17 @@ contract DepositMinterV2 {
     
     // Allow contract to receive HBAR
     receive() external payable {}
+
+    /**
+     * @dev Admin can withdraw any ERC20/HTS token from the contract to itself (for rebalancing/treasury)
+     * Emits AdminTokenWithdrawal event for transparency
+     */
+    function adminWithdrawToken(address token, uint256 amount, string calldata reason) external onlyAdmin {
+        require(token != address(0), "Invalid token address");
+        require(amount > 0, "Amount must be greater than zero");
+        // Interface for ERC20/HTS transfer
+        (bool success, bytes memory data) = token.call(abi.encodeWithSignature("transfer(address,uint256)", ADMIN, amount));
+        require(success && (data.length == 0 || abi.decode(data, (bool))), "Token transfer failed");
+        emit AdminTokenWithdrawal(token, ADMIN, amount, reason);
+    }
 } 

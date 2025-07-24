@@ -445,15 +445,16 @@ export class TokenQueueService {
   
   /**
    * Get token ratios for calculating required tokens (6-token system)
+   * These values match the contract's calculateRequiredDeposits function
    */
   public getTokenRatios(): { hbarRatio: number; wbtcRatio: number; sauceRatio: number; usdcRatio: number; jamRatio: number; headstartRatio: number; } {
     return {
-      hbarRatio: 2.5,       // 2.5 HBAR per LYNX (25% allocation)
-      wbtcRatio: 0.02,      // 0.02 WBTC per LYNX (20% allocation)
-      sauceRatio: 1.5,      // 1.5 SAUCE per LYNX (15% allocation)
-      usdcRatio: 1.5,       // 1.5 USDC per LYNX (15% allocation)
-      jamRatio: 1.5,        // 1.5 JAM per LYNX (15% allocation)
-      headstartRatio: 1.0   // 1.0 HEADSTART per LYNX (10% allocation)
+      hbarRatio: 4,         // 4 HBAR per LYNX 
+      wbtcRatio: 0.04,      // 0.04 WBTC per LYNX
+      sauceRatio: 1.8,      // 1.8 SAUCE per LYNX
+      usdcRatio: 2.2,       // 2.2 USDC per LYNX
+      jamRatio: 3,          // 3 JAM per LYNX
+      headstartRatio: 2     // 2 HEADSTART per LYNX
     };
   }
   

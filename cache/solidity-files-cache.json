@@ -443,6 +443,52 @@
       "artifacts": [
         "console"
       ]
+    },
+    "/Users/kevincompton/Sites/lynx/hardhat/contracts/DepositMinterV2.sol": {
+      "lastModificationDate": 1753367589560,
+      "contentHash": "6f751c7f4cf89e2c6f95d8c88573e1ae",
+      "sourceName": "hardhat/contracts/DepositMinterV2.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "devdoc",
+                "userdoc",
+                "storageLayout",
+                "evm.gasEstimates"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          },
+          "metadata": {
+            "useLiteralContent": true
+          }
+        }
+      },
+      "imports": [
+        "./HederaResponseCodes.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "DepositMinterV2",
+        "IHederaTokenService"
+      ]
     }
   }
 }

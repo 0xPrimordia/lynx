@@ -16,18 +16,15 @@ async function setGovernanceAddress() {
     console.log("🏛️ Setting Governance Address on DepositMinterV2");
     console.log("=================================================");
     
-    // Initialize client with operator account (admin)
-    const operatorId = AccountId.fromString(process.env.NEXT_PUBLIC_OPERATOR_ID!);
-    const operatorKey = PrivateKey.fromString(process.env.OPERATOR_KEY!);
-    
-    // Get governance agent ID
-    const governanceAgentId = AccountId.fromString("0.0.6110233"); // Governance Agent ID
+    // Hardcoded values
+    const operatorId = AccountId.fromString("0.0.4337514"); // new operator as admin
+    const operatorKey = PrivateKey.fromString("302e020100300506032b6570042204204925374197b15b43464e996f0d85a56c22672e634990522be1b8a8854bafa2f8");
+    const governanceAgentId = AccountId.fromString("0.0.6356196"); // new governance account
+    const contractHederaId = "0.0.6434231"; // new contract
     
     const client = Client.forTestnet();
     client.setOperator(operatorId, operatorKey);
     
-    // Use the new DepositMinterV2 contract with governance features
-    const contractHederaId = process.env.NEXT_PUBLIC_DEPOSIT_MINTER_V3_ID!;
     const contractId = ContractId.fromString(contractHederaId);
     
     console.log("Contract ID:", contractHederaId);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTokens } from '../hooks/useTokens';
 import { useTokenQueue } from '../hooks/useTokenQueue';
 import { useToast } from '../hooks/useToast';
@@ -10,7 +10,7 @@ import { Progress } from '@nextui-org/progress';
 import { Spinner } from '@nextui-org/spinner';
 export function MintForm() {
   const { toast } = useToast();
-  const { tokenBalances, calculateRequiredTokens } = useTokens();
+  const { tokenBalances, calculateRequiredTokens, formatTokenAmount } = useTokens();
   const { 
     mintLynx,
     getTransactionStatus, 
@@ -27,8 +27,10 @@ export function MintForm() {
   // Ref to track the approval monitoring interval
   const checkApprovalsRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Calculate token requirements based on LYNX amount
-  const required = calculateRequiredTokens(lynxAmount);
+  // Calculate token requirements based on LYNX amount - memoized to prevent infinite re-renders
+  const required = useMemo(() => {
+    return calculateRequiredTokens(lynxAmount);
+  }, [calculateRequiredTokens, lynxAmount]);
   
 
   
@@ -86,6 +88,7 @@ export function MintForm() {
       
       const result = await mintLynx({
         lynxAmount,
+        requiredAmounts: required,
         onSuccess: (txId: string) => {
           toast.success(`Mint transaction submitted: ${txId}`);
           setCurrentStep('LYNX minting transaction submitted');
@@ -255,17 +258,17 @@ export function MintForm() {
             <h3 className="text-sm font-medium mb-2">Required Tokens:</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="text-gray-500">HBAR:</div>
-              <div className="font-medium">{required.HBAR} HBAR</div>
+                              <div className="font-medium">{formatTokenAmount(required.HBAR, 'HBAR')} HBAR</div>
               <div className="text-gray-500">WBTC:</div>
-              <div className="font-medium">{required.WBTC} WBTC</div>
+                              <div className="font-medium">{formatTokenAmount(required.WBTC, 'WBTC')} WBTC</div>
               <div className="text-gray-500">SAUCE:</div>
-              <div className="font-medium">{required.SAUCE} SAUCE</div>
+                              <div className="font-medium">{formatTokenAmount(required.SAUCE, 'SAUCE')} SAUCE</div>
               <div className="text-gray-500">USDC:</div>
-              <div className="font-medium">{required.USDC} USDC</div>
+                              <div className="font-medium">{formatTokenAmount(required.USDC, 'USDC')} USDC</div>
               <div className="text-gray-500">JAM:</div>
-              <div className="font-medium">{required.JAM} JAM</div>
+                              <div className="font-medium">{formatTokenAmount(required.JAM, 'JAM')} JAM</div>
               <div className="text-gray-500">HEADSTART:</div>
-              <div className="font-medium">{required.HEADSTART} HEADSTART</div>
+                              <div className="font-medium">{formatTokenAmount(required.HEADSTART, 'HEADSTART')} HEADSTART</div>
             </div>
           </div>
         </div>

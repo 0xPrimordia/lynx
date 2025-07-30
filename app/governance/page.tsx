@@ -19,14 +19,11 @@ export default function GovernancePage() {
 
   const {
     contractBalances,
-    totalSupply,
     isLoading: tokenDataLoading,
     error: tokenDataError,
-    lastUpdated: tokenDataLastUpdated,
     formatTotalSupply,
     formatTokenBalance,
-    formatHbarBalance,
-    refresh: refreshTokenData
+    formatHbarBalance
   } = useTokenData();
 
   const formatNumber = (num: number): string => {
@@ -95,7 +92,7 @@ export default function GovernancePage() {
     );
   }
 
-  const { rebalancing, treasury, governance, metadata } = parameters;
+  const { treasury, metadata } = parameters;
 
   // Mock some state data for display since we don't have actual state yet
   const mockState = {

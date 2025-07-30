@@ -13,30 +13,7 @@ interface MirrorNodeResponse {
   messages: MirrorNodeMessage[];
 }
 
-// New snapshot schema interface
-interface TokenRatioSnapshot {
-  p: string;
-  op: string;
-  t_id: string;
-  metadata: string;
-  m: string;
-  data: {
-    snapshot_id: string;
-    snapshot_type: string;
-    governance_session: string;
-    token_weights: {
-      HBAR: number;
-      WBTC: number;
-      SAUCE: number;
-      USDC: number;
-      JAM: number;
-      HEADSTART: number;
-    };
-    timestamp: string;
-    created_by: string;
-    hash: string;
-  };
-}
+// TokenRatioSnapshot interface removed as it's not used
 
 export async function GET(): Promise<NextResponse> {
   try {

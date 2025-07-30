@@ -91,7 +91,7 @@ export function useTokenData() {
         error: error instanceof Error ? error.message : 'Failed to fetch token data'
       }));
     }
-  }, [mirrorNodeService, contractId, lynxTokenId]);
+  }, [mirrorNodeService, contractId, lynxTokenId, compositionTokens]);
 
   // Fetch data on mount
   useEffect(() => {
@@ -106,7 +106,7 @@ export function useTokenData() {
     const formatted = mirrorNodeService.formatTokenAmount(tokenData.totalSupply, 8);
     const numValue = parseFloat(formatted);
     return mirrorNodeService.formatNumber(numValue);
-  }, [tokenData.totalSupply]);
+  }, [tokenData.totalSupply, mirrorNodeService]);
 
   // Format individual token balance
   const formatTokenBalance = useCallback((balance: string, decimals: number = 8) => {

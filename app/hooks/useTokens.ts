@@ -39,10 +39,10 @@ export interface SaucerSwapContextType {
 }
 
 // Actual implementation of useTokens hook
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from './useWallet';
 import { BalanceService } from '../services/balanceService';
-import { useDaoParameters } from '../providers/DaoParametersProvider';
+// import { useDaoParameters } from '../providers/DaoParametersProvider'; // Removed as not used
 
 // Token IDs from environment variables or defaults
 const LYNX_TOKEN_ID = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.5948419";
@@ -122,7 +122,7 @@ export const useSaucerSwapContext = () => {
 
 export function useTokens(): UseTokensResult {
   const { account, isConnected } = useWallet();
-  const { parameters } = useDaoParameters();
+  // const { parameters } = useDaoParameters(); // Removed as not used
   const [tokenBalances, setTokenBalances] = useState<TokenBalances>({
     HBAR: '0',
     SAUCE: '0',
@@ -205,40 +205,9 @@ export function useTokens(): UseTokensResult {
     }
   }, [isConnected, account?.accountId, balanceService]);
 
-  // Memoize the weights to prevent infinite re-renders
-  const memoizedWeights = useMemo(() => {
-    if (parameters?.treasury?.weights) {
-      const weights = parameters.treasury.weights;
-      
-      // Extract the actual weight values (handle both simple values and ParameterObject format)
-      const getWeightValue = (weight: any): number => {
-        return typeof weight === 'object' && weight.value !== undefined ? weight.value : weight;
-      };
-      
-      const extractedWeights = {
-        HBAR: getWeightValue(weights.HBAR),
-        WBTC: getWeightValue(weights.WBTC),
-        SAUCE: getWeightValue(weights.SAUCE),
-        USDC: getWeightValue(weights.USDC),
-        JAM: getWeightValue(weights.JAM),
-        HEADSTART: getWeightValue(weights.HEADSTART)
-      };
+  // Memoize the weights to prevent infinite re-renders (removed as not used)
 
-      // Create a stable string representation for comparison
-      const weightsString = JSON.stringify(extractedWeights);
-      
-      return {
-        weights: extractedWeights,
-        hash: weightsString
-      };
-    }
-    return null;
-  }, [parameters?.treasury?.weights]);
-
-  // Create a stable reference to the weights
-  const stableWeights = useMemo(() => {
-    return memoizedWeights?.weights || null;
-  }, [memoizedWeights?.hash]);
+  // Create a stable reference to the weights (removed as not used)
 
   // Calculate required tokens based on LYNX amount using contract ratios
   const calculateRequiredTokens = useCallback((lynxAmount: number): RequiredTokens => {

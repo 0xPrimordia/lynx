@@ -39,9 +39,10 @@ export interface SaucerSwapContextType {
 }
 
 // Actual implementation of useTokens hook
-import { useState, useEffect, useCallback } from 'react';
-import { useWallet } from '../providers/WalletProvider';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useWallet } from './useWallet';
 import { BalanceService } from '../services/balanceService';
+import { useDaoParameters } from '../providers/DaoParametersProvider';
 
 // Token IDs from environment variables or defaults
 const LYNX_TOKEN_ID = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.5948419";
@@ -100,6 +101,7 @@ export interface UseTokensResult {
   error: Error | null;
   refreshBalances: () => Promise<boolean>;
   calculateRequiredTokens: (lynxAmount: number) => RequiredTokens;
+  formatTokenAmount: (amount: number, tokenType: string) => string;
 }
 
 // Mock token data for governance section
@@ -119,7 +121,8 @@ export const useSaucerSwapContext = () => {
 };
 
 export function useTokens(): UseTokensResult {
-  const { accountId, isConnected } = useWallet();
+  const { account, isConnected } = useWallet();
+  const { parameters } = useDaoParameters();
   const [tokenBalances, setTokenBalances] = useState<TokenBalances>({
     HBAR: '0',
     SAUCE: '0',
@@ -163,7 +166,7 @@ export function useTokens(): UseTokensResult {
 
   // Function to refresh balances using real Hedera SDK queries
   const refreshBalances = useCallback(async (): Promise<boolean> => {
-    if (!isConnected || !accountId) {
+    if (!isConnected || !account?.accountId) {
       console.log('[useTokens] Wallet not connected, skipping balance refresh');
       return false;
     }
@@ -175,7 +178,7 @@ export function useTokens(): UseTokensResult {
       console.log('[useTokens] Fetching real balances from Hedera network...');
       
       // Use the BalanceService to get real balances
-      const realBalances = await balanceService.getTokenBalances(accountId);
+      const realBalances = await balanceService.getTokenBalances(account.accountId);
       
       console.log('[useTokens] Real balances fetched:', realBalances);
       setTokenBalances(realBalances);
@@ -200,39 +203,99 @@ export function useTokens(): UseTokensResult {
     } finally {
       setIsLoading(false);
     }
-  }, [isConnected, accountId, balanceService]);
+  }, [isConnected, account?.accountId, balanceService]);
 
-  // Calculate required tokens based on LYNX amount
+  // Memoize the weights to prevent infinite re-renders
+  const memoizedWeights = useMemo(() => {
+    if (parameters?.treasury?.weights) {
+      const weights = parameters.treasury.weights;
+      
+      // Extract the actual weight values (handle both simple values and ParameterObject format)
+      const getWeightValue = (weight: any): number => {
+        return typeof weight === 'object' && weight.value !== undefined ? weight.value : weight;
+      };
+      
+      const extractedWeights = {
+        HBAR: getWeightValue(weights.HBAR),
+        WBTC: getWeightValue(weights.WBTC),
+        SAUCE: getWeightValue(weights.SAUCE),
+        USDC: getWeightValue(weights.USDC),
+        JAM: getWeightValue(weights.JAM),
+        HEADSTART: getWeightValue(weights.HEADSTART)
+      };
+
+      // Create a stable string representation for comparison
+      const weightsString = JSON.stringify(extractedWeights);
+      
+      return {
+        weights: extractedWeights,
+        hash: weightsString
+      };
+    }
+    return null;
+  }, [parameters?.treasury?.weights]);
+
+  // Create a stable reference to the weights
+  const stableWeights = useMemo(() => {
+    return memoizedWeights?.weights || null;
+  }, [memoizedWeights?.hash]);
+
+  // Calculate required tokens based on LYNX amount using contract ratios
   const calculateRequiredTokens = useCallback((lynxAmount: number): RequiredTokens => {
     if (!lynxAmount || lynxAmount <= 0) {
       return { HBAR: 0, SAUCE: 0, WBTC: 0, USDC: 0, JAM: 0, HEADSTART: 0 };
     }
     
     try {
-      // Match the DepositMinterV2 contract ratios (verified from contract test):
-      // 4 HBAR per 1 LYNX
-      // 0.04 WBTC per 1 LYNX
-      // 1.8 SAUCE per 1 LYNX
-      // 2.2 USDC per 1 LYNX
-      // 3 JAM per 1 LYNX
-      // 2 HEADSTART per 1 LYNX
+      // Use the actual contract ratios (these match the contract's getCurrentRatios() values)
+      // The contract calculates in base units (tinybars, satoshis, etc.), so we need to match that
+      const contractRatios = {
+        HBAR: 5.0,      // Contract HBAR_RATIO = 50, so 50/10 = 5.0 HBAR per LYNX
+        WBTC: 0.03,     // Contract WBTC_RATIO = 3, so 3/100 = 0.03 WBTC per LYNX  
+        SAUCE: 2.5,     // Contract SAUCE_RATIO = 25, so 25/10 = 2.5 SAUCE per LYNX
+        USDC: 1.5,      // Contract USDC_RATIO = 15, so 15/10 = 1.5 USDC per LYNX
+        JAM: 0.5,       // Contract JAM_RATIO = 5, so 5/10 = 0.5 JAM per LYNX
+        HEADSTART: 0.3  // Contract HEADSTART_RATIO = 3, so 3/10 = 0.3 HEADSTART per LYNX
+      };
+      
+      console.log('[useTokens] Using contract ratios for token calculation:', contractRatios);
+      
       return {
-        HBAR: 4 * lynxAmount,
-        WBTC: 0.04 * lynxAmount,
-        SAUCE: 1.8 * lynxAmount,
-        USDC: 2.2 * lynxAmount,
-        JAM: 3 * lynxAmount,
-        HEADSTART: 2 * lynxAmount
+        HBAR: lynxAmount * contractRatios.HBAR,
+        WBTC: lynxAmount * contractRatios.WBTC,
+        SAUCE: lynxAmount * contractRatios.SAUCE,
+        USDC: lynxAmount * contractRatios.USDC,
+        JAM: lynxAmount * contractRatios.JAM,
+        HEADSTART: lynxAmount * contractRatios.HEADSTART
       };
     } catch (err) {
+      console.error('[useTokens] Error calculating required tokens:', err);
       setError(err instanceof Error ? err : new Error('Failed to calculate required tokens'));
       return { HBAR: 0, SAUCE: 0, WBTC: 0, USDC: 0, JAM: 0, HEADSTART: 0 };
     }
   }, []);
 
+  // Format token amounts with appropriate decimal places
+  const formatTokenAmount = useCallback((amount: number, tokenType: string): string => {
+    if (amount === 0) return '0';
+    
+    // Define decimal places for each token type
+    const decimalPlaces: Record<string, number> = {
+      HBAR: 2,      // 2 decimal places for HBAR
+      WBTC: 4,      // 4 decimal places for WBTC (small amounts)
+      SAUCE: 2,     // 2 decimal places for SAUCE
+      USDC: 2,      // 2 decimal places for USDC
+      JAM: 2,       // 2 decimal places for JAM
+      HEADSTART: 2  // 2 decimal places for HEADSTART
+    };
+    
+    const decimals = decimalPlaces[tokenType] || 2;
+    return amount.toFixed(decimals);
+  }, []);
+
   // Load initial data when wallet connects
   useEffect(() => {
-    if (isConnected && accountId) {
+    if (isConnected && account?.accountId) {
       console.log('[useTokens] Wallet connected, refreshing balances...');
       refreshBalances();
     } else {
@@ -247,7 +310,7 @@ export function useTokens(): UseTokensResult {
         LYNX: '0'
       });
     }
-  }, [isConnected, accountId, refreshBalances]);
+  }, [isConnected, account?.accountId, refreshBalances]);
 
   // Cleanup balance service on unmount
   useEffect(() => {
@@ -266,7 +329,8 @@ export function useTokens(): UseTokensResult {
     isLoading,
     error,
     refreshBalances,
-    calculateRequiredTokens
+    calculateRequiredTokens,
+    formatTokenAmount
   };
 }
 

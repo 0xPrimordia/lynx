@@ -3,6 +3,7 @@
 import React from 'react';
 import { VT323 } from "next/font/google";
 import { useDaoParameters } from '../providers/DaoParametersProvider';
+import { useTokenData } from '../hooks/useTokenData';
 
 const vt323 = VT323({ weight: "400", subsets: ["latin"] });
 
@@ -15,6 +16,18 @@ export default function GovernancePage() {
     lastUpdated,
     recentMessages 
   } = useDaoParameters();
+
+  const {
+    contractBalances,
+    totalSupply,
+    isLoading: tokenDataLoading,
+    error: tokenDataError,
+    lastUpdated: tokenDataLastUpdated,
+    formatTotalSupply,
+    formatTokenBalance,
+    formatHbarBalance,
+    refresh: refreshTokenData
+  } = useTokenData();
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000000) {
@@ -69,6 +82,8 @@ export default function GovernancePage() {
     );
   }
 
+
+
   if (!parameters) {
     return (
       <div className="p-8">
@@ -116,6 +131,7 @@ export default function GovernancePage() {
                   {isConnected ? 'Connected to HCS' : 'Disconnected'}
                 </span>
               </div>
+
               {lastUpdated && (
                 <p className="text-xs text-gray-500">
                   Last updated: {formatDate(lastUpdated)}
@@ -128,63 +144,177 @@ export default function GovernancePage() {
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <div className="bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-300 mb-2">Total LYNX Staked</h3>
+            <h3 className="text-lg font-medium text-gray-300 mb-2">Total LYNX Supply</h3>
+            {tokenDataLoading ? (
+              <div className="flex items-center justify-center h-16">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : tokenDataError ? (
+              <div className="text-red-400 text-sm">
+                Error loading data
+              </div>
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-white">
+                  {formatTotalSupply()} LYNX
+                </p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Circulating supply
+                </p>
+              </>
+            )}
+          </div>
+
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h3 className="text-lg font-medium text-gray-300 mb-2">Your Staked LYNX</h3>
             <p className="text-3xl font-bold text-white">
-              {formatNumber(mockState.totalLynxStaked)}
+              0 LYNX
             </p>
             <p className="text-sm text-gray-400 mt-1">
-              {((mockState.totalLynxStaked / mockState.totalLynxSupply) * 100).toFixed(1)}% of supply
+              Staked for governance
             </p>
           </div>
 
           <div className="bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-300 mb-2">Active Proposals</h3>
+            <h3 className="text-lg font-medium text-gray-300 mb-2">Your Voting Power</h3>
             <p className="text-3xl font-bold text-white">
-              {mockState.stakeholderVotingRecords.length}
+              0%
             </p>
             <p className="text-sm text-gray-400 mt-1">
-              Requires {extractValue(governance.quorumPercentage)}% quorum
+              Based on staked tokens
             </p>
           </div>
 
           <div className="bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-300 mb-2">Voting Participation</h3>
-            <p className="text-3xl font-bold text-white">
-              {extractValue(governance.quorumPercentage)}%
-            </p>
-            <p className="text-sm text-gray-400 mt-1">
-              Min: {formatNumber(Number(extractValue(governance.proposalThreshold)))} LYNX
-            </p>
+            <h3 className="text-lg font-medium text-gray-300 mb-2">Contract SAUCE Balance</h3>
+            {tokenDataLoading ? (
+              <div className="flex items-center justify-center h-16">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : tokenDataError ? (
+              <div className="text-red-400 text-sm">
+                Error loading data
+              </div>
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-white">
+                  {formatTokenBalance(contractBalances.SAUCE || '0')} SAUCE
+                </p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Vault contract balance
+                </p>
+              </>
+            )}
           </div>
 
           <div className="bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-300 mb-2">Next Rebalance</h3>
-            <p className="text-3xl font-bold text-white">
-              {formatDate(mockState.nextRebalanceScheduled).split(',')[0]}
-            </p>
-            <p className="text-sm text-gray-400 mt-1">
-              Every {extractValue(rebalancing.frequencyHours)} hours
-            </p>
+            <h3 className="text-lg font-medium text-gray-300 mb-2">Contract WBTC Balance</h3>
+            {tokenDataLoading ? (
+              <div className="flex items-center justify-center h-16">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : tokenDataError ? (
+              <div className="text-red-400 text-sm">
+                Error loading data
+              </div>
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-white">
+                  {formatTokenBalance(contractBalances.WBTC || '0')} WBTC
+                </p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Vault contract balance
+                </p>
+              </>
+            )}
           </div>
 
           <div className="bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-300 mb-2">DAO Treasury</h3>
-            <p className="text-3xl font-bold text-white">
-              {formatNumber(mockState.treasuryBalance.hbar)} HBAR
-            </p>
-            <p className="text-sm text-gray-400 mt-1">
-              {Object.keys(mockState.treasuryBalance.otherTokens).length} other assets
-            </p>
+            <h3 className="text-lg font-medium text-gray-300 mb-2">Contract USDC Balance</h3>
+            {tokenDataLoading ? (
+              <div className="flex items-center justify-center h-16">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : tokenDataError ? (
+              <div className="text-red-400 text-sm">
+                Error loading data
+              </div>
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-white">
+                  {formatTokenBalance(contractBalances.USDC || '0', 6)} USDC
+                </p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Vault contract balance
+                </p>
+              </>
+            )}
           </div>
 
           <div className="bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-300 mb-2">Total Holders</h3>
-            <p className="text-3xl font-bold text-white">
-              {formatNumber(mockState.totalLynxSupply - mockState.totalLynxStaked)}
-            </p>
-            <p className="text-sm text-gray-400 mt-1">
-              Across {mockState.currentTokenList.length} tokens
-            </p>
+            <h3 className="text-lg font-medium text-gray-300 mb-2">Contract JAM Balance</h3>
+            {tokenDataLoading ? (
+              <div className="flex items-center justify-center h-16">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : tokenDataError ? (
+              <div className="text-red-400 text-sm">
+                Error loading data
+              </div>
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-white">
+                  {formatTokenBalance(contractBalances.JAM || '0')} JAM
+                </p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Vault contract balance
+                </p>
+              </>
+            )}
+          </div>
+
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h3 className="text-lg font-medium text-gray-300 mb-2">Contract HEADSTART Balance</h3>
+            {tokenDataLoading ? (
+              <div className="flex items-center justify-center h-16">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : tokenDataError ? (
+              <div className="text-red-400 text-sm">
+                Error loading data
+              </div>
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-white">
+                  {formatTokenBalance(contractBalances.HEADSTART || '0')} HEADSTART
+                </p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Vault contract balance
+                </p>
+              </>
+            )}
+          </div>
+
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h3 className="text-lg font-medium text-gray-300 mb-2">Contract HBAR Balance</h3>
+            {tokenDataLoading ? (
+              <div className="flex items-center justify-center h-16">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : tokenDataError ? (
+              <div className="text-red-400 text-sm">
+                Error loading data
+              </div>
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-white">
+                  {formatHbarBalance(contractBalances.HBAR || '0')} HBAR
+                </p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Vault contract balance
+                </p>
+              </>
+            )}
           </div>
         </div>
 

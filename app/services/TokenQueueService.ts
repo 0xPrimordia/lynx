@@ -57,6 +57,14 @@ export interface TokenApprovalParams {
 
 export interface MintParams {
   lynxAmount: number;
+  requiredAmounts?: {
+    HBAR: number;
+    WBTC: number;
+    SAUCE: number;
+    USDC: number;
+    JAM: number;
+    HEADSTART: number;
+  };
   onSuccess?: (transactionId: string) => void;
   onError?: (error: Error) => void;
 }
@@ -216,16 +224,36 @@ export class TokenQueueService {
       return Promise.reject(new Error('Wallet not connected'));
     }
     
-    const { lynxAmount, onSuccess, onError } = params;
+    const { lynxAmount, requiredAmounts, onSuccess, onError } = params;
     
-    // Calculate required token amounts for 6-token system (using DepositMinterV2 ratios)
-    const ratios = this.getTokenRatios();
+    // Use provided amounts if available, otherwise fall back to calculation
+    let wbtcAmount: string;
+    let sauceAmount: string;
+    let usdcAmount: string;
+    let jamAmount: string;
+    let headstartAmount: string;
     
-    const wbtcAmount = (lynxAmount * ratios.wbtcRatio * Math.pow(10, 8)).toString(); // 8 decimals
-    const sauceAmount = (lynxAmount * ratios.sauceRatio * Math.pow(10, 6)).toString(); // 6 decimals
-    const usdcAmount = (lynxAmount * ratios.usdcRatio * Math.pow(10, 6)).toString(); // 6 decimals
-    const jamAmount = (lynxAmount * ratios.jamRatio * Math.pow(10, 8)).toString(); // 8 decimals
-    const headstartAmount = (lynxAmount * ratios.headstartRatio * Math.pow(10, 8)).toString(); // 8 decimals
+    if (requiredAmounts) {
+      // Use the frontend-calculated amounts (convert to base units)
+      wbtcAmount = (requiredAmounts.WBTC * Math.pow(10, 8)).toString(); // 8 decimals
+      sauceAmount = (requiredAmounts.SAUCE * Math.pow(10, 6)).toString(); // 6 decimals
+      usdcAmount = (requiredAmounts.USDC * Math.pow(10, 6)).toString(); // 6 decimals
+      jamAmount = (requiredAmounts.JAM * Math.pow(10, 8)).toString(); // 8 decimals
+      headstartAmount = (requiredAmounts.HEADSTART * Math.pow(10, 8)).toString(); // 8 decimals
+      
+      console.log(`[QUEUE DEBUG] Using frontend-calculated amounts:`, requiredAmounts);
+    } else {
+      // Fallback to calculation (using DepositMinterV2 ratios)
+      const ratios = this.getTokenRatios();
+      
+      wbtcAmount = (lynxAmount * ratios.wbtcRatio * Math.pow(10, 8)).toString(); // 8 decimals
+      sauceAmount = (lynxAmount * ratios.sauceRatio * Math.pow(10, 6)).toString(); // 6 decimals
+      usdcAmount = (lynxAmount * ratios.usdcRatio * Math.pow(10, 6)).toString(); // 6 decimals
+      jamAmount = (lynxAmount * ratios.jamRatio * Math.pow(10, 8)).toString(); // 8 decimals
+      headstartAmount = (lynxAmount * ratios.headstartRatio * Math.pow(10, 8)).toString(); // 8 decimals
+      
+      console.log(`[QUEUE DEBUG] Using fallback calculated amounts`);
+    }
     
     try {
       console.log(`[QUEUE DEBUG] Starting LYNX minting process for ${lynxAmount} LYNX`);
@@ -386,7 +414,7 @@ export class TokenQueueService {
           console.log(`[QUEUE DEBUG] All approvals completed successfully, executing mint`);
           
           // Execute the mint transaction using DepositMinterV2
-          const mintResult = await this.transactionService!.mintLynx(lynxAmount);
+          const mintResult = await this.transactionService!.mintLynx(lynxAmount, requiredAmounts);
           
           if (mintResult.status === 'error') {
             console.error(`[QUEUE DEBUG] Minting failed:`, mintResult.error);

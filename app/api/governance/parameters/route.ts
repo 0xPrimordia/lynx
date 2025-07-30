@@ -13,7 +13,30 @@ interface MirrorNodeResponse {
   messages: MirrorNodeMessage[];
 }
 
-
+// New snapshot schema interface
+interface TokenRatioSnapshot {
+  p: string;
+  op: string;
+  t_id: string;
+  metadata: string;
+  m: string;
+  data: {
+    snapshot_id: string;
+    snapshot_type: string;
+    governance_session: string;
+    token_weights: {
+      HBAR: number;
+      WBTC: number;
+      SAUCE: number;
+      USDC: number;
+      JAM: number;
+      HEADSTART: number;
+    };
+    timestamp: string;
+    created_by: string;
+    hash: string;
+  };
+}
 
 export async function GET(): Promise<NextResponse> {
   try {
@@ -55,7 +78,7 @@ export async function GET(): Promise<NextResponse> {
       );
     }
 
-    // Process messages to find DAO parameters
+    // Process messages to find the most recent token ratio snapshot
     for (const message of data.messages) {
       try {
         // Decode base64 message
@@ -68,94 +91,95 @@ export async function GET(): Promise<NextResponse> {
 
         const parsed = JSON.parse(messageData);
 
-        // Check if this is an HCS-10 message with reference
-        if (parsed.p === 'hcs-10' && parsed.data?.startsWith('hcs://')) {
-          console.log('API: Found HCS-10 reference:', parsed.data);
+        // Check if this is the new token ratio snapshot format
+        if (parsed.p === 'hcs-2' && parsed.op === 'register' && parsed.data?.snapshot_type === 'token_ratios') {
+          console.log('API: Found token ratio snapshot:', {
+            snapshotId: parsed.data.snapshot_id,
+            governanceSession: parsed.data.governance_session,
+            tokenWeights: parsed.data.token_weights
+          });
+
+          // Create a simplified parameters object with just the token weights
+          const tokenWeights = parsed.data.token_weights;
           
-          try {
-            // Use the basic HCS utility for simple message reading
-            const { HCS } = await import('@hashgraphonline/standards-sdk');
-            
-            console.log('API: Using HCS utility to handle HCS-10 reference...');
-            
-            // Extract referenced topic ID (format: hcs://1/0.0.XXXXXX)
-            const parts = parsed.data.split('/');
-            const referencedTopicId = parts[parts.length - 1]; // Get the last part: 0.0.6110285
-            
-            console.log('API: Extracted referenced topic ID:', referencedTopicId);
-            
-            // Instantiate HCS and use retrieveHCS1Data to read the topic
-            const hcs = new HCS();
-            const referencedContent = await hcs.retrieveHCS1Data(referencedTopicId);
-            
-            console.log('API: Successfully retrieved content with HCS.retrieveHCS1Data:', {
-              hasContent: !!referencedContent,
-              contentType: typeof referencedContent,
-              isBlob: referencedContent instanceof Blob,
-              blobSize: referencedContent instanceof Blob ? referencedContent.size : 'N/A',
-              blobType: referencedContent instanceof Blob ? referencedContent.type : 'N/A'
-            });
-            
-            // Handle Blob content properly
-            let actualContent: unknown = null;
-            if (referencedContent instanceof Blob) {
-              console.log('API: Reading Blob content...');
-              const blobText = await referencedContent.text();
-              console.log('API: Blob text length:', blobText.length);
-              console.log('API: Blob text preview:', blobText.substring(0, 200) + '...');
-              
-              try {
-                actualContent = JSON.parse(blobText);
-                console.log('API: Successfully parsed Blob JSON content');
-              } catch (parseError) {
-                console.error('API: Failed to parse Blob content as JSON:', parseError);
-                actualContent = blobText;
+          // Create a minimal parameters structure that matches the expected format
+          const parameters = {
+            treasury: {
+              weights: {
+                HBAR: tokenWeights.HBAR,
+                WBTC: tokenWeights.WBTC,
+                SAUCE: tokenWeights.SAUCE,
+                USDC: tokenWeights.USDC,
+                JAM: tokenWeights.JAM,
+                HEADSTART: tokenWeights.HEADSTART
+              },
+              // Keep default values for other treasury parameters
+              maxSlippage: {
+                HBAR: 1.0,
+                WBTC: 2.0,
+                SAUCE: 3.0,
+                USDC: 0.5,
+                JAM: 3.0,
+                HEADSTART: 5.0
+              },
+              maxSwapSize: {
+                HBAR: 1000000,
+                WBTC: 500000,
+                SAUCE: 250000,
+                USDC: 1000000,
+                JAM: 100000,
+                HEADSTART: 50000
               }
-            } else {
-              actualContent = referencedContent;
+            },
+            // Keep default values for other parameter sections
+            rebalancing: {
+              frequencyHours: 24,
+              thresholds: {
+                normal: 10,
+                emergency: 20
+              },
+              cooldownPeriods: {
+                normal: 48,
+                emergency: 12
+              }
+            },
+            fees: {
+              mintingFee: 0.3,
+              burningFee: 0.3,
+              operationalFee: 0.1
+            },
+            governance: {
+              quorumPercentage: 20,
+              votingPeriodHours: 72,
+              proposalThreshold: 1000
+            },
+            metadata: {
+              version: "1.0.0",
+              lastUpdated: parsed.data.timestamp,
+              updatedBy: parsed.data.created_by,
+              networkState: network as 'mainnet' | 'testnet' | 'previewnet',
+              topicId: governanceTopicId,
+              sequenceNumber: message.sequence_number
             }
-            
-            // Check if this contains DAO parameters (nested in data field for HCS-10 format)
-            const contentObj = actualContent as Record<string, unknown>;
-            const dataObj = contentObj?.data as Record<string, unknown>;
-            
-            console.log('API: Final content structure:', {
-              hasActualContent: !!actualContent,
-              actualContentType: typeof actualContent,
-              actualContentKeys: typeof actualContent === 'object' ? Object.keys(actualContent || {}) : 'Not an object',
-              hasData: !!(contentObj?.data),
-              dataKeys: dataObj ? Object.keys(dataObj) : 'No data field',
-              hasParameters: !!(dataObj?.parameters),
-              hasRebalancing: !!(dataObj?.parameters as Record<string, unknown>)?.rebalancing,
-              hasTreasury: !!(dataObj?.parameters as Record<string, unknown>)?.treasury
-            });
-            const daoData = dataObj?.parameters || dataObj;
-            const daoDataObj = daoData as Record<string, unknown>;
-            if (daoData && (daoDataObj.parameters || daoDataObj.rebalancing || daoDataObj.treasury)) {
-              console.log('API: Found DAO parameters via HCS utility!');
-              
-              return NextResponse.json({
-                parameters: daoDataObj.parameters || daoData,
-                metadata: {
-                  timestamp: message.consensus_timestamp,
-                  sequenceNumber: message.sequence_number,
-                  version: (dataObj?.metadata as Record<string, unknown>)?.version || '1.0.0',
-                  sourceTopicId: governanceTopicId,
-                  decodedWithHCS: true,
-                  hcsReference: parsed.data
-                }
-              });
+          };
+
+          return NextResponse.json({
+            parameters,
+            metadata: {
+              timestamp: parsed.data.timestamp,
+              sequenceNumber: message.sequence_number,
+              version: "1.0.0",
+              sourceTopicId: governanceTopicId,
+              snapshotId: parsed.data.snapshot_id,
+              governanceSession: parsed.data.governance_session,
+              hash: parsed.data.hash
             }
-            
-          } catch (hcsError) {
-            console.error('API: Failed with HCS utility:', hcsError);
-            // Continue with fallback logic below
-          }
+          });
         }
-        
-        // Check if this message directly contains DAO parameters
+
+        // Legacy support for old format (keep for backward compatibility)
         if (parsed.parameters || parsed.rebalancing || parsed.treasury) {
-          console.log('API: Found direct DAO parameters');
+          console.log('API: Found legacy DAO parameters format');
           
           return NextResponse.json({
             parameters: parsed.parameters || parsed,
@@ -177,7 +201,7 @@ export async function GET(): Promise<NextResponse> {
       }
     }
 
-    console.log('API: No DAO parameters found in any messages, returning defaults');
+    console.log('API: No token ratio snapshots found, returning defaults');
     
     // Return default parameters if none found
     return NextResponse.json({

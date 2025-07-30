@@ -193,7 +193,14 @@ export class TransactionService {
    * Mint LYNX tokens
    * Creates and executes a mint transaction using the Hedera SDK
    */
-  public async mintLynx(amount: number): Promise<TransactionResponse> {
+  public async mintLynx(amount: number, requiredAmounts?: {
+    HBAR: number;
+    WBTC: number;
+    SAUCE: number;
+    USDC: number;
+    JAM: number;
+    HEADSTART: number;
+  }): Promise<TransactionResponse> {
     try {
       if (!this.connector || !this.accountId) {
         console.error('[CRITICAL] Cannot mint LYNX: wallet not connected');
@@ -219,15 +226,37 @@ export class TransactionService {
       // 2. Parse account ID properly
       const sender = AccountId.fromString(this.accountId);
       
-      // 3. Calculate required amounts for 6-token system (DepositMinterV2)
-      // These values match the contract's calculateRequiredDeposits function
+      // 3. Use provided amounts or calculate required amounts for 6-token system
       const lynxAmountRaw = amount;                                    // Send exactly what user inputs (1, 2, 3, etc.)
-      const hbarRequiredTinybars = amount * 4 * Math.pow(10, 8);     // 4 HBAR per LYNX (in tinybars)
-      const wbtcRequired = amount * 0.04 * Math.pow(10, 8);          // 0.04 WBTC per LYNX (8 decimals)
-      const sauceRequired = amount * 1.8 * Math.pow(10, 6);          // 1.8 SAUCE per LYNX (6 decimals)
-      const usdcRequired = amount * 2.2 * Math.pow(10, 6);           // 2.2 USDC per LYNX (6 decimals)
-      const jamRequired = amount * 3 * Math.pow(10, 8);              // 3 JAM per LYNX (8 decimals)
-      const headstartRequired = amount * 2 * Math.pow(10, 8);        // 2 HEADSTART per LYNX (8 decimals)
+      
+      let hbarRequiredTinybars: number;
+      let wbtcRequired: number;
+      let sauceRequired: number;
+      let usdcRequired: number;
+      let jamRequired: number;
+      let headstartRequired: number;
+      
+      if (requiredAmounts) {
+        // Use the frontend-calculated amounts (convert to base units)
+        hbarRequiredTinybars = requiredAmounts.HBAR * Math.pow(10, 8);     // Convert HBAR to tinybars
+        wbtcRequired = requiredAmounts.WBTC * Math.pow(10, 8);             // Convert WBTC to satoshis
+        sauceRequired = requiredAmounts.SAUCE * Math.pow(10, 6);           // Convert SAUCE to base units
+        usdcRequired = requiredAmounts.USDC * Math.pow(10, 6);             // Convert USDC to base units
+        jamRequired = requiredAmounts.JAM * Math.pow(10, 8);               // Convert JAM to base units
+        headstartRequired = requiredAmounts.HEADSTART * Math.pow(10, 8);   // Convert HEADSTART to base units
+        
+        console.log('[CRITICAL] Using frontend-calculated amounts:', requiredAmounts);
+      } else {
+        // Fallback to hardcoded calculation (these should match the contract)
+        hbarRequiredTinybars = amount * 5 * Math.pow(10, 8);     // 5 HBAR per LYNX (contract HBAR_RATIO = 50, so 50/10 = 5)
+        wbtcRequired = amount * 0.03 * Math.pow(10, 8);          // 0.03 WBTC per LYNX (contract WBTC_RATIO = 3, so 3/100 = 0.03)
+        sauceRequired = amount * 2.5 * Math.pow(10, 6);          // 2.5 SAUCE per LYNX (contract SAUCE_RATIO = 25, so 25/10 = 2.5)
+        usdcRequired = amount * 1.5 * Math.pow(10, 6);           // 1.5 USDC per LYNX (contract USDC_RATIO = 15, so 15/10 = 1.5)
+        jamRequired = amount * 0.5 * Math.pow(10, 8);            // 0.5 JAM per LYNX (contract JAM_RATIO = 5, so 5/10 = 0.5)
+        headstartRequired = amount * 0.3 * Math.pow(10, 8);      // 0.3 HEADSTART per LYNX (contract HEADSTART_RATIO = 3, so 3/10 = 0.3)
+        
+        console.log('[CRITICAL] Using fallback hardcoded amounts');
+      }
       
       console.log('[CRITICAL] Creating mint transaction for DepositMinterV2 contract', contractHederaId);
       console.log('[CRITICAL] Calling mintWithDeposits with 6-token system:', {

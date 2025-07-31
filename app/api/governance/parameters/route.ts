@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { createDefaultDaoParameters } from '../../../types';
 
 interface MirrorNodeMessage {
   consensus_timestamp: string;
@@ -13,22 +12,20 @@ interface MirrorNodeResponse {
   messages: MirrorNodeMessage[];
 }
 
-// TokenRatioSnapshot interface removed as it's not used
-
 export async function GET(): Promise<NextResponse> {
   try {
     const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
-    const governanceTopicId = process.env.NEXT_PUBLIC_GOVERNANCE_TOPIC_ID || '0.0.6110234';
+    const snapshotTopicId = process.env.NEXT_PUBLIC_SNAPSHOT_TOPIC_ID || '0.0.6110234';
 
-    console.log('API: Fetching DAO parameters from topic:', governanceTopicId);
+    console.log('API: Fetching DAO parameters from snapshot topic:', snapshotTopicId);
 
     // Get mirror node base URL
     const mirrorNodeUrl = network === 'mainnet' 
       ? 'https://mainnet-public.mirrornode.hedera.com'
       : 'https://testnet.mirrornode.hedera.com';
 
-    // Fetch messages from the governance topic
-    const url = `${mirrorNodeUrl}/api/v1/topics/${governanceTopicId}/messages?order=desc&limit=10`;
+    // Fetch messages from the snapshot topic
+    const url = `${mirrorNodeUrl}/api/v1/topics/${snapshotTopicId}/messages?order=desc&limit=10`;
     console.log('API: Fetching from URL:', url);
 
     const response = await fetch(url);
@@ -44,13 +41,13 @@ export async function GET(): Promise<NextResponse> {
     const data: MirrorNodeResponse = await response.json();
     console.log('API: Retrieved messages:', {
       messageCount: data.messages?.length || 0,
-      topicId: governanceTopicId
+      topicId: snapshotTopicId
     });
 
     if (!data.messages || data.messages.length === 0) {
       console.log('API: No messages found in topic');
       return NextResponse.json(
-        { error: 'No messages found in governance topic' },
+        { error: 'No messages found in snapshot topic' },
         { status: 404 }
       );
     }
@@ -76,8 +73,9 @@ export async function GET(): Promise<NextResponse> {
             tokenWeights: parsed.data.token_weights
           });
 
-          // Create a simplified parameters object with just the token weights
-          const tokenWeights = parsed.data.token_weights;
+          try {
+            // Create a simplified parameters object with just the token weights
+            const tokenWeights = parsed.data.token_weights;
           
           // Create a minimal parameters structure that matches the expected format
           const parameters = {
@@ -135,23 +133,28 @@ export async function GET(): Promise<NextResponse> {
               lastUpdated: parsed.data.timestamp,
               updatedBy: parsed.data.created_by,
               networkState: network as 'mainnet' | 'testnet' | 'previewnet',
-              topicId: governanceTopicId,
+              topicId: snapshotTopicId,
               sequenceNumber: message.sequence_number
             }
           };
 
-          return NextResponse.json({
-            parameters,
-            metadata: {
-              timestamp: parsed.data.timestamp,
-              sequenceNumber: message.sequence_number,
-              version: "1.0.0",
-              sourceTopicId: governanceTopicId,
-              snapshotId: parsed.data.snapshot_id,
-              governanceSession: parsed.data.governance_session,
-              hash: parsed.data.hash
-            }
-          });
+                      console.log('API: Successfully created parameters object, returning response');
+            return NextResponse.json({
+              parameters,
+              metadata: {
+                timestamp: parsed.data.timestamp,
+                sequenceNumber: message.sequence_number,
+                version: "1.0.0",
+                sourceTopicId: snapshotTopicId,
+                snapshotId: parsed.data.snapshot_id,
+                governanceSession: parsed.data.governance_session,
+                hash: parsed.data.hash
+              }
+            });
+          } catch (snapshotError) {
+            console.error('API: Error processing snapshot:', snapshotError);
+            continue;
+          }
         }
 
         // Legacy support for old format (keep for backward compatibility)
@@ -164,7 +167,7 @@ export async function GET(): Promise<NextResponse> {
               timestamp: message.consensus_timestamp,
               sequenceNumber: message.sequence_number,
               version: parsed.metadata?.version || '1.0.0',
-              sourceTopicId: governanceTopicId
+              sourceTopicId: snapshotTopicId
             }
           });
         }
@@ -178,16 +181,75 @@ export async function GET(): Promise<NextResponse> {
       }
     }
 
-    console.log('API: No token ratio snapshots found, returning defaults');
+    console.log('API: No token ratio snapshots found, returning fallback with zero weights');
     
-    // Return default parameters if none found
+    // Return fallback parameters with zero weights and disabled voting
     return NextResponse.json({
-      parameters: createDefaultDaoParameters(),
+      parameters: {
+        treasury: {
+          weights: {
+            HBAR: 0,
+            WBTC: 0,
+            SAUCE: 0,
+            USDC: 0,
+            JAM: 0,
+            HEADSTART: 0
+          },
+          maxSlippage: {
+            HBAR: 0,
+            WBTC: 0,
+            SAUCE: 0,
+            USDC: 0,
+            JAM: 0,
+            HEADSTART: 0
+          },
+          maxSwapSize: {
+            HBAR: 0,
+            WBTC: 0,
+            SAUCE: 0,
+            USDC: 0,
+            JAM: 0,
+            HEADSTART: 0
+          }
+        },
+        rebalancing: {
+          frequencyHours: 0,
+          thresholds: {
+            normal: 0,
+            emergency: 0
+          },
+          cooldownPeriods: {
+            normal: 0,
+            emergency: 0
+          }
+        },
+        fees: {
+          mintingFee: 0,
+          burningFee: 0,
+          operationalFee: 0
+        },
+        governance: {
+          quorumPercentage: 0,
+          votingPeriodHours: 0,
+          proposalThreshold: 0
+        },
+        metadata: {
+          version: "0.0.0-fallback",
+          lastUpdated: new Date().toISOString(),
+          updatedBy: "system",
+          networkState: network as 'mainnet' | 'testnet' | 'previewnet',
+          topicId: snapshotTopicId,
+          sequenceNumber: 0,
+          snapshotStatus: "failed"
+        }
+      },
       metadata: {
         timestamp: new Date().toISOString(),
         sequenceNumber: 0,
-        version: '1.0.0-default',
-        sourceTopicId: 'default'
+        version: '0.0.0-fallback',
+        sourceTopicId: snapshotTopicId,
+        snapshotStatus: "failed",
+        error: "No valid token ratio snapshots found in topic"
       }
     });
 

@@ -41,6 +41,13 @@ interface MultiRatioGovernanceVote {
 
 export default function CompositionPage() {
   const { parameters, isLoading, error } = useDaoParameters();
+  
+  // Check if snapshot failed to load (all weights are 0)
+  const isSnapshotFailed = parameters && 
+    parameters.treasury?.weights && 
+    Object.values(parameters.treasury.weights).every(weight => 
+      getParameterValue(weight) === 0
+    );
   const { account, isConnected, connector: dAppConnector } = useWallet();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showVoteButton, setShowVoteButton] = useState<boolean>(false);
@@ -80,6 +87,11 @@ export default function CompositionPage() {
 
 
   const handleAllocationChange = (symbol: LynxTokenSymbol, newAllocation: number) => {
+    // Disable changes if snapshot failed to load
+    if (isSnapshotFailed) {
+      return;
+    }
+    
     setProposedChanges(prev => ({
       ...prev,
       [symbol]: newAllocation
@@ -350,6 +362,19 @@ export default function CompositionPage() {
           </p>
         </div>
 
+        {/* Snapshot Failure Warning */}
+        {isSnapshotFailed && (
+          <div className="bg-red-900/30 border border-red-800 rounded-lg p-6 mb-6">
+            <h3 className="text-lg font-medium text-red-400 mb-2">⚠️ Snapshot Loading Failed</h3>
+            <p className="text-red-300">
+              Unable to load governance snapshot data. Voting is disabled until snapshot data is available.
+            </p>
+            <div className="mt-3 text-sm text-red-200">
+              Check that the snapshot topic contains valid token ratio data.
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-8">
           {/* Allocation Validation - Always visible to prevent layout jump */}
           <div className={`p-3 rounded-lg border text-center transition-all duration-200 ${
@@ -374,13 +399,13 @@ export default function CompositionPage() {
 
           {/* Current Composition */}
           <div className="mb-8">
-            <div className="flex flex-wrap gap-4 justify-center">
-              {currentComposition.map(token => (
-                renderTokenCard(token, true)
-              ))}
-            </div>
+                      <div className="flex flex-wrap gap-4 justify-center">
+            {currentComposition.map(token => (
+              renderTokenCard(token, !isSnapshotFailed)
+            ))}
+          </div>
             
-            {showVoteButton && (
+            {showVoteButton && !isSnapshotFailed && (
               <div className="flex justify-center mt-6">
                 <button 
                   onClick={handleVoteSubmit}

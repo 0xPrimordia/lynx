@@ -23,15 +23,15 @@ async function checkRatioSync() {
 
   // Contract addresses from deployment info
   const contractId = process.env.NEXT_PUBLIC_LYNX_CONTRACT_HEDERA_ID!;
-  const governanceTopicId = process.env.NEXT_PUBLIC_GOVERNANCE_TOPIC_ID!;
+  const snapshotTopicId = process.env.NEXT_PUBLIC_SNAPSHOT_TOPIC_ID!;
 
-  if (!contractId || !governanceTopicId) {
-    throw new Error('Missing contract or governance topic ID');
+  if (!contractId || !snapshotTopicId) {
+    throw new Error('Missing contract or snapshot topic ID');
   }
 
   console.log('📋 Configuration:');
   console.log(`- Contract ID: ${contractId}`);
-  console.log(`- Governance Topic ID: ${governanceTopicId}\n`);
+  console.log(`- Snapshot Topic ID: ${snapshotTopicId}\n`);
 
   // 1. Fetch current contract ratios
   console.log('1️⃣ Fetching current contract ratios...');
@@ -78,7 +78,7 @@ async function checkRatioSync() {
       ? 'https://mainnet-public.mirrornode.hedera.com'
       : 'https://testnet.mirrornode.hedera.com';
 
-    const url = `${mirrorNodeUrl}/api/v1/topics/${governanceTopicId}/messages?order=desc&limit=10`;
+    const url = `${mirrorNodeUrl}/api/v1/topics/${snapshotTopicId}/messages?order=desc&limit=10`;
     console.log(`Fetching from: ${url}`);
 
     const response = await fetch(url);
@@ -90,11 +90,11 @@ async function checkRatioSync() {
     const data = await response.json();
     
     if (!data.messages || data.messages.length === 0) {
-      console.log('❌ No messages found in governance topic');
+      console.log('❌ No messages found in snapshot topic');
       return;
     }
 
-    console.log(`Found ${data.messages.length} messages in governance topic`);
+    console.log(`Found ${data.messages.length} messages in snapshot topic`);
 
     // Look for the most recent token ratio snapshot
     for (const message of data.messages) {

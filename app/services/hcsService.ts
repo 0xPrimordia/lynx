@@ -29,9 +29,9 @@ export class HCSService {
     operatorId?: string,
     operatorKey?: string,
     network: 'testnet' | 'mainnet' | 'previewnet' = 'testnet',
-    governanceTopicId: string = '0.0.6110234'
-  ) {
-    this.governanceTopicId = governanceTopicId;
+    snapshotTopicId: string = '0.0.6110234'
+      ) {
+      this.governanceTopicId = snapshotTopicId;
     this.operatorId = operatorId;
     this.operatorKey = operatorKey;
     this.network = network;
@@ -228,14 +228,14 @@ export function getHCSService(): HCSService {
   if (!hcsServiceInstance) {
     // Simple initialization without credentials for client-side
     const network = (process.env.NEXT_PUBLIC_HEDERA_NETWORK as 'testnet' | 'mainnet' | 'previewnet') || 'testnet';
-    const governanceTopicId = process.env.NEXT_PUBLIC_GOVERNANCE_TOPIC_ID || '0.0.6110234';
+    const snapshotTopicId = process.env.NEXT_PUBLIC_SNAPSHOT_TOPIC_ID || '0.0.6110234';
     
     console.log('Creating HCS Service for client-side use:', {
       network,
-      governanceTopicId
+      snapshotTopicId
     });
     
-    hcsServiceInstance = new HCSService(undefined, undefined, network, governanceTopicId);
+    hcsServiceInstance = new HCSService(undefined, undefined, network, snapshotTopicId);
   }
   return hcsServiceInstance;
 } 

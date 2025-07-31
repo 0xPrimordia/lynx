@@ -42,7 +42,7 @@ export interface SaucerSwapContextType {
 import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from './useWallet';
 import { BalanceService } from '../services/balanceService';
-// import { useDaoParameters } from '../providers/DaoParametersProvider'; // Removed as not used
+import { useDaoParameters } from '../providers/DaoParametersProvider';
 
 // Token IDs from environment variables or defaults
 const LYNX_TOKEN_ID = process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || "0.0.5948419";
@@ -122,7 +122,7 @@ export const useSaucerSwapContext = () => {
 
 export function useTokens(): UseTokensResult {
   const { account, isConnected } = useWallet();
-  // const { parameters } = useDaoParameters(); // Removed as not used
+  const { parameters } = useDaoParameters();
   const [tokenBalances, setTokenBalances] = useState<TokenBalances>({
     HBAR: '0',
     SAUCE: '0',
@@ -209,40 +209,81 @@ export function useTokens(): UseTokensResult {
 
   // Create a stable reference to the weights (removed as not used)
 
-  // Calculate required tokens based on LYNX amount using contract ratios
+  // Calculate required tokens based on LYNX amount using snapshot ratios
   const calculateRequiredTokens = useCallback((lynxAmount: number): RequiredTokens => {
     if (!lynxAmount || lynxAmount <= 0) {
       return { HBAR: 0, SAUCE: 0, WBTC: 0, USDC: 0, JAM: 0, HEADSTART: 0 };
     }
     
     try {
-      // Use the actual contract ratios (these match the contract's getCurrentRatios() values)
-      // The contract calculates in base units (tinybars, satoshis, etc.), so we need to match that
-      const contractRatios = {
-        HBAR: 5.0,      // Contract HBAR_RATIO = 50, so 50/10 = 5.0 HBAR per LYNX
-        WBTC: 0.03,     // Contract WBTC_RATIO = 3, so 3/100 = 0.03 WBTC per LYNX  
-        SAUCE: 2.5,     // Contract SAUCE_RATIO = 25, so 25/10 = 2.5 SAUCE per LYNX
-        USDC: 1.5,      // Contract USDC_RATIO = 15, so 15/10 = 1.5 USDC per LYNX
-        JAM: 0.5,       // Contract JAM_RATIO = 5, so 5/10 = 0.5 JAM per LYNX
-        HEADSTART: 0.3  // Contract HEADSTART_RATIO = 3, so 3/10 = 0.3 HEADSTART per LYNX
-      };
-      
-      console.log('[useTokens] Using contract ratios for token calculation:', contractRatios);
-      
-      return {
-        HBAR: lynxAmount * contractRatios.HBAR,
-        WBTC: lynxAmount * contractRatios.WBTC,
-        SAUCE: lynxAmount * contractRatios.SAUCE,
-        USDC: lynxAmount * contractRatios.USDC,
-        JAM: lynxAmount * contractRatios.JAM,
-        HEADSTART: lynxAmount * contractRatios.HEADSTART
-      };
+      // Use snapshot ratios if available, otherwise fall back to hardcoded contract ratios
+      if (parameters?.treasury?.weights) {
+        // Extract values from DAO parameters (handle both simple values and ParameterObject format)
+        const getWeightValue = (weight: unknown): number => {
+          if (typeof weight === 'object' && weight !== null && 'value' in weight) {
+            return (weight as { value: number }).value;
+          }
+          return weight as number;
+        };
+
+        const snapshotWeights = {
+          HBAR: getWeightValue(parameters.treasury.weights.HBAR),
+          WBTC: getWeightValue(parameters.treasury.weights.WBTC),
+          SAUCE: getWeightValue(parameters.treasury.weights.SAUCE),
+          USDC: getWeightValue(parameters.treasury.weights.USDC),
+          JAM: getWeightValue(parameters.treasury.weights.JAM),
+          HEADSTART: getWeightValue(parameters.treasury.weights.HEADSTART)
+        };
+
+        // Convert snapshot weights (which are contract ratios) to actual token amounts
+        // The snapshot contains the contract ratio values directly
+        const snapshotRatios = {
+          HBAR: snapshotWeights.HBAR / 10,        // Contract stores as 50, we need 5.0
+          WBTC: snapshotWeights.WBTC / 100,       // Contract stores as 3, we need 0.03
+          SAUCE: snapshotWeights.SAUCE / 10,      // Contract stores as 25, we need 2.5
+          USDC: snapshotWeights.USDC / 10,        // Contract stores as 15, we need 1.5
+          JAM: snapshotWeights.JAM / 10,          // Contract stores as 5, we need 0.5
+          HEADSTART: snapshotWeights.HEADSTART / 10 // Contract stores as 3, we need 0.3
+        };
+        
+        console.log('[useTokens] Using snapshot ratios for token calculation:', snapshotRatios);
+        
+        return {
+          HBAR: lynxAmount * snapshotRatios.HBAR,
+          WBTC: lynxAmount * snapshotRatios.WBTC,
+          SAUCE: lynxAmount * snapshotRatios.SAUCE,
+          USDC: lynxAmount * snapshotRatios.USDC,
+          JAM: lynxAmount * snapshotRatios.JAM,
+          HEADSTART: lynxAmount * snapshotRatios.HEADSTART
+        };
+      } else {
+        // Fallback to hardcoded contract ratios if no snapshot data
+        const fallbackRatios = {
+          HBAR: 5.0,      // Contract HBAR_RATIO = 50, so 50/10 = 5.0 HBAR per LYNX
+          WBTC: 0.03,     // Contract WBTC_RATIO = 3, so 3/100 = 0.03 WBTC per LYNX  
+          SAUCE: 2.5,     // Contract SAUCE_RATIO = 25, so 25/10 = 2.5 SAUCE per LYNX
+          USDC: 1.5,      // Contract USDC_RATIO = 15, so 15/10 = 1.5 USDC per LYNX
+          JAM: 0.5,       // Contract JAM_RATIO = 5, so 5/10 = 0.5 JAM per LYNX
+          HEADSTART: 0.3  // Contract HEADSTART_RATIO = 3, so 3/10 = 0.3 HEADSTART per LYNX
+        };
+        
+        console.log('[useTokens] Using fallback ratios (no snapshot data):', fallbackRatios);
+        
+        return {
+          HBAR: lynxAmount * fallbackRatios.HBAR,
+          WBTC: lynxAmount * fallbackRatios.WBTC,
+          SAUCE: lynxAmount * fallbackRatios.SAUCE,
+          USDC: lynxAmount * fallbackRatios.USDC,
+          JAM: lynxAmount * fallbackRatios.JAM,
+          HEADSTART: lynxAmount * fallbackRatios.HEADSTART
+        };
+      }
     } catch (err) {
       console.error('[useTokens] Error calculating required tokens:', err);
       setError(err instanceof Error ? err : new Error('Failed to calculate required tokens'));
       return { HBAR: 0, SAUCE: 0, WBTC: 0, USDC: 0, JAM: 0, HEADSTART: 0 };
     }
-  }, []);
+  }, [parameters]);
 
   // Format token amounts with appropriate decimal places
   const formatTokenAmount = useCallback((amount: number, tokenType: string): string => {

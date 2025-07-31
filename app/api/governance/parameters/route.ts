@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { createDefaultDaoParameters } from '../../../types';
 
 interface MirrorNodeMessage {
   consensus_timestamp: string;
@@ -11,16 +10,6 @@ interface MirrorNodeMessage {
 
 interface MirrorNodeResponse {
   messages: MirrorNodeMessage[];
-}
-
-interface TokenRatioSnapshotData {
-  snapshot_id: string;                           // e.g., "snapshot_1753919915094_pyvcvojw7"
-  snapshot_type: 'token_ratios';                 // Fixed type
-  governance_session: string;                    // e.g., "test_session_1753919915094"
-  token_weights: Record<string, number>;         // Token ratios
-  timestamp: string;                             // ISO date string
-  created_by: string;                            // Account ID (e.g., "0.0.6356196")
-  hash: string;                                  // SHA-256 hash of token weights
 }
 
 export async function GET(): Promise<NextResponse> {

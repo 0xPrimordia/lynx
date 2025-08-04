@@ -6,6 +6,7 @@ import { useTokenQueue } from '../providers/TokenQueueProvider';
 import { useTokens } from '../hooks/useTokens';
 import { useDaoParameters } from '../providers/DaoParametersProvider';
 import { MintForm } from '../components/MintForm';
+import { TokenPurchaseAgent } from '../components/TokenPurchaseAgent';
 import { vt323 } from '../fonts';
 
 export default function MintPage() {
@@ -121,6 +122,11 @@ export default function MintPage() {
                 Balances are fetched directly from the Hedera network
               </div>
             </div>
+          )}
+
+          {/* Token Purchase Agent */}
+          {isConnected && accountId && (
+            <TokenPurchaseAgent className="mt-8" />
           )}
 
           {/* DAO Parameters Status */}

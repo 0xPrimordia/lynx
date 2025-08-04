@@ -66,7 +66,7 @@ export default function CompositionPage() {
   const generateComposition = (): TokenComposition[] => {
     if (!parameters) return [];
 
-    return LYNX_TOKENS.map(token => ({
+    const composition = LYNX_TOKENS.map(token => ({
       symbol: token,
       name: TOKEN_INFO[token].name,
       sector: TOKEN_INFO[token].sector,
@@ -74,6 +74,11 @@ export default function CompositionPage() {
       maxSlippage: getParameterValue(parameters.treasury.maxSlippage[token]),
       maxSwapSize: getParameterValue(parameters.treasury.maxSwapSize[token])
     }));
+
+    console.log('Generated composition with weights:', composition.map(t => `${t.symbol}: ${t.allocation}%`));
+    console.log('Raw treasury weights from parameters:', parameters.treasury.weights);
+    
+    return composition;
   };
 
 
@@ -265,59 +270,59 @@ export default function CompositionPage() {
     const originalAllocation = token.allocation;
     
     return (
-              <div 
-          key={token.symbol} 
-          className="bg-gray-800 rounded-lg p-6 pb-4 mb-6 flex flex-col items-center justify-between w-[200px] h-[380px]"
-        >
-        <div className="flex flex-col items-center">
-          <div className="rounded-full p-2 mb-2">
-            <TokenImage symbol={token.symbol} />
-          </div>
-          <div className="text-center">
-            <div className="text-white font-medium text-lg">{token.symbol}</div>
-            <div className="text-sm text-gray-400 mt-1">{token.name}</div>
-          </div>
-        </div>
-        
-        <div className="text-center">
-          <div className="text-xs text-gray-500 mb-1">{token.sector}</div>
-        </div>
-        
-        <div className="w-full space-y-3">
-          <div className="text-center">
-            {isEditable ? (
-              <div>
-                <input
-                  type="range"
-                  min="5"
-                  max="40"
-                  value={currentAllocation}
-                  onChange={(e) => handleAllocationChange(token.symbol, parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-                />
-                <div className="text-xl font-bold text-white mt-2">
-                  {currentAllocation}%
-                  {hasChanged && (
-                    <span className="text-sm text-gray-400 ml-2">
-                      (was {originalAllocation}%)
-                    </span>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="text-xl font-bold text-white">{token.allocation}%</div>
-            )}
-            <div className="text-xs text-gray-400">Allocation</div>
+      <div 
+        key={token.symbol} 
+        className="bg-gray-800 rounded-lg p-6 pb-4 mb-6 flex flex-col items-center justify-between w-full"
+      >
+        <div className="flex items-start space-x-4 w-full">
+          <div className="flex flex-col items-center">
+            <div className="rounded-full p-2 mb-2">
+              <TokenImage symbol={token.symbol} />
+            </div>
+            <div className="text-center">
+              <div className="text-white font-medium text-lg">{token.symbol}</div>
+              <div className="text-sm text-gray-400 mt-1">{token.name}</div>
+              <div className="text-xs text-gray-500 mt-1">{token.sector}</div>
+            </div>
           </div>
           
-                      <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="flex-1 space-y-3">
+            <div className="grid grid-cols-2 gap-2 text-xs pb-4">
               <div>
                 <div className="text-gray-400">Max Slip</div>
                 <div className="text-white">{token.maxSlippage}%</div>
               </div>
-            <div>
-              <div className="text-gray-400">Max Swap</div>
-              <div className="text-white">${(token.maxSwapSize / 1000)}K</div>
+              <div>
+                <div className="text-gray-400">Max Swap</div>
+                <div className="text-white">${(token.maxSwapSize / 1000)}K</div>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              {isEditable ? (
+                <div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="50"
+                    step="1"
+                    value={currentAllocation}
+                    onChange={(e) => handleAllocationChange(token.symbol, parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                  />
+                  <div className="text-xl font-bold text-white mt-2">
+                    {currentAllocation}%
+                    {hasChanged && (
+                      <span className="text-sm text-gray-400 ml-2">
+                        (was {originalAllocation}%)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xl font-bold text-white">{token.allocation}%</div>
+              )}
+              <div className="text-xs text-gray-400">Allocation</div>
             </div>
           </div>
         </div>
@@ -402,7 +407,7 @@ export default function CompositionPage() {
 
           {/* Current Composition */}
           <div className="mb-8">
-                      <div className="flex flex-wrap gap-4 justify-center">
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-center">
             {currentComposition.map(token => (
               renderTokenCard(token, !isSnapshotFailed)
             ))}

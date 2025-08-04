@@ -78,16 +78,15 @@ export async function GET(): Promise<NextResponse> {
                 tokenWeights: metadataObj.token_weights
               });
 
-              // Convert raw contract ratios to per-LYNX amounts using contract denominators
-              // Contract formula: hbarRequired = lynxAmount * HBAR_RATIO * (10^8) / 10
-              // This simplifies to: hbarRequired = lynxAmount * HBAR_RATIO / 10
+              // Use the raw token weights as percentages for the UI
+              // The contract ratios are already in the correct percentage format
               const tokenWeights = {
-                HBAR: (metadataObj.token_weights.HBAR || 0) / 10,        // HBAR_RATIO / 10
-                WBTC: (metadataObj.token_weights.WBTC || 0) / 100,       // WBTC_RATIO / 100  
-                SAUCE: (metadataObj.token_weights.SAUCE || 0) / 10,      // SAUCE_RATIO / 10
-                USDC: (metadataObj.token_weights.USDC || 0) / 10,        // USDC_RATIO / 10
-                JAM: (metadataObj.token_weights.JAM || 0) / 10,          // JAM_RATIO / 10
-                HEADSTART: (metadataObj.token_weights.HEADSTART || 0) / 10 // HEADSTART_RATIO / 10
+                HBAR: metadataObj.token_weights.HBAR || 0,
+                WBTC: metadataObj.token_weights.WBTC || 0,
+                SAUCE: metadataObj.token_weights.SAUCE || 0,
+                USDC: metadataObj.token_weights.USDC || 0,
+                JAM: metadataObj.token_weights.JAM || 0,
+                HEADSTART: metadataObj.token_weights.HEADSTART || 0
               };
           
           // Create a minimal parameters structure that matches the expected format

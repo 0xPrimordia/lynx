@@ -12,16 +12,16 @@
 
 ## 🎯 Overview
 
-**Lynx** is a tokenized index fund on Hedera Hashgraph that provides automated portfolio management through autonomous AI agents. This dashboard serves as the minting and governance interface for the Lynx ecosystem, enabling users to mint/burn LYNX tokens and participate in decentralized governance decisions that control the underlying portfolio composition.
+**Lynx** is a decentralized DAO governed tokenized index on Hedera. This dashboard is a prototype of the minting and governance interface for the Lynx ecosystem, enabling users to mint LYNX tokens and participate in decentralized governance decisions that control the underlying (testnet) portfolio composition.
 
 The system leverages **[Lynx Governance Agent V2](https://github.com/0xPrimordia/lynx-governance-agentv2)** and **[Lynx Balancer Agent](https://github.com/0xPrimordia/lynx-balancer-agent)** powered by Hedera Agent Kit to provide fully autonomous portfolio management through HCS (Hedera Consensus Service) messaging.
 
 ### ✨ Key Features
 
-- 🪙 **Token Minting & Burning** - Convert between portfolio tokens and LYNX index tokens
+- 🪙 **Token Minting** - Convert between portfolio tokens and LYNX index tokens
 - 🗳️ **Governance Voting** - Submit and track portfolio ratio changes through HCS-2
 - 📊 **Real-time Portfolio Monitoring** - Live updates of token balances and ratios
-- 🔗 **Agent Integration** - Seamless communication with autonomous governance and balancer agents
+- 🔗 **Agent Integration** - HCS communication with autonomous governance and balancer agents
 - 💼 **Wallet Integration** - Native Hedera wallet support with transaction queuing
 - 📱 **Responsive Design** - Modern UI optimized for all devices
 - ⚡ **Real-time Updates** - Live notifications and state synchronization

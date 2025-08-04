@@ -43,13 +43,7 @@ The system leverages **[Lynx Governance Agent V2](https://github.com/0xPrimordia
 #### **Step 2: Governance Composition & Voting**
 1. Navigate to **Governance → Composition** (`/governance/composition`)
 2. **Key Demo Feature**: Each vote is configured with **1000 voting power** to trigger quorum immediately
-3. Adjust token allocation ratios using the interactive sliders:
-   - HBAR: 40% (default)
-   - WBTC: 3% (default) 
-   - SAUCE: 25% (default)
-   - USDC: 20% (default)
-   - JAM: 7% (default)
-   - HEADSTART: 5% (default)
+3. Adjust token allocation ratios using the interactive sliders
 4. **Submit a governance vote** - This will:
    - Send the vote to HCS-2 topic for processing
    - Trigger the Governance Agent V2 to process the vote

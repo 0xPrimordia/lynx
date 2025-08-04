@@ -113,7 +113,7 @@ export default function CompositionPage() {
     try {
       // Mock voting power calculation - in reality this would query the user's LYNX balance
       // For testing quorum triggers, using a high value (25% of total supply to trigger quorum)
-      const mockVotingPower = 250000; // 250K LYNX for testing quorum
+      const mockVotingPower = 1000; // 1000 for test quorum
       return mockVotingPower;
     } catch (error) {
       console.error('Error fetching voting power:', error);

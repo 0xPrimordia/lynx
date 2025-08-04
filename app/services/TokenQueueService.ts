@@ -234,23 +234,30 @@ export class TokenQueueService {
     let headstartAmount: string;
     
     if (requiredAmounts) {
-      // Use the frontend-calculated amounts (convert to base units)
-      wbtcAmount = (requiredAmounts.WBTC * Math.pow(10, 8)).toString(); // 8 decimals
-      sauceAmount = (requiredAmounts.SAUCE * Math.pow(10, 6)).toString(); // 6 decimals
-      usdcAmount = (requiredAmounts.USDC * Math.pow(10, 6)).toString(); // 6 decimals
-      jamAmount = (requiredAmounts.JAM * Math.pow(10, 8)).toString(); // 8 decimals
-      headstartAmount = (requiredAmounts.HEADSTART * Math.pow(10, 8)).toString(); // 8 decimals
+      // Use the frontend-calculated amounts (convert to base units with proper rounding)
+      wbtcAmount = Math.round(requiredAmounts.WBTC * Math.pow(10, 8)).toString(); // 8 decimals
+      sauceAmount = Math.round(requiredAmounts.SAUCE * Math.pow(10, 6)).toString(); // 6 decimals
+      usdcAmount = Math.round(requiredAmounts.USDC * Math.pow(10, 6)).toString(); // 6 decimals
+      jamAmount = Math.round(requiredAmounts.JAM * Math.pow(10, 8)).toString(); // 8 decimals
+      headstartAmount = Math.round(requiredAmounts.HEADSTART * Math.pow(10, 8)).toString(); // 8 decimals
       
       console.log(`[QUEUE DEBUG] Using frontend-calculated amounts:`, requiredAmounts);
+      console.log(`[QUEUE DEBUG] Converted to base units:`, {
+        wbtc: wbtcAmount,
+        sauce: sauceAmount,
+        usdc: usdcAmount,
+        jam: jamAmount,
+        headstart: headstartAmount
+      });
     } else {
       // Fallback to calculation (using DepositMinterV2 ratios)
       const ratios = this.getTokenRatios();
       
-      wbtcAmount = (lynxAmount * ratios.wbtcRatio * Math.pow(10, 8)).toString(); // 8 decimals
-      sauceAmount = (lynxAmount * ratios.sauceRatio * Math.pow(10, 6)).toString(); // 6 decimals
-      usdcAmount = (lynxAmount * ratios.usdcRatio * Math.pow(10, 6)).toString(); // 6 decimals
-      jamAmount = (lynxAmount * ratios.jamRatio * Math.pow(10, 8)).toString(); // 8 decimals
-      headstartAmount = (lynxAmount * ratios.headstartRatio * Math.pow(10, 8)).toString(); // 8 decimals
+      wbtcAmount = Math.round(lynxAmount * ratios.wbtcRatio * Math.pow(10, 8)).toString(); // 8 decimals
+      sauceAmount = Math.round(lynxAmount * ratios.sauceRatio * Math.pow(10, 6)).toString(); // 6 decimals
+      usdcAmount = Math.round(lynxAmount * ratios.usdcRatio * Math.pow(10, 6)).toString(); // 6 decimals
+      jamAmount = Math.round(lynxAmount * ratios.jamRatio * Math.pow(10, 8)).toString(); // 8 decimals
+      headstartAmount = Math.round(lynxAmount * ratios.headstartRatio * Math.pow(10, 8)).toString(); // 8 decimals
       
       console.log(`[QUEUE DEBUG] Using fallback calculated amounts`);
     }

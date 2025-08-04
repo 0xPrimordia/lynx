@@ -15,7 +15,7 @@ interface MirrorNodeResponse {
 export async function GET(): Promise<NextResponse> {
   try {
     const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
-    const snapshotTopicId = process.env.NEXT_PUBLIC_SNAPSHOT_TOPIC_ID || '0.0.6110234';
+    const snapshotTopicId = process.env.NEXT_PUBLIC_SNAPSHOT_TOPIC_ID || '0.0.6495309';
 
     console.log('API: Fetching DAO parameters from snapshot topic:', snapshotTopicId);
 
@@ -65,17 +65,30 @@ export async function GET(): Promise<NextResponse> {
 
         const parsed = JSON.parse(messageData);
 
-        // Check if this is the new token ratio snapshot format
-        if (parsed.p === 'hcs-2' && parsed.op === 'register' && parsed.data?.snapshot_type === 'token_ratios') {
-          console.log('API: Found token ratio snapshot:', {
-            snapshotId: parsed.data.snapshot_id,
-            governanceSession: parsed.data.governance_session,
-            tokenWeights: parsed.data.token_weights
-          });
-
+        // Check if this is the HCS-2 token ratio snapshot format
+        if (parsed.p === 'hcs-2' && parsed.op === 'register' && parsed.metadata) {
           try {
-            // Create a simplified parameters object with just the token weights
-            const tokenWeights = parsed.data.token_weights;
+            // Parse the metadata JSON string
+            const metadataObj = JSON.parse(parsed.metadata);
+            
+            if (metadataObj.snapshot_type === 'token_ratios') {
+              console.log('API: Found HCS-2 token ratio snapshot:', {
+                snapshotId: metadataObj.snapshot_id,
+                governanceSession: metadataObj.governance_session,
+                tokenWeights: metadataObj.token_weights
+              });
+
+              // Convert raw contract ratios to per-LYNX amounts using contract denominators
+              // Contract formula: hbarRequired = lynxAmount * HBAR_RATIO * (10^8) / 10
+              // This simplifies to: hbarRequired = lynxAmount * HBAR_RATIO / 10
+              const tokenWeights = {
+                HBAR: (metadataObj.token_weights.HBAR || 0) / 10,        // HBAR_RATIO / 10
+                WBTC: (metadataObj.token_weights.WBTC || 0) / 100,       // WBTC_RATIO / 100  
+                SAUCE: (metadataObj.token_weights.SAUCE || 0) / 10,      // SAUCE_RATIO / 10
+                USDC: (metadataObj.token_weights.USDC || 0) / 10,        // USDC_RATIO / 10
+                JAM: (metadataObj.token_weights.JAM || 0) / 10,          // JAM_RATIO / 10
+                HEADSTART: (metadataObj.token_weights.HEADSTART || 0) / 10 // HEADSTART_RATIO / 10
+              };
           
           // Create a minimal parameters structure that matches the expected format
           const parameters = {
@@ -130,29 +143,30 @@ export async function GET(): Promise<NextResponse> {
             },
             metadata: {
               version: "1.0.0",
-              lastUpdated: parsed.data.timestamp,
-              updatedBy: parsed.data.created_by,
+              lastUpdated: metadataObj.timestamp,
+              updatedBy: metadataObj.created_by,
               networkState: network as 'mainnet' | 'testnet' | 'previewnet',
               topicId: snapshotTopicId,
               sequenceNumber: message.sequence_number
             }
           };
 
-                      console.log('API: Successfully created parameters object, returning response');
-            return NextResponse.json({
-              parameters,
-              metadata: {
-                timestamp: parsed.data.timestamp,
-                sequenceNumber: message.sequence_number,
-                version: "1.0.0",
-                sourceTopicId: snapshotTopicId,
-                snapshotId: parsed.data.snapshot_id,
-                governanceSession: parsed.data.governance_session,
-                hash: parsed.data.hash
-              }
-            });
-          } catch (snapshotError) {
-            console.error('API: Error processing snapshot:', snapshotError);
+              console.log('API: Successfully created parameters object, returning response');
+              return NextResponse.json({
+                parameters,
+                metadata: {
+                  timestamp: metadataObj.timestamp,
+                  sequenceNumber: message.sequence_number,
+                  version: "1.0.0",
+                  sourceTopicId: snapshotTopicId,
+                  snapshotId: metadataObj.snapshot_id,
+                  governanceSession: metadataObj.governance_session,
+                  hash: metadataObj.hash
+                }
+              });
+            }
+          } catch (metadataError) {
+            console.error('API: Error parsing HCS-2 metadata:', metadataError);
             continue;
           }
         }

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { VT323 } from "next/font/google";
 import { useDaoParameters } from '../../providers/DaoParametersProvider';
 import { LYNX_TOKENS, TOKEN_INFO, LynxTokenSymbol, getParameterValue } from '../../types';
+import { MultiRatioGovernanceVote, validateMultiRatioVote } from '../../types/governance';
 import { useWallet } from '../../hooks/useWallet';
 import { 
   TopicMessageSubmitTransaction, 
@@ -17,6 +18,8 @@ import { toast } from 'sonner';
 
 const vt323 = VT323({ weight: "400", subsets: ["latin"] });
 
+// Validation function is now imported from shared governance types
+
 interface TokenComposition {
   symbol: LynxTokenSymbol;
   name: string;
@@ -26,18 +29,7 @@ interface TokenComposition {
   maxSwapSize: number;
 }
 
-interface MultiRatioGovernanceVote {
-  type: 'MULTI_RATIO_VOTE';
-  ratioChanges: Array<{
-    token: string;
-    newRatio: number;
-  }>;
-  voterAccountId: string;
-  votingPower: number;
-  timestamp: Date;
-  txId?: string;
-  reason?: string;
-}
+// MultiRatioGovernanceVote interface is now imported from shared governance types
 
 export default function CompositionPage() {
   const { parameters, isLoading, error } = useDaoParameters();
@@ -144,8 +136,10 @@ export default function CompositionPage() {
       return;
     }
 
-    if (Object.keys(proposedChanges).length === 0) {
-      toast.error('No changes to submit');
+    // Note: We now always send the full state of all token ratios, 
+    // so we can submit votes even when no specific changes were made
+    if (!parameters?.treasury?.weights) {
+      toast.error('Treasury parameters not loaded - cannot submit vote');
       return;
     }
 
@@ -153,19 +147,28 @@ export default function CompositionPage() {
       setIsSubmitting(true);
       toast.loading('Submitting governance votes to Hedera Consensus Service...');
 
-      // Create a single multi-ratio vote containing all changes
+      // Create a single multi-ratio vote containing ALL token ratios (full state)
       const multiRatioVote: MultiRatioGovernanceVote = {
         type: 'MULTI_RATIO_VOTE',
-        ratioChanges: Object.entries(proposedChanges).map(([symbol, newValue]) => ({
-          token: symbol,
-          newRatio: newValue
+        ratioChanges: LYNX_TOKENS.map(token => ({
+          token: token,
+          newRatio: proposedChanges[token] ?? getParameterValue(parameters.treasury.weights[token])
         })),
         voterAccountId: String(account.accountId),
         votingPower: votingPower,
         timestamp: new Date(),
-        reason: `Proposed ratio changes for ${Object.keys(proposedChanges).length} tokens`
+        reason: `Full state vote with ${Object.keys(proposedChanges).length} proposed changes across all ${LYNX_TOKENS.length} tokens`
       };
 
+      // Validate the vote data before submission
+      const validation = validateMultiRatioVote(multiRatioVote);
+      if (!validation.isValid) {
+        console.error('Vote validation failed:', validation.errors);
+        toast.dismiss();
+        toast.error(`Vote validation failed: ${validation.errors.join(', ')}`);
+        return;
+      }
+      
       console.log('Submitting multi-ratio vote:', multiRatioVote);
       
       // Create client for testnet
@@ -405,7 +408,7 @@ export default function CompositionPage() {
             ))}
           </div>
             
-            {showVoteButton && !isSnapshotFailed && (
+            {isConnected && !isSnapshotFailed && (
               <div className="flex justify-center mt-6">
                 <button 
                   onClick={handleVoteSubmit}
@@ -418,7 +421,9 @@ export default function CompositionPage() {
                     ? 'Submitting to HCS...' 
                     : !isConnected 
                     ? 'Connect Wallet to Vote' 
-                    : 'Submit Changes for Governance Vote'
+                    : Object.keys(proposedChanges).length > 0
+                    ? 'Submit Changes for Governance Vote'
+                    : 'Submit Full State Governance Vote'
                   }
                 </button>
               </div>

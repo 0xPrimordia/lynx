@@ -237,23 +237,31 @@ export class TransactionService {
       let headstartRequired: number;
       
       if (requiredAmounts) {
-        // Use the frontend-calculated amounts (convert to base units)
-        hbarRequiredTinybars = requiredAmounts.HBAR * Math.pow(10, 8);     // Convert HBAR to tinybars
-        wbtcRequired = requiredAmounts.WBTC * Math.pow(10, 8);             // Convert WBTC to satoshis
-        sauceRequired = requiredAmounts.SAUCE * Math.pow(10, 6);           // Convert SAUCE to base units
-        usdcRequired = requiredAmounts.USDC * Math.pow(10, 6);             // Convert USDC to base units
-        jamRequired = requiredAmounts.JAM * Math.pow(10, 8);               // Convert JAM to base units
-        headstartRequired = requiredAmounts.HEADSTART * Math.pow(10, 8);   // Convert HEADSTART to base units
+        // Use the frontend-calculated amounts (convert to base units with proper rounding)
+        hbarRequiredTinybars = Math.round(requiredAmounts.HBAR * Math.pow(10, 8));     // Convert HBAR to tinybars
+        wbtcRequired = Math.round(requiredAmounts.WBTC * Math.pow(10, 8));             // Convert WBTC to satoshis
+        sauceRequired = Math.round(requiredAmounts.SAUCE * Math.pow(10, 6));           // Convert SAUCE to base units
+        usdcRequired = Math.round(requiredAmounts.USDC * Math.pow(10, 6));             // Convert USDC to base units
+        jamRequired = Math.round(requiredAmounts.JAM * Math.pow(10, 8));               // Convert JAM to base units
+        headstartRequired = Math.round(requiredAmounts.HEADSTART * Math.pow(10, 8));   // Convert HEADSTART to base units
         
         console.log('[CRITICAL] Using frontend-calculated amounts:', requiredAmounts);
+        console.log('[CRITICAL] Converted to base units:', {
+          hbar: hbarRequiredTinybars,
+          wbtc: wbtcRequired,
+          sauce: sauceRequired,
+          usdc: usdcRequired,
+          jam: jamRequired,
+          headstart: headstartRequired
+        });
       } else {
         // Fallback to hardcoded calculation (these should match the contract)
-        hbarRequiredTinybars = amount * 5 * Math.pow(10, 8);     // 5 HBAR per LYNX (contract HBAR_RATIO = 50, so 50/10 = 5)
-        wbtcRequired = amount * 0.03 * Math.pow(10, 8);          // 0.03 WBTC per LYNX (contract WBTC_RATIO = 3, so 3/100 = 0.03)
-        sauceRequired = amount * 2.5 * Math.pow(10, 6);          // 2.5 SAUCE per LYNX (contract SAUCE_RATIO = 25, so 25/10 = 2.5)
-        usdcRequired = amount * 1.5 * Math.pow(10, 6);           // 1.5 USDC per LYNX (contract USDC_RATIO = 15, so 15/10 = 1.5)
-        jamRequired = amount * 0.5 * Math.pow(10, 8);            // 0.5 JAM per LYNX (contract JAM_RATIO = 5, so 5/10 = 0.5)
-        headstartRequired = amount * 0.3 * Math.pow(10, 8);      // 0.3 HEADSTART per LYNX (contract HEADSTART_RATIO = 3, so 3/10 = 0.3)
+        hbarRequiredTinybars = Math.round(amount * 5 * Math.pow(10, 8));     // 5 HBAR per LYNX (contract HBAR_RATIO = 50, so 50/10 = 5)
+        wbtcRequired = Math.round(amount * 0.03 * Math.pow(10, 8));          // 0.03 WBTC per LYNX (contract WBTC_RATIO = 3, so 3/100 = 0.03)
+        sauceRequired = Math.round(amount * 2.5 * Math.pow(10, 6));          // 2.5 SAUCE per LYNX (contract SAUCE_RATIO = 25, so 25/10 = 2.5)
+        usdcRequired = Math.round(amount * 1.5 * Math.pow(10, 6));           // 1.5 USDC per LYNX (contract USDC_RATIO = 15, so 15/10 = 1.5)
+        jamRequired = Math.round(amount * 0.5 * Math.pow(10, 8));            // 0.5 JAM per LYNX (contract JAM_RATIO = 5, so 5/10 = 0.5)
+        headstartRequired = Math.round(amount * 0.3 * Math.pow(10, 8));      // 0.3 HEADSTART per LYNX (contract HEADSTART_RATIO = 3, so 3/10 = 0.3)
         
         console.log('[CRITICAL] Using fallback hardcoded amounts');
       }

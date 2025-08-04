@@ -1,159 +1,212 @@
-import { Client, PrivateKey, AccountId, ContractId } from '@hashgraph/sdk';
-import * as dotenv from 'dotenv';
-import { ContractCallQuery } from '@hashgraph/sdk';
+#!/usr/bin/env tsx
 
+/**
+ * Script to check if contract ratios are in sync with governance snapshot ratios
+ */
+
+import dotenv from 'dotenv';
+import { Client, ContractCallQuery, ContractId, AccountId, PrivateKey } from '@hashgraph/sdk';
+
+// Load environment variables from .env.local
 dotenv.config({ path: '.env.local' });
 
-async function checkRatioSync() {
-  console.log('🔍 Checking ratio synchronization between contract and governance snapshot...\n');
+// Environment setup
+const HEDERA_NETWORK = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
+const DEPOSIT_MINTER_V2_ID = process.env.NEXT_PUBLIC_DEPOSIT_MINTER_V2_HEDERA_ID || '0.0.6434231';
+const SNAPSHOT_TOPIC_ID = process.env.NEXT_PUBLIC_SNAPSHOT_TOPIC_ID || '0.0.6495309';
 
-  // Initialize Hedera client
-  const operatorId = process.env.NEXT_PUBLIC_OPERATOR_ID!;
-  const operatorKey = process.env.NEXT_PUBLIC_OPERATOR_KEY!;
+interface ContractRatios {
+  hbarRatio: number;
+  wbtcRatio: number;
+  sauceRatio: number;
+  usdcRatio: number;
+  jamRatio: number;
+  headstartRatio: number;
+}
+
+interface SnapshotRatios {
+  HBAR: number;
+  WBTC: number;
+  SAUCE: number;
+  USDC: number;
+  JAM: number;
+  HEADSTART: number;
+}
+
+async function getCurrentContractRatios(): Promise<ContractRatios> {
+  console.log('📡 Fetching current contract ratios...');
+  
+  // Get environment variables
+  const operatorId = process.env.NEXT_PUBLIC_OPERATOR_ID;
+  const operatorKey = process.env.NEXT_PUBLIC_OPERATOR_KEY;
   
   if (!operatorId || !operatorKey) {
-    throw new Error('Missing operator credentials');
+    throw new Error('Missing required environment variables: NEXT_PUBLIC_OPERATOR_ID, NEXT_PUBLIC_OPERATOR_KEY');
   }
-
-  const client = Client.forTestnet();
-  client.setOperator(
-    AccountId.fromString(operatorId),
-    PrivateKey.fromString(operatorKey)
-  );
-
-  // Contract addresses from deployment info
-  const contractId = process.env.NEXT_PUBLIC_LYNX_CONTRACT_HEDERA_ID!;
-  const snapshotTopicId = process.env.NEXT_PUBLIC_SNAPSHOT_TOPIC_ID!;
-
-  if (!contractId || !snapshotTopicId) {
-    throw new Error('Missing contract or snapshot topic ID');
-  }
-
-  console.log('📋 Configuration:');
-  console.log(`- Contract ID: ${contractId}`);
-  console.log(`- Snapshot Topic ID: ${snapshotTopicId}\n`);
-
-  // 1. Fetch current contract ratios
-  console.log('1️⃣ Fetching current contract ratios...');
-  let contractRatios: any = {};
+  
+  const client = HEDERA_NETWORK === 'mainnet' ? Client.forMainnet() : Client.forTestnet();
+  client.setOperator(AccountId.fromString(operatorId), PrivateKey.fromString(operatorKey));
   
   try {
-    const contract = ContractId.fromString(contractId);
-    
     // Call getCurrentRatios() on the contract
-    const ratiosQuery = new ContractCallQuery()
-      .setContractId(contract)
+    const contractCall = new ContractCallQuery()
+      .setContractId(ContractId.fromString(DEPOSIT_MINTER_V2_ID))
       .setGas(100000)
-      .setFunction("getCurrentRatios");
-
-    const ratiosResult = await ratiosQuery.execute(client);
+      .setFunction('getCurrentRatios');
     
-    contractRatios = {
-      HBAR: ratiosResult.getUint256(0),
-      WBTC: ratiosResult.getUint256(1),
-      SAUCE: ratiosResult.getUint256(2),
-      USDC: ratiosResult.getUint256(3),
-      JAM: ratiosResult.getUint256(4),
-      HEADSTART: ratiosResult.getUint256(5)
+    const result = await contractCall.execute(client);
+    
+    const contractRatios: ContractRatios = {
+      hbarRatio: parseInt(result.getUint256(0).toString()),
+      wbtcRatio: parseInt(result.getUint256(1).toString()),
+      sauceRatio: parseInt(result.getUint256(2).toString()),
+      usdcRatio: parseInt(result.getUint256(3).toString()),
+      jamRatio: parseInt(result.getUint256(4).toString()),
+      headstartRatio: parseInt(result.getUint256(5).toString())
     };
-
-    console.log('📊 Contract Ratios:');
-    console.log(`- HBAR_RATIO: ${contractRatios.HBAR}`);
-    console.log(`- WBTC_RATIO: ${contractRatios.WBTC}`);
-    console.log(`- SAUCE_RATIO: ${contractRatios.SAUCE}`);
-    console.log(`- USDC_RATIO: ${contractRatios.USDC}`);
-    console.log(`- JAM_RATIO: ${contractRatios.JAM}`);
-    console.log(`- HEADSTART_RATIO: ${contractRatios.HEADSTART}\n`);
-
+    
+    console.log('✅ Contract ratios retrieved:', contractRatios);
+    return contractRatios;
+    
   } catch (error) {
-    console.error('❌ Failed to fetch contract ratios:', error);
-    return;
+    console.error('❌ Error fetching contract ratios:', error);
+    throw error;
+  } finally {
+    client.close();
   }
+}
 
-  // 2. Fetch latest governance snapshot
-  console.log('2️⃣ Fetching latest governance snapshot...');
+async function getCurrentSnapshotRatios(): Promise<SnapshotRatios | null> {
+  console.log('🔍 Fetching current snapshot ratios...');
+  
+  const mirrorNodeUrl = HEDERA_NETWORK === 'mainnet' 
+    ? 'https://mainnet-public.mirrornode.hedera.com'
+    : 'https://testnet.mirrornode.hedera.com';
+  
   try {
-    const network = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
-    const mirrorNodeUrl = network === 'mainnet' 
-      ? 'https://mainnet-public.mirrornode.hedera.com'
-      : 'https://testnet.mirrornode.hedera.com';
-
-    const url = `${mirrorNodeUrl}/api/v1/topics/${snapshotTopicId}/messages?order=desc&limit=10`;
-    console.log(`Fetching from: ${url}`);
-
+    const url = `${mirrorNodeUrl}/api/v1/topics/${SNAPSHOT_TOPIC_ID}/messages?order=desc&limit=10`;
     const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error(`Mirror node request failed: ${response.status} ${response.statusText}`);
+      throw new Error(`Mirror node request failed: ${response.status}`);
     }
-
+    
     const data = await response.json();
     
-    if (!data.messages || data.messages.length === 0) {
-      console.log('❌ No messages found in snapshot topic');
-      return;
-    }
-
-    console.log(`Found ${data.messages.length} messages in snapshot topic`);
-
-    // Look for the most recent token ratio snapshot
+    // Find the most recent HCS-2 token ratio snapshot
     for (const message of data.messages) {
       try {
-        const decodedMessage = Buffer.from(message.message, 'base64').toString('utf-8');
-        const parsed = JSON.parse(decodedMessage);
+        const messageData = Buffer.from(message.message, 'base64').toString('utf-8');
+        const parsed = JSON.parse(messageData);
         
-        // Check if this is a token ratio snapshot
-        if (parsed.type === 'token_ratio_snapshot' || parsed.data?.type === 'token_ratio_snapshot') {
-          console.log('📋 Found token ratio snapshot:');
-          console.log(JSON.stringify(parsed, null, 2));
+        if (parsed.p === 'hcs-2' && parsed.op === 'register' && parsed.metadata) {
+          const metadataObj = JSON.parse(parsed.metadata);
           
-          // Extract ratios from snapshot
-          const snapshotRatios = parsed.data?.ratios || parsed.ratios;
-          
-          if (snapshotRatios) {
-            console.log('\n📊 Snapshot Ratios:');
-            console.log(`- HBAR: ${snapshotRatios.HBAR}`);
-            console.log(`- WBTC: ${snapshotRatios.WBTC}`);
-            console.log(`- SAUCE: ${snapshotRatios.SAUCE}`);
-            console.log(`- USDC: ${snapshotRatios.USDC}`);
-            console.log(`- JAM: ${snapshotRatios.JAM}`);
-            console.log(`- HEADSTART: ${snapshotRatios.HEADSTART}`);
+          if (metadataObj.snapshot_type === 'token_ratios') {
+            console.log('✅ Found snapshot ratios:', metadataObj.token_weights);
+            console.log('📅 Snapshot timestamp:', metadataObj.timestamp);
+            console.log('🆔 Snapshot ID:', metadataObj.snapshot_id);
             
-            // Compare with contract ratios
-            console.log('\n🔍 Comparison:');
-            console.log('Contract vs Snapshot:');
-            console.log(`- HBAR: ${contractRatios.HBAR} vs ${snapshotRatios.HBAR} - ${contractRatios.HBAR === snapshotRatios.HBAR ? '✅ Match' : '❌ Mismatch'}`);
-            console.log(`- WBTC: ${contractRatios.WBTC} vs ${snapshotRatios.WBTC} - ${contractRatios.WBTC === snapshotRatios.WBTC ? '✅ Match' : '❌ Mismatch'}`);
-            console.log(`- SAUCE: ${contractRatios.SAUCE} vs ${snapshotRatios.SAUCE} - ${contractRatios.SAUCE === snapshotRatios.SAUCE ? '✅ Match' : '❌ Mismatch'}`);
-            console.log(`- USDC: ${contractRatios.USDC} vs ${snapshotRatios.USDC} - ${contractRatios.USDC === snapshotRatios.USDC ? '✅ Match' : '❌ Mismatch'}`);
-            console.log(`- JAM: ${contractRatios.JAM} vs ${snapshotRatios.JAM} - ${contractRatios.JAM === snapshotRatios.JAM ? '✅ Match' : '❌ Mismatch'}`);
-            console.log(`- HEADSTART: ${contractRatios.HEADSTART} vs ${snapshotRatios.HEADSTART} - ${contractRatios.HEADSTART === snapshotRatios.HEADSTART ? '✅ Match' : '❌ Mismatch'}`);
+            return metadataObj.token_weights as SnapshotRatios;
           }
-          
-          break; // Found the snapshot, stop looking
         }
       } catch (parseError) {
-        console.log(`Could not parse message ${message.sequence_number}:`, (parseError as Error).message);
-        continue;
+        continue; // Skip unparseable messages
       }
     }
-
+    
+    console.log('❌ No token ratio snapshots found');
+    return null;
+    
   } catch (error) {
-    console.error('❌ Failed to fetch governance snapshot:', error);
+    console.error('❌ Error fetching snapshot ratios:', error);
+    throw error;
   }
-
-  // 3. Check what the frontend is actually using
-  console.log('\n3️⃣ Checking frontend calculation...');
-  console.log('The frontend should be using DAO parameters from the governance topic.');
-  console.log('If the snapshot ratios don\'t match the contract, the frontend will calculate wrong amounts.\n');
-
-  console.log('🎯 Conclusion:');
-  console.log('- If ratios match: Frontend should work correctly');
-  console.log('- If ratios don\'t match: Need to update contract or snapshot');
-  console.log('- If no snapshot found: Need to create governance snapshot');
-
-  client.close();
 }
 
-// Run the check
-checkRatioSync().catch(console.error); 
+function convertContractRatiosToTokenAmounts(contractRatios: ContractRatios): SnapshotRatios {
+  // Return RAW contract ratios without any conversion - these are the exact values from getCurrentRatios()
+  return {
+    HBAR: contractRatios.hbarRatio,
+    WBTC: contractRatios.wbtcRatio,
+    SAUCE: contractRatios.sauceRatio,
+    USDC: contractRatios.usdcRatio,
+    JAM: contractRatios.jamRatio,
+    HEADSTART: contractRatios.headstartRatio
+  };
+}
+
+function compareRatios(contractRatios: SnapshotRatios, snapshotRatios: SnapshotRatios): void {
+  console.log('\n📊 RATIO COMPARISON');
+  console.log('='.repeat(60));
+  
+  const tokens = ['HBAR', 'WBTC', 'SAUCE', 'USDC', 'JAM', 'HEADSTART'] as const;
+  let allMatch = true;
+  
+  console.log(`${'TOKEN'.padEnd(12)} ${'CONTRACT'.padEnd(12)} ${'SNAPSHOT'.padEnd(12)} ${'STATUS'.padEnd(10)}`);
+  console.log('-'.repeat(60));
+  
+  for (const token of tokens) {
+    const contractValue = contractRatios[token];
+    const snapshotValue = snapshotRatios[token];
+    const matches = Math.abs(contractValue - snapshotValue) < 0.0001; // Allow tiny floating point differences
+    
+    if (!matches) allMatch = false;
+    
+    const status = matches ? '✅ MATCH' : '❌ MISMATCH';
+    const contractStr = contractValue.toString();
+    const snapshotStr = snapshotValue.toString();
+    
+    console.log(`${token.padEnd(12)} ${contractStr.padEnd(12)} ${snapshotStr.padEnd(12)} ${status}`);
+  }
+  
+  console.log('='.repeat(60));
+  
+  if (allMatch) {
+    console.log('🎉 ALL RATIOS MATCH! Contract and snapshot are in sync.');
+  } else {
+    console.log('⚠️  RATIOS ARE OUT OF SYNC! This will cause minting failures.');
+    console.log('\n💡 Solutions:');
+    console.log('1. Update the snapshot ratios to match the contract');
+    console.log('2. Or call updateRatios() on the contract to match the snapshot');
+  }
+}
+
+async function main() {
+  console.log('🔄 CHECKING RATIO SYNCHRONIZATION');
+  console.log('='.repeat(50));
+  console.log(`Contract: ${DEPOSIT_MINTER_V2_ID}`);
+  console.log(`Snapshot Topic: ${SNAPSHOT_TOPIC_ID}`);
+  console.log(`Network: ${HEDERA_NETWORK}`);
+  console.log('='.repeat(50));
+  
+  try {
+    // Fetch both sets of ratios
+    const [contractRatios, snapshotRatios] = await Promise.all([
+      getCurrentContractRatios(),
+      getCurrentSnapshotRatios()
+    ]);
+    
+    if (!snapshotRatios) {
+      console.log('❌ Cannot compare - no snapshot ratios found');
+      process.exit(1);
+    }
+    
+    // Convert contract ratios to token amounts for comparison
+    const contractTokenAmounts = convertContractRatiosToTokenAmounts(contractRatios);
+    
+    // Compare the ratios
+    compareRatios(contractTokenAmounts, snapshotRatios);
+    
+  } catch (error) {
+    console.error('❌ Script failed:', error);
+    process.exit(1);
+  }
+}
+
+// Run the script
+if (require.main === module) {
+  main().catch(console.error);
+}
+
+export { getCurrentContractRatios, getCurrentSnapshotRatios, compareRatios };

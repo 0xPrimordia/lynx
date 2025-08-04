@@ -235,15 +235,15 @@ export function useTokens(): UseTokensResult {
           HEADSTART: getWeightValue(parameters.treasury.weights.HEADSTART)
         };
 
-        // Convert snapshot weights (which are contract ratios) to actual token amounts
-        // The snapshot contains the contract ratio values directly
+        // Use snapshot weights directly - they are already token amounts per LYNX
+        // e.g., HBAR: 0.5 means 0.5 HBAR needed per 1 LYNX token
         const snapshotRatios = {
-          HBAR: snapshotWeights.HBAR / 10,        // Contract stores as 50, we need 5.0
-          WBTC: snapshotWeights.WBTC / 100,       // Contract stores as 3, we need 0.03
-          SAUCE: snapshotWeights.SAUCE / 10,      // Contract stores as 25, we need 2.5
-          USDC: snapshotWeights.USDC / 10,        // Contract stores as 15, we need 1.5
-          JAM: snapshotWeights.JAM / 10,          // Contract stores as 5, we need 0.5
-          HEADSTART: snapshotWeights.HEADSTART / 10 // Contract stores as 3, we need 0.3
+          HBAR: snapshotWeights.HBAR,
+          WBTC: snapshotWeights.WBTC,
+          SAUCE: snapshotWeights.SAUCE,
+          USDC: snapshotWeights.USDC,
+          JAM: snapshotWeights.JAM,
+          HEADSTART: snapshotWeights.HEADSTART
         };
         
         console.log('[useTokens] Using snapshot ratios for token calculation:', snapshotRatios);

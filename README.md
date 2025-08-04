@@ -171,14 +171,6 @@ sequenceDiagram
 - **Agent Status**: Visibility into autonomous agent operations
 - **Alert System**: Notifications for important events and updates
 
-### **Design Philosophy**
-
-- **Dark Theme**: Professional, easy-on-the-eyes interface
-- **Terminal Aesthetic**: VT323 font for technical credibility
-- **Responsive Design**: Optimized for desktop, tablet, and mobile
-- **Accessibility**: High contrast and clear typography
-- **Performance**: Fast loading and smooth interactions
-
 ## 🔗 Integration with Autonomous Agents
 
 ### **Governance Agent V2 Integration**
@@ -278,71 +270,6 @@ npm run test:minting
 # Test agent communication
 npm run test:agents
 ```
-
-## 🔐 Security & Best Practices
-
-### **Security Features**
-
-- **Wallet Integration**: Secure Hedera wallet connections
-- **Transaction Validation**: Client-side transaction validation
-- **Input Sanitization**: Protection against malicious inputs
-- **Environment Variables**: Secure configuration management
-- **HTTPS Enforcement**: Secure communication protocols
-
-### **Development Best Practices**
-
-- **TypeScript**: Strict type checking for all components
-- **Error Handling**: Comprehensive error boundaries and fallbacks
-- **Performance Optimization**: Code splitting and lazy loading
-- **Accessibility**: WCAG 2.1 compliance standards
-- **Testing**: Unit, integration, and end-to-end test coverage
-
-## 📊 Monitoring & Analytics
-
-### **Real-time Monitoring**
-
-- **Transaction Status**: Live tracking of all blockchain transactions
-- **Agent Health**: Monitoring of autonomous agent operations
-- **User Activity**: Analytics on governance participation
-- **Performance Metrics**: Application performance monitoring
-
-### **Debugging Tools**
-
-- **Transaction Explorer**: Direct links to HashScan for transaction verification
-- **Agent Logs**: Real-time agent operation logs
-- **Error Tracking**: Comprehensive error reporting and debugging
-- **State Inspection**: Developer tools for state management
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
-
-### **Development Guidelines**
-
-- ✅ Use TypeScript with strict mode enabled
-- ✅ Follow the existing code style and patterns
-- ✅ Add tests for new functionality
-- ✅ Update documentation for any API changes
-- ✅ Ensure responsive design for all new components
-
-## 📄 License
-
-This project is licensed under the **Apache-2.0 License** - see the [LICENSE](LICENSE) file for details.
-
-## 🙋‍♂️ Support & Community
-
-- 📚 **Documentation**: Check the `/docs` directory for detailed guides
-- 🐛 **Issues**: Report bugs and request features via GitHub Issues
-- 💬 **Discussions**: Join the community discussions for help and ideas
-- 🔗 **Agent Repositories**: 
-  - [Lynx Governance Agent V2](https://github.com/0xPrimordia/lynx-governance-agentv2)
-  - [Lynx Balancer Agent](https://github.com/0xPrimordia/lynx-balancer-agent)
 
 ## 🏆 Hackathon Submission
 

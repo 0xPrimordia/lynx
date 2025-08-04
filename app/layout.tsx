@@ -9,6 +9,7 @@ import Header from "./components/Header";
 import { vt323 } from "./fonts";
 import NextUIProvider from "./providers/NextUIProvider";
 import { DaoParametersProvider } from "./providers/DaoParametersProvider";
+import DashboardAlerts from "./components/DashboardAlerts";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -37,6 +38,7 @@ export default function RootLayout({
             <WalletProvider>
               <DaoParametersProvider autoConnect={true}>
                 <TokenQueueProvider>
+                  <DashboardAlerts />
                   <Header />
                   {children}
                   <footer className="border-t border-[#111] py-6 text-center text-gray-400 text-sm mt-auto">

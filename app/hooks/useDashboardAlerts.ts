@@ -19,8 +19,6 @@ export function useDashboardAlerts() {
       ? 'https://mainnet-public.mirrornode.hedera.com'
       : 'https://testnet.mirrornode.hedera.com';
 
-    let intervalId: NodeJS.Timeout;
-
     const checkForNewMessages = async () => {
       try {
         const url = `${mirrorUrl}/api/v1/topics/${alertTopicId}/messages?limit=5&order=desc`;
@@ -73,14 +71,12 @@ export function useDashboardAlerts() {
 
     // Initial check and set up polling
     checkForNewMessages();
-    intervalId = setInterval(checkForNewMessages, 2000); // Check every 2 seconds
+    const intervalId = setInterval(checkForNewMessages, 2000); // Check every 2 seconds
 
     console.log(`[DashboardAlerts] Monitoring ${alertTopicId} for dashboard alerts`);
 
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      clearInterval(intervalId);
     };
   }, []);
 }

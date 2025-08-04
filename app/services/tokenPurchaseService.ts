@@ -5,15 +5,12 @@ import {
   TransferTransaction,
   Hbar,
   PrivateKey,
-  TransactionReceiptQuery,
   Status,
-  TransactionResponse,
   AccountBalanceQuery,
   TransactionId,
   TokenAssociateTransaction
 } from '@hashgraph/sdk';
 import { DAppConnector, transactionToBase64String } from '@hashgraph/hedera-wallet-connect';
-import { checkTokenAssociation } from '../actions/tokenActions';
 
 export interface TokenPurchaseRequest {
   hbarAmount: number;

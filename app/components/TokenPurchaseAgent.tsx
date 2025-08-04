@@ -127,7 +127,7 @@ export function TokenPurchaseAgent({ className = "" }: TokenPurchaseAgentProps) 
     } finally {
       setIsProcessing(false);
     }
-  }, [isConnected, accountId, dAppConnector, hbarAmount, tokenAmounts]);
+  }, [isConnected, accountId, dAppConnector, hbarAmount, tokenAmounts, toast]);
 
   const handleAssociateTokens = useCallback(async () => {
     if (!isConnected || !accountId || !dAppConnector || needsAssociation.length === 0) {
@@ -164,7 +164,7 @@ export function TokenPurchaseAgent({ className = "" }: TokenPurchaseAgentProps) 
     }
   }, [isConnected, accountId, dAppConnector, needsAssociation, toast]);
 
-  const formatTokenAmount = (amount: number, token: string): string => {
+  const formatTokenAmount = (amount: number): string => {
     if (amount < 0.0001) return '< 0.0001';
     if (amount >= 1000000) return `${(amount / 1000000).toFixed(2)}M`;
     if (amount >= 1000) return `${(amount / 1000).toFixed(2)}K`;
@@ -239,7 +239,7 @@ export function TokenPurchaseAgent({ className = "" }: TokenPurchaseAgentProps) 
       {/* Token Breakdown */}
       {tokenAmounts && Object.keys(tokenAmounts).length > 0 && (
         <div className="mb-6">
-          <h4 className="text-lg font-medium text-white mb-3">Tokens You'll Receive</h4>
+          <h4 className="text-lg font-medium text-white mb-3">Tokens You&apos;ll Receive</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {Object.entries(tokenAmounts).map(([token, data]) => (
               <div key={token} className="bg-gray-700/30 rounded-lg p-3">
@@ -249,7 +249,7 @@ export function TokenPurchaseAgent({ className = "" }: TokenPurchaseAgentProps) 
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[#0159E0] font-bold">
-                    {formatTokenAmount(data.amount, token)}
+                    {formatTokenAmount(data.amount)}
                   </span>
                   <span className="text-gray-400 text-sm">
                     {formatUSD(data.valueUSD)}

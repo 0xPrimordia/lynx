@@ -36,7 +36,7 @@ The system leverages **[Lynx Governance Agent V2](https://github.com/0xPrimordia
 #### **Step 1: Token Minting & Portfolio Overview**
 1. Navigate to the **Minting Page** (`/mint`)
 2. Connect your Hedera wallet (HashPack, Blade, or MyHbarWallet)
-3. View current token ratios and portfolio composition
+3. View current token ratios and portfolio composition, mint some testnet Lynx if you want to
 4. Observe the real-time token balances and pricing data
 5. **Note**: The minting interface shows the current portfolio allocation that will be reflected in governance
 

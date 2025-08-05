@@ -178,15 +178,6 @@ export function TokenPurchaseAgent({ className = "" }: TokenPurchaseAgentProps) 
     
     try {
       console.log(`[TokenPurchaseAgent] Starting association for tokens: ${needsAssociation.join(', ')}`);
-      
-      // Token ID mapping for association
-      const tokenIds: { [key: string]: string } = {
-        WBTC: process.env.NEXT_PUBLIC_WBTC_TOKEN_ID || '0.0.6212930',
-        SAUCE: process.env.NEXT_PUBLIC_SAUCE_TOKEN_ID || '0.0.1183558',
-        USDC: process.env.NEXT_PUBLIC_USDC_TOKEN_ID || '0.0.6212931',
-        JAM: process.env.NEXT_PUBLIC_JAM_TOKEN_ID || '0.0.6212932',
-        HEADSTART: process.env.NEXT_PUBLIC_HEADSTART_TOKEN_ID || '0.0.6212933'
-      };
 
       const associationResults: { [tokenId: string]: { success: boolean; txId?: string; error?: string } } = {};
       const successfulAssociations: string[] = [];

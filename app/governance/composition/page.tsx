@@ -47,7 +47,7 @@ export default function CompositionPage() {
   const [votingPower, setVotingPower] = useState<number>(0);
 
   // Get governance topic ID from environment
-  const governanceTopicId = process.env.NEXT_PUBLIC_GOVERNANCE_TOPIC_ID || '0.0.6110234';
+  const governanceTopicId = process.env.NEXT_PUBLIC_GOVERNANCE_TOPIC_ID || '0.0.6501988';
 
   // Map token symbols to their icon URLs
   const getTokenIconUrl = (symbol: string): string => {

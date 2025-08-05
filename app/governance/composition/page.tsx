@@ -150,7 +150,7 @@ export default function CompositionPage() {
 
     try {
       setIsSubmitting(true);
-      toast.loading('Submitting governance votes to Hedera Consensus Service...');
+      toast.loading('Submitting governance votes to HCS-2 topic...');
 
       // Create a single multi-ratio vote containing ALL token ratios (full state)
       const multiRatioVote: MultiRatioGovernanceVote = {
@@ -179,8 +179,17 @@ export default function CompositionPage() {
       // Create client for testnet
       const client = Client.forTestnet();
       
+      // Wrap vote data in HCS-2 format for agent compatibility
+      const hcs2Message = {
+        p: "hcs-2",
+        op: "register",
+        t_id: governanceTopicId,
+        metadata: JSON.stringify(multiRatioVote),
+        m: "Governance vote submission"
+      };
+      
       // Create single topic message submission transaction
-      const voteMessage = JSON.stringify(multiRatioVote, null, 2);
+      const voteMessage = JSON.stringify(hcs2Message, null, 2);
       const transaction = new TopicMessageSubmitTransaction()
         .setTopicId(governanceTopicId)
         .setMessage(voteMessage)
@@ -206,7 +215,7 @@ export default function CompositionPage() {
       
       if (txId) {
         toast.success(
-          `Successfully submitted multi-ratio governance vote to HCS topic ${governanceTopicId}! ` +
+          `Successfully submitted multi-ratio governance vote to HCS-2 topic ${governanceTopicId}! ` +
           `Transaction ID: ${txId}`
         );
         
@@ -221,7 +230,8 @@ export default function CompositionPage() {
           changes: proposedChanges,
           transactionId: txId,
           topicId: governanceTopicId,
-          message: 'Multi-ratio vote submitted via Hedera Consensus Service'
+          message: 'Multi-ratio vote submitted via Hedera Consensus Service',
+          hcs2Format: hcs2Message
         });
       } else {
         toast.error('Failed to submit governance vote');

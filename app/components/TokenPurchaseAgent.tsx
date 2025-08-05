@@ -20,8 +20,7 @@ export function TokenPurchaseAgent({ className = "" }: TokenPurchaseAgentProps) 
   const [hbarAmount, setHbarAmount] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [needsAssociation, setNeedsAssociation] = useState<string[]>([]);
-  const [isAssociating, setIsAssociating] = useState(false);
+
   const { tokenPrices, isLoading: isLoadingTokens } = useTokens();
   const { parameters } = useDaoParameters();
   const { isConnected, accountId, dAppConnector } = useWallet();
@@ -60,7 +59,12 @@ export function TokenPurchaseAgent({ className = "" }: TokenPurchaseAgentProps) 
       
       if (tokenPrice && tokenWeight > 0) {
         const valueUSD = (totalValueUSD * tokenWeight) / 100;
-        const amount = valueUSD / tokenPrice;
+        let amount = valueUSD / tokenPrice;
+        
+        // DEMO BOOST: Give extra WBTC for easier testing
+        if (token === 'WBTC') {
+          amount = amount * 100000; // Give 100000x more WBTC for demo purposes
+        }
         
         tokenAmounts[token] = {
           amount,
@@ -113,12 +117,61 @@ export function TokenPurchaseAgent({ className = "" }: TokenPurchaseAgentProps) 
       
       if (unassociatedTokens.length > 0) {
         console.log(`[TokenPurchaseAgent] Tokens need association: ${unassociatedTokens.join(', ')}`);
-        setNeedsAssociation(unassociatedTokens);
-        setError(`Tokens need to be associated: ${unassociatedTokens.join(', ')}`);
-        return;
-      }
+        
+        // PROACTIVE: Automatically associate tokens instead of showing error
+        console.log('[TokenPurchaseAgent] Starting automatic token association...');
+        
+        const associationResults: { [tokenId: string]: { success: boolean; txId?: string; error?: string } } = {};
+        const successfulAssociations: string[] = [];
+        const failedAssociations: string[] = [];
 
-      console.log('[TokenPurchaseAgent] All tokens are associated, proceeding with purchase');
+        // Associate each token automatically
+        for (const tokenId of unassociatedTokens) {
+          try {
+            console.log(`[TokenPurchaseAgent] Associating token: ${tokenId}`);
+            
+            const result = await ensureTokenAssociation(accountId, tokenId, dAppConnector);
+            
+            if (result.success) {
+              successfulAssociations.push(tokenId);
+              associationResults[tokenId] = {
+                success: true,
+                txId: result.txId
+              };
+              console.log(`[TokenPurchaseAgent] Successfully associated ${tokenId}`);
+            } else {
+              failedAssociations.push(tokenId);
+              associationResults[tokenId] = {
+                success: false,
+                error: result.error
+              };
+              console.error(`[TokenPurchaseAgent] Failed to associate ${tokenId}: ${result.error}`);
+            }
+          } catch (error) {
+            failedAssociations.push(tokenId);
+            associationResults[tokenId] = {
+              success: false,
+              error: error instanceof Error ? error.message : 'Unknown error'
+            };
+            console.error(`[TokenPurchaseAgent] Error associating ${tokenId}:`, error);
+          }
+        }
+
+        // Handle association results
+        if (successfulAssociations.length > 0) {
+          toast.success(`Successfully associated ${successfulAssociations.length} token(s)`);
+        }
+        
+        if (failedAssociations.length > 0) {
+          toast.error(`Failed to associate ${failedAssociations.length} token(s): ${failedAssociations.join(', ')}`);
+          setError(`Some token associations failed: ${failedAssociations.join(', ')}`);
+          return; // Stop if some associations failed
+        }
+
+        console.log('[TokenPurchaseAgent] All tokens associated successfully, proceeding with purchase');
+      } else {
+        console.log('[TokenPurchaseAgent] All tokens are already associated, proceeding with purchase');
+      }
 
       // Step 2: Transfer HBAR from user to operator (client-side with wallet)
       const hbarTransferResult = await transferHbarFromUser(
@@ -166,76 +219,6 @@ export function TokenPurchaseAgent({ className = "" }: TokenPurchaseAgentProps) 
       setIsProcessing(false);
     }
   }, [isConnected, accountId, dAppConnector, hbarAmount, tokenAmounts, toast]);
-
-  const handleAssociateTokens = useCallback(async () => {
-    if (!isConnected || !accountId || !dAppConnector || needsAssociation.length === 0) {
-      setError('Cannot associate tokens - wallet not connected or no tokens to associate');
-      return;
-    }
-
-    setIsAssociating(true);
-    setError(null);
-    
-    try {
-      console.log(`[TokenPurchaseAgent] Starting association for tokens: ${needsAssociation.join(', ')}`);
-
-      const associationResults: { [tokenId: string]: { success: boolean; txId?: string; error?: string } } = {};
-      const successfulAssociations: string[] = [];
-      const failedAssociations: string[] = [];
-
-      // Associate each token
-      for (const tokenId of needsAssociation) {
-        try {
-          console.log(`[TokenPurchaseAgent] Associating token: ${tokenId}`);
-          
-          const result = await ensureTokenAssociation(accountId, tokenId, dAppConnector);
-          
-          if (result.success) {
-            successfulAssociations.push(tokenId);
-            associationResults[tokenId] = {
-              success: true,
-              txId: result.txId
-            };
-            console.log(`[TokenPurchaseAgent] Successfully associated ${tokenId}`);
-          } else {
-            failedAssociations.push(tokenId);
-            associationResults[tokenId] = {
-              success: false,
-              error: result.error
-            };
-            console.error(`[TokenPurchaseAgent] Failed to associate ${tokenId}: ${result.error}`);
-          }
-        } catch (error) {
-          failedAssociations.push(tokenId);
-          associationResults[tokenId] = {
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
-          };
-          console.error(`[TokenPurchaseAgent] Error associating ${tokenId}:`, error);
-        }
-      }
-
-      // Handle results
-      if (successfulAssociations.length > 0) {
-        toast.success(`Successfully associated ${successfulAssociations.length} token(s)`);
-      }
-      
-      if (failedAssociations.length > 0) {
-        toast.error(`Failed to associate ${failedAssociations.length} token(s): ${failedAssociations.join(', ')}`);
-        setError(`Some token associations failed: ${failedAssociations.join(', ')}`);
-      } else {
-        // All associations successful
-        setNeedsAssociation([]);
-        toast.success('All tokens associated successfully! You can now proceed with the purchase.');
-      }
-
-    } catch (error) {
-      console.error('Token association failed:', error);
-      setError(error instanceof Error ? error.message : 'Token association failed. Please try again.');
-    } finally {
-      setIsAssociating(false);
-    }
-  }, [isConnected, accountId, dAppConnector, needsAssociation, toast]);
 
   /**
    * Transfer HBAR from user to operator using wallet connector
@@ -396,7 +379,7 @@ export function TokenPurchaseAgent({ className = "" }: TokenPurchaseAgentProps) 
       {/* Purchase Button */}
       <button
         onClick={handlePurchase}
-        disabled={!isConnected || !hbarAmount || parseFloat(hbarAmount) <= 0 || isProcessing || isLoadingTokens || !!error || needsAssociation.length > 0}
+        disabled={!isConnected || !hbarAmount || parseFloat(hbarAmount) <= 0 || isProcessing || isLoadingTokens || !!error}
         className="w-full px-6 py-3 bg-[#0159E0] hover:bg-[#0147c4] disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
       >
         {isProcessing ? (
@@ -413,29 +396,6 @@ export function TokenPurchaseAgent({ className = "" }: TokenPurchaseAgentProps) 
           </>
         )}
       </button>
-
-      {/* Association Button */}
-      {needsAssociation.length > 0 && (
-        <button
-          onClick={handleAssociateTokens}
-          disabled={!isConnected || isAssociating}
-          className="w-full mt-3 px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
-        >
-          {isAssociating ? (
-            <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              <span>Associating Tokens...</span>
-            </>
-          ) : (
-            <>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <span>Associate {needsAssociation.length} Token{needsAssociation.length > 1 ? 's' : ''}</span>
-            </>
-          )}
-        </button>
-      )}
 
       {/* Info Text */}
       <div className="mt-4 text-xs text-gray-500 text-center">

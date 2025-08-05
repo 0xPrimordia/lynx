@@ -247,24 +247,24 @@ export function useTokens(): UseTokensResult {
         
         console.log('[useTokens] Using snapshot ratios for token calculation:', snapshotRatios);
         
-        // return the weights as they come from the snapshot, do not change them
+        // Calculate required tokens by multiplying ratios by LYNX amount and dividing by 10
         return {
-          HBAR: snapshotRatios.HBAR,
-          WBTC: snapshotRatios.WBTC,
-          SAUCE: snapshotRatios.SAUCE,
-          USDC: snapshotRatios.USDC,
-          JAM: snapshotRatios.JAM,
-          HEADSTART: snapshotRatios.HEADSTART
+          HBAR: (lynxAmount * snapshotRatios.HBAR) / 10,
+          WBTC: (lynxAmount * snapshotRatios.WBTC) / 10,
+          SAUCE: (lynxAmount * snapshotRatios.SAUCE) / 10,
+          USDC: (lynxAmount * snapshotRatios.USDC) / 10,
+          JAM: (lynxAmount * snapshotRatios.JAM) / 10,
+          HEADSTART: (lynxAmount * snapshotRatios.HEADSTART) / 10
         };
       } else {
         // Fallback to hardcoded contract ratios if no snapshot data
         const fallbackRatios = {
-          HBAR: 5.0,      // Contract HBAR_RATIO = 50, so 50/10 = 5.0 HBAR per LYNX
-          WBTC: 0.03,     // Contract WBTC_RATIO = 3, so 3/100 = 0.03 WBTC per LYNX  
-          SAUCE: 2.5,     // Contract SAUCE_RATIO = 25, so 25/10 = 2.5 SAUCE per LYNX
-          USDC: 1.5,      // Contract USDC_RATIO = 15, so 15/10 = 1.5 USDC per LYNX
-          JAM: 0.5,       // Contract JAM_RATIO = 5, so 5/10 = 0.5 JAM per LYNX
-          HEADSTART: 0.3  // Contract HEADSTART_RATIO = 3, so 3/10 = 0.3 HEADSTART per LYNX
+          HBAR: 50,      // Contract HBAR_RATIO = 50
+          WBTC: 0.3,     // Contract WBTC_RATIO = 3  
+          SAUCE: 25,     // Contract SAUCE_RATIO = 25
+          USDC: 15,      // Contract USDC_RATIO = 15
+          JAM: 5,       // Contract JAM_RATIO = 5
+          HEADSTART: 3  // Contract HEADSTART_RATIO = 3
         };
         
         console.log('[useTokens] Using fallback ratios (no snapshot data):', fallbackRatios);

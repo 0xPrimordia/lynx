@@ -2,6 +2,7 @@ import { v4 as uuid } from 'uuid';
 import { DAppConnector } from '@hashgraph/hedera-wallet-connect';
 import { TransactionQueueManager, QueuedTransaction, QueueStats, TransactionResult } from './TransactionQueueManager';
 import { TransactionService } from './transactionService';
+import { ensureTokenAssociation } from '../lib/utils/tokens';
 
 import { TOKEN_IDS, CONTRACT_IDS } from '../config/environment';
 
@@ -266,6 +267,24 @@ export class TokenQueueService {
       console.log(`[QUEUE DEBUG] Starting LYNX minting process for ${lynxAmount} LYNX`);
       console.log(`[QUEUE DEBUG] Required amounts: WBTC=${wbtcAmount}, SAUCE=${sauceAmount}, USDC=${usdcAmount}, JAM=${jamAmount}, HEADSTART=${headstartAmount}`);
       
+      // Check and ensure LYNX token association (critical for minting)
+      console.log('[QUEUE DEBUG] Checking LYNX token association...');
+      
+      try {
+        console.log(`[QUEUE DEBUG] Ensuring LYNX token association for account ${this.accountId}`);
+        const lynxAssociationResult = await ensureTokenAssociation(this.accountId, TOKEN_CONFIG.LYNX.tokenId, this.connector!);
+        
+        if (lynxAssociationResult.success) {
+          console.log('[QUEUE DEBUG] LYNX token association successful or already associated');
+        } else {
+          console.error('[QUEUE DEBUG] LYNX token association failed:', lynxAssociationResult.error);
+          throw new Error(`LYNX token association failed: ${lynxAssociationResult.error}`);
+        }
+      } catch (error) {
+        console.error('[QUEUE DEBUG] Error during LYNX token association:', error);
+        throw new Error(`LYNX token association failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      
       // Check token associations for all 6 tokens
       console.log('[QUEUE DEBUG] Checking token associations...');
       
@@ -338,6 +357,7 @@ export class TokenQueueService {
             console.error(`[QUEUE DEBUG] Error associating token ${tokenId}:`, error);
             throw new Error(`Token association failed: ${error instanceof Error ? error.message : String(error)}`);
           }
+
         }
       }
       
@@ -500,4 +520,4 @@ export class TokenQueueService {
     // 10 tinybar per LYNX = 0.0000001 HBAR per LYNX
     return lynxAmount * 0.0000001;
   }
-} 
+}

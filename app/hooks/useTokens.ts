@@ -250,7 +250,7 @@ export function useTokens(): UseTokensResult {
         // Calculate required tokens by multiplying ratios by LYNX amount and dividing by 10
         return {
           HBAR: (lynxAmount * snapshotRatios.HBAR) / 10,
-          WBTC: (lynxAmount * snapshotRatios.WBTC) / 10,
+          WBTC: (lynxAmount * snapshotRatios.WBTC) / 100, // WBTC needs division by 100 to match contract
           SAUCE: (lynxAmount * snapshotRatios.SAUCE) / 10,
           USDC: (lynxAmount * snapshotRatios.USDC) / 10,
           JAM: (lynxAmount * snapshotRatios.JAM) / 10,

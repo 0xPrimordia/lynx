@@ -12,7 +12,7 @@ import {
   TokenAssociateTransaction,
   AccountAllowanceApproveTransaction
 } from '@hashgraph/sdk';
-import { checkTokenAssociation } from '../actions/tokenActions';
+
 import { HashPackWalletResponse } from '../types';
 
 export interface TransactionResponse {
@@ -448,38 +448,9 @@ export class TransactionService {
 
       console.log(`[TokenService] Checking if token ${tokenId} is already associated with account ${accountId}`);
       
-      // First check if the token is already associated using the server action
-      try {
-        console.log(`[TokenService] Performing initial association check`);
-        const isAssociated = await checkTokenAssociation(tokenId, accountId);
-        if (isAssociated) {
-          console.log(`[TokenService] Token ${tokenId} is already associated with account ${accountId} - skipping association`);
-          return {
-            success: true,
-            message: 'Token is already associated'
-          };
-        }
-        console.log(`[TokenService] Initial check shows token is NOT associated, proceeding with association`);
-      } catch (checkError) {
-        console.warn(`[TokenService] Error during initial association check:`, checkError);
-        console.log(`[TokenService] Will perform double-check to verify association status`);
-        
-        // Perform a second check with a short delay to be sure
-        await new Promise(resolve => setTimeout(resolve, 500));
-        try {
-          const secondCheck = await checkTokenAssociation(tokenId, accountId);
-          if (secondCheck) {
-            console.log(`[TokenService] Double-check confirms token ${tokenId} is already associated - skipping association`);
-            return {
-              success: true,
-              message: 'Token is already associated (confirmed by double-check)'
-            };
-          }
-          console.log(`[TokenService] Double-check confirms token is NOT associated, proceeding with association`);
-        } catch (secondCheckError) {
-          console.warn(`[TokenService] Double-check also failed, will attempt association anyway:`, secondCheckError);
-        }
-      }
+      // Note: Token association checking is now handled client-side through the wallet
+      // We'll proceed with the association transaction and let it fail if already associated
+      console.log(`[TokenService] Proceeding with token association for ${tokenId}`);
       
       // Create a client for testnet
       const client = Client.forTestnet();
@@ -527,20 +498,9 @@ export class TransactionService {
       } catch (walletError) {
         console.error(`[TokenService] Wallet error during signing:`, walletError);
         
-        // Check if this was a rejection because the token is already associated
-        console.log(`[TokenService] Checking if token is now associated after wallet error`);
-        try {
-          const finalCheck = await checkTokenAssociation(tokenId, accountId);
-          if (finalCheck) {
-            console.log(`[TokenService] Despite error, token ${tokenId} is actually associated`);
-            return {
-              success: true,
-              message: 'Token is already associated (verified after wallet error)'
-            };
-          }
-        } catch (finalCheckError) {
-          console.warn(`[TokenService] Final association check failed:`, finalCheckError);
-        }
+        // Note: Token association checking is now handled client-side through the wallet
+        // If the wallet error indicates the token is already associated, we'll handle it appropriately
+        console.log(`[TokenService] Wallet error occurred during association`);
         
         throw new Error(`Wallet error: ${walletError instanceof Error ? walletError.message : String(walletError)}`);
       }

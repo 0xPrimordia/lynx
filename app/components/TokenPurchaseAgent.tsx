@@ -4,8 +4,15 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useTokens } from '../hooks/useTokens';
 import { useDaoParameters } from '../providers/DaoParametersProvider';
 import { useWallet } from '../providers/WalletProvider';
-import { TokenPurchaseService } from '../services/tokenPurchaseService';
 import { useToast } from '../hooks/useToast';
+import { DAppConnector, transactionToBase64String } from '@hashgraph/hedera-wallet-connect';
+import { TransferTransaction, Hbar, TransactionId, AccountId } from '@hashgraph/sdk';
+import { 
+  checkTokenAssociation, 
+  ensureTokenAssociation, 
+  getUnassociatedTokens,
+  executeTransaction 
+} from '../lib/utils/tokens';
 
 interface TokenPurchaseAgentProps {
   className?: string;
@@ -88,39 +95,72 @@ export function TokenPurchaseAgent({ className = "" }: TokenPurchaseAgentProps) 
     setError(null);
     
     try {
-      const purchaseService = new TokenPurchaseService();
+      // Step 1: PROACTIVE association management - check and associate tokens as needed
+      console.log('[TokenPurchaseAgent] Starting proactive association management...');
       
-      // Check if operator has sufficient balances
-      const balanceCheck = await purchaseService.checkOperatorBalances(tokenAmounts);
-      if (!balanceCheck.sufficient) {
-        setError(`Insufficient operator balances for: ${balanceCheck.insufficientTokens.join(', ')}`);
+      // Token ID mapping for association checks
+      const tokenIds: { [key: string]: string } = {
+        WBTC: process.env.NEXT_PUBLIC_WBTC_TOKEN_ID || '0.0.6212930',
+        SAUCE: process.env.NEXT_PUBLIC_SAUCE_TOKEN_ID || '0.0.1183558',
+        USDC: process.env.NEXT_PUBLIC_USDC_TOKEN_ID || '0.0.6212931',
+        JAM: process.env.NEXT_PUBLIC_JAM_TOKEN_ID || '0.0.6212932',
+        HEADSTART: process.env.NEXT_PUBLIC_HEADSTART_TOKEN_ID || '0.0.6212933'
+      };
+
+      // Get list of tokens that need association
+      const tokensToCheck = Object.keys(tokenAmounts);
+      const tokenIdList = tokensToCheck.map(symbol => tokenIds[symbol]).filter(Boolean);
+      
+      const unassociatedTokens = await getUnassociatedTokens(accountId, tokenIdList);
+      
+      if (unassociatedTokens.length > 0) {
+        console.log(`[TokenPurchaseAgent] Tokens need association: ${unassociatedTokens.join(', ')}`);
+        setNeedsAssociation(unassociatedTokens);
+        setError(`Tokens need to be associated: ${unassociatedTokens.join(', ')}`);
         return;
       }
 
-      // Execute the token purchase
-      const result = await purchaseService.executeTokenPurchase(
-        {
-          hbarAmount: parseFloat(hbarAmount),
-          userAccountId: accountId,
-          tokenAmounts
-        },
+      console.log('[TokenPurchaseAgent] All tokens are associated, proceeding with purchase');
+
+      // Step 2: Transfer HBAR from user to operator (client-side with wallet)
+      const hbarTransferResult = await transferHbarFromUser(
+        parseFloat(hbarAmount),
+        accountId,
         dAppConnector
       );
 
-      if (result.success) {
-        // Success - clear form and show success message
-        setHbarAmount('');
-        toast.success(`Purchase completed successfully! Transaction ID: ${result.txId}`);
-        toast.info('You have received the tokens in your wallet.');
-      } else if (result.needsAssociation && result.unassociatedTokens) {
-        // Need to associate tokens first
-        setNeedsAssociation(result.unassociatedTokens);
-        setError(`Tokens need to be associated: ${result.unassociatedTokens.join(', ')}`);
-      } else {
-        setError(`Purchase failed: ${result.error}`);
+      if (!hbarTransferResult.success) {
+        setError(`HBAR transfer failed: ${hbarTransferResult.error}`);
+        return;
       }
 
-      purchaseService.close();
+      // Step 3: Request token transfers from server
+      const tokenTransferResponse = await fetch('/api/token-purchase/transfer-tokens', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tokenAmounts,
+          userAccountId: accountId,
+          hbarTransferTxId: hbarTransferResult.txId
+        })
+      });
+
+      const tokenTransferResult = await tokenTransferResponse.json();
+
+      if (!tokenTransferResult.success) {
+        setError(`Token transfer failed: ${tokenTransferResult.error}`);
+        return;
+      }
+
+      // Success - clear form and show success message
+      setHbarAmount('');
+      toast.success(`Purchase completed successfully! HBAR TX: ${hbarTransferResult.txId}`);
+      if (tokenTransferResult.txIds && tokenTransferResult.txIds.length > 0) {
+        toast.info(`Token transfers: ${tokenTransferResult.txIds.join(', ')}`);
+      }
+
     } catch (error) {
       console.error('Purchase failed:', error);
       setError(error instanceof Error ? error.message : 'Purchase failed. Please try again.');
@@ -139,21 +179,65 @@ export function TokenPurchaseAgent({ className = "" }: TokenPurchaseAgentProps) 
     setError(null);
     
     try {
-      const purchaseService = new TokenPurchaseService();
+      console.log(`[TokenPurchaseAgent] Starting association for tokens: ${needsAssociation.join(', ')}`);
       
-      const result = await purchaseService.associateTokensWithUser(
-        needsAssociation,
-        accountId,
-        dAppConnector
-      );
+      // Token ID mapping for association
+      const tokenIds: { [key: string]: string } = {
+        WBTC: process.env.NEXT_PUBLIC_WBTC_TOKEN_ID || '0.0.6212930',
+        SAUCE: process.env.NEXT_PUBLIC_SAUCE_TOKEN_ID || '0.0.1183558',
+        USDC: process.env.NEXT_PUBLIC_USDC_TOKEN_ID || '0.0.6212931',
+        JAM: process.env.NEXT_PUBLIC_JAM_TOKEN_ID || '0.0.6212932',
+        HEADSTART: process.env.NEXT_PUBLIC_HEADSTART_TOKEN_ID || '0.0.6212933'
+      };
 
-      purchaseService.close();
+      const associationResults: { [tokenId: string]: { success: boolean; txId?: string; error?: string } } = {};
+      const successfulAssociations: string[] = [];
+      const failedAssociations: string[] = [];
 
-      if (result.success) {
-        setNeedsAssociation([]);
-        toast.success('Tokens associated successfully! You can now proceed with the purchase.');
+      // Associate each token
+      for (const tokenId of needsAssociation) {
+        try {
+          console.log(`[TokenPurchaseAgent] Associating token: ${tokenId}`);
+          
+          const result = await ensureTokenAssociation(accountId, tokenId, dAppConnector);
+          
+          if (result.success) {
+            successfulAssociations.push(tokenId);
+            associationResults[tokenId] = {
+              success: true,
+              txId: result.txId
+            };
+            console.log(`[TokenPurchaseAgent] Successfully associated ${tokenId}`);
+          } else {
+            failedAssociations.push(tokenId);
+            associationResults[tokenId] = {
+              success: false,
+              error: result.error
+            };
+            console.error(`[TokenPurchaseAgent] Failed to associate ${tokenId}: ${result.error}`);
+          }
+        } catch (error) {
+          failedAssociations.push(tokenId);
+          associationResults[tokenId] = {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          };
+          console.error(`[TokenPurchaseAgent] Error associating ${tokenId}:`, error);
+        }
+      }
+
+      // Handle results
+      if (successfulAssociations.length > 0) {
+        toast.success(`Successfully associated ${successfulAssociations.length} token(s)`);
+      }
+      
+      if (failedAssociations.length > 0) {
+        toast.error(`Failed to associate ${failedAssociations.length} token(s): ${failedAssociations.join(', ')}`);
+        setError(`Some token associations failed: ${failedAssociations.join(', ')}`);
       } else {
-        setError(`Token association failed: ${result.error}`);
+        // All associations successful
+        setNeedsAssociation([]);
+        toast.success('All tokens associated successfully! You can now proceed with the purchase.');
       }
 
     } catch (error) {
@@ -163,6 +247,65 @@ export function TokenPurchaseAgent({ className = "" }: TokenPurchaseAgentProps) 
       setIsAssociating(false);
     }
   }, [isConnected, accountId, dAppConnector, needsAssociation, toast]);
+
+  /**
+   * Transfer HBAR from user to operator using wallet connector
+   */
+  const transferHbarFromUser = async (
+    hbarAmount: number,
+    userAccountId: string,
+    connector: DAppConnector
+  ): Promise<{ success: boolean; txId?: string; error?: string }> => {
+    try {
+      console.log(`[TokenPurchaseAgent] Transferring ${hbarAmount} HBAR from ${userAccountId} to operator`);
+
+      // Get operator ID from environment (public)
+      const operatorId = process.env.NEXT_PUBLIC_OPERATOR_ID;
+      if (!operatorId) {
+        throw new Error('Operator ID not configured');
+      }
+
+      // Create transfer transaction
+      const transferTx = new TransferTransaction()
+        .addHbarTransfer(userAccountId, new Hbar(-hbarAmount))
+        .addHbarTransfer(operatorId, new Hbar(hbarAmount))
+        .setTransactionId(TransactionId.generate(AccountId.fromString(userAccountId)))
+        .setTransactionMemo('LYNX Token Purchase - HBAR Transfer')
+        .setMaxTransactionFee(new Hbar(2));
+
+      // Convert transaction to base64 string
+      const txBase64 = transactionToBase64String(transferTx);
+
+      // Execute transaction through wallet connector
+      const response = await connector.signAndExecuteTransaction({
+        signerAccountId: userAccountId,
+        transactionList: txBase64
+      });
+
+      console.log('[TokenPurchaseAgent] HBAR transfer successful:', response);
+      
+      return {
+        success: true,
+        txId: String(response?.id || 'unknown')
+      };
+
+    } catch (error) {
+      console.error('[TokenPurchaseAgent] HBAR transfer failed:', error);
+      
+      // Handle empty error objects (wallet popup closed)
+      if (error && typeof error === 'object' && Object.keys(error).length === 0) {
+        return {
+          success: false,
+          error: 'Transaction was rejected or wallet popup was closed'
+        };
+      }
+      
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  };
 
   const formatTokenAmount = (amount: number): string => {
     if (amount < 0.0001) return '< 0.0001';

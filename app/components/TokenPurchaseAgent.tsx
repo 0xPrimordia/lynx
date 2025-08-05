@@ -8,10 +8,8 @@ import { useToast } from '../hooks/useToast';
 import { DAppConnector, transactionToBase64String } from '@hashgraph/hedera-wallet-connect';
 import { TransferTransaction, Hbar, TransactionId, AccountId } from '@hashgraph/sdk';
 import { 
-  checkTokenAssociation, 
   ensureTokenAssociation, 
   getUnassociatedTokens,
-  executeTransaction 
 } from '../lib/utils/tokens';
 
 interface TokenPurchaseAgentProps {

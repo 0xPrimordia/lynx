@@ -103,11 +103,11 @@ export default function Home() {
           <div className="p-5 bg-[#111] rounded-lg mb-4">
             <p className="mb-3 flex justify-between">
               <span className="text-gray-300">Token Contract:</span>
-              <code style={{ color: "#0159E0" }}>0.0.5758264</code>
+              <code style={{ color: "#0159E0" }}>{process.env.NEXT_PUBLIC_DEPOSIT_MINTER_V2_HEDERA_ID || '0.0.6213127'}</code>
             </p>
             <p className="flex justify-between">
               <span className="text-gray-300">LYNX Token ID:</span>
-              <code style={{ color: "#0159E0" }}>0.0.5758713</code>
+              <code style={{ color: "#0159E0" }}>{process.env.NEXT_PUBLIC_LYNX_TOKEN_ID || '0.0.6200902'}</code>
             </p>
           </div>
         </CardBody>
